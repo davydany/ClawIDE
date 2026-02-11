@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/davydany/ccmux/internal/model"
-	"github.com/davydany/ccmux/internal/store"
+	"github.com/davydany/ClawIDE/internal/model"
+	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/go-chi/chi/v5"
 )
 

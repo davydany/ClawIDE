@@ -1,4 +1,4 @@
-module github.com/davydany/ccmux
+module github.com/davydany/ClawIDE
 
 go 1.24.4
 

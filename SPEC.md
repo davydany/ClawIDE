@@ -1,4 +1,4 @@
-# CCMux - Claude Code Multiplexer Specification
+# ClawIDE - Claude Code Multiplexer Specification
 
 ## Overview
 Single Go binary serving a mobile-first web UI for managing multiple Claude Code sessions across projects via git worktrees, with Docker integration, file editing, and terminal access.
@@ -17,7 +17,7 @@ Single Go binary serving a mobile-first web UI for managing multiple Claude Code
 - [X] `web/embed.go` — go:embed for static + templates
 - [X] `web/templates/` — base.html, layouts, pages, components
 - [X] `web/static/` — Tailwind CSS, vendored JS (htmx, alpine)
-- [X] `cmd/ccmux/main.go` — wire everything, graceful shutdown
+- [X] `cmd/clawide/main.go` — wire everything, graceful shutdown
 - [X] `Makefile` — build, dev, vendor targets
 - [X] `Dockerfile` + `docker-compose.yml` — local dev environment
 - [X] `.gitignore`

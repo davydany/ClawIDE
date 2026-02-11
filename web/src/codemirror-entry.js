@@ -148,7 +148,7 @@ function createEditor(container, content, filename, onDocChange, onSave) {
     });
 
     // Store compartment ref for language reconfiguration
-    view._ccmuxLangCompartment = langCompartment;
+    view._clawIDELangCompartment = langCompartment;
 
     // Load language asynchronously
     getLanguageExtension(filename).then(function(langExt) {
@@ -176,11 +176,11 @@ function setContent(view, text, filename) {
     });
 
     // Reconfigure language if filename changed
-    if (filename && view._ccmuxLangCompartment) {
+    if (filename && view._clawIDELangCompartment) {
         getLanguageExtension(filename).then(function(langExt) {
             if (view.dom.parentNode) {
                 view.dispatch({
-                    effects: view._ccmuxLangCompartment.reconfigure(langExt),
+                    effects: view._clawIDELangCompartment.reconfigure(langExt),
                 });
             }
         });
@@ -194,7 +194,7 @@ function destroyEditor(view) {
 }
 
 // Expose to global scope
-window.CCMuxCodeMirror = {
+window.ClawIDECodeMirror = {
     createEditor: createEditor,
     getContent: getContent,
     setContent: setContent,

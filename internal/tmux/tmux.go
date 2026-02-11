@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const prefix = "ccmux-"
+const prefix = "clawide-"
 
 // Check verifies that tmux is installed and accessible.
 func Check() error {
@@ -23,8 +23,8 @@ func HasSession(name string) bool {
 	return err == nil
 }
 
-// ListCCMuxSessions returns the names of all tmux sessions that start with the ccmux- prefix.
-func ListCCMuxSessions() ([]string, error) {
+// ListClawIDESessions returns the names of all tmux sessions that start with the clawide- prefix.
+func ListClawIDESessions() ([]string, error) {
 	out, err := exec.Command("tmux", "list-sessions", "-F", "#{session_name}").Output()
 	if err != nil {
 		// tmux returns error when no server is running (no sessions) — that's fine

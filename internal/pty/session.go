@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/creack/pty"
-	"github.com/davydany/ccmux/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/tmux"
 )
 
 type Session struct {

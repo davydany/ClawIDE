@@ -1,5 +1,5 @@
 {
-  "name": "ccmux-frontend",
+  "name": "clawide-frontend",
   "private": true,
   "scripts": {
     "build:xterm": "esbuild xterm-entry.js --bundle --minify --outfile=../static/dist/xterm-bundle.js",

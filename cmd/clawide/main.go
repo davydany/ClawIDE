@@ -8,11 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/davydany/ccmux/internal/config"
-	"github.com/davydany/ccmux/internal/server"
-	"github.com/davydany/ccmux/internal/store"
-	"github.com/davydany/ccmux/internal/tmpl"
-	"github.com/davydany/ccmux/web"
+	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/server"
+	"github.com/davydany/ClawIDE/internal/store"
+	"github.com/davydany/ClawIDE/internal/tmpl"
+	"github.com/davydany/ClawIDE/web"
 )
 
 func main() {
@@ -52,5 +52,5 @@ func main() {
 		log.Fatalf("Server shutdown error: %v", err)
 	}
 
-	log.Println("CCMux stopped")
+	log.Println("ClawIDE stopped")
 }

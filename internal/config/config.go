@@ -30,7 +30,7 @@ func DefaultConfig() *Config {
 		ScrollbackSize: 65536,
 		ClaudeCommand:  "claude",
 		LogLevel:       "info",
-		DataDir:        filepath.Join(home, ".ccmux"),
+		DataDir:        filepath.Join(home, ".clawide"),
 	}
 }
 
@@ -69,34 +69,34 @@ func (c *Config) loadFile() error {
 }
 
 func (c *Config) loadEnv() {
-	if v := os.Getenv("CCMUX_HOST"); v != "" {
+	if v := os.Getenv("CLAWIDE_HOST"); v != "" {
 		c.Host = v
 	}
-	if v := os.Getenv("CCMUX_PORT"); v != "" {
+	if v := os.Getenv("CLAWIDE_PORT"); v != "" {
 		if p, err := strconv.Atoi(v); err == nil {
 			c.Port = p
 		}
 	}
-	if v := os.Getenv("CCMUX_PROJECTS_DIR"); v != "" {
+	if v := os.Getenv("CLAWIDE_PROJECTS_DIR"); v != "" {
 		c.ProjectsDir = v
 	}
-	if v := os.Getenv("CCMUX_MAX_SESSIONS"); v != "" {
+	if v := os.Getenv("CLAWIDE_MAX_SESSIONS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			c.MaxSessions = n
 		}
 	}
-	if v := os.Getenv("CCMUX_SCROLLBACK_SIZE"); v != "" {
+	if v := os.Getenv("CLAWIDE_SCROLLBACK_SIZE"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			c.ScrollbackSize = n
 		}
 	}
-	if v := os.Getenv("CCMUX_CLAUDE_COMMAND"); v != "" {
+	if v := os.Getenv("CLAWIDE_CLAUDE_COMMAND"); v != "" {
 		c.ClaudeCommand = v
 	}
-	if v := os.Getenv("CCMUX_LOG_LEVEL"); v != "" {
+	if v := os.Getenv("CLAWIDE_LOG_LEVEL"); v != "" {
 		c.LogLevel = v
 	}
-	if v := os.Getenv("CCMUX_DATA_DIR"); v != "" {
+	if v := os.Getenv("CLAWIDE_DATA_DIR"); v != "" {
 		c.DataDir = v
 	}
 }

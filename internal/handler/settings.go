@@ -7,12 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/davydany/ccmux/internal/config"
+	"github.com/davydany/ClawIDE/internal/config"
 )
 
 func (h *Handlers) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
-		"Title":  "Settings - CCMux",
+		"Title":  "Settings - ClawIDE",
 		"Config": h.cfg,
 	}
 

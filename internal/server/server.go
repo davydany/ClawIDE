@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davydany/ccmux/internal/config"
-	"github.com/davydany/ccmux/internal/handler"
-	"github.com/davydany/ccmux/internal/pty"
-	"github.com/davydany/ccmux/internal/store"
-	"github.com/davydany/ccmux/internal/tmpl"
-	"github.com/davydany/ccmux/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/handler"
+	"github.com/davydany/ClawIDE/internal/pty"
+	"github.com/davydany/ClawIDE/internal/store"
+	"github.com/davydany/ClawIDE/internal/tmpl"
+	"github.com/davydany/ClawIDE/internal/tmux"
 )
 
 type Server struct {
@@ -60,7 +60,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 
 // recoverTmuxSessions cleans up orphan tmux sessions that are not referenced in state.json.
 func recoverTmuxSessions(st *store.Store) {
-	tmuxSessions, err := tmux.ListCCMuxSessions()
+	tmuxSessions, err := tmux.ListClawIDESessions()
 	if err != nil {
 		log.Printf("Warning: could not list tmux sessions: %v", err)
 		return
@@ -76,7 +76,7 @@ func recoverTmuxSessions(st *store.Store) {
 	for _, sess := range allSessions {
 		if sess.Layout != nil {
 			for _, paneID := range sess.Layout.CollectLeaves() {
-				validPanes["ccmux-"+paneID] = true
+				validPanes["clawide-"+paneID] = true
 			}
 		}
 	}
@@ -85,7 +85,7 @@ func recoverTmuxSessions(st *store.Store) {
 	surviving := 0
 	for _, tmuxSess := range tmuxSessions {
 		if validPanes[tmuxSess] {
-			paneID := strings.TrimPrefix(tmuxSess, "ccmux-")
+			paneID := strings.TrimPrefix(tmuxSess, "clawide-")
 			log.Printf("Surviving tmux session: %s (pane %s) — will reconnect lazily", tmuxSess, paneID)
 			surviving++
 		} else {
@@ -102,7 +102,7 @@ func recoverTmuxSessions(st *store.Store) {
 }
 
 func (s *Server) Start() error {
-	log.Printf("Starting CCMux on http://%s", s.cfg.Addr())
+	log.Printf("Starting ClawIDE on http://%s", s.cfg.Addr())
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server error: %w", err)
 	}

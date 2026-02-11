@@ -1,7 +1,7 @@
 .PHONY: build dev clean vendor-js css css-watch run test
 
 # Binary name
-BINARY := ccmux
+BINARY := clawide
 BUILD_DIR := .
 
 # Go build flags
@@ -12,11 +12,11 @@ all: vendor-js css build
 
 # Build the binary
 build:
-	go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY) ./cmd/ccmux
+	go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY) ./cmd/clawide
 
 # Run in development mode
 dev: vendor-js css
-	go run ./cmd/ccmux
+	go run ./cmd/clawide
 
 # Run the built binary
 run: build

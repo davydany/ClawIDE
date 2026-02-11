@@ -1,4 +1,4 @@
-// CCMux Modifier Keys Toolbar
+// ClawIDE Modifier Keys Toolbar
 // Virtual modifier & special keys for touch devices
 (function() {
     'use strict';
@@ -142,9 +142,9 @@
 
     // Send a key sequence to the focused terminal pane
     function sendKey(sequence) {
-        var paneID = window.CCMuxTerminal.getFocusedPaneID();
+        var paneID = window.ClawIDETerminal.getFocusedPaneID();
         if (!paneID) return;
-        window.CCMuxTerminal.sendInput(paneID, sequence);
+        window.ClawIDETerminal.sendInput(paneID, sequence);
     }
 
     // Arrow key sequences with modifier support
@@ -177,8 +177,8 @@
         if (!toolbar) return;
 
         // Register data interceptor
-        if (window.CCMuxTerminal && window.CCMuxTerminal.addDataInterceptor) {
-            window.CCMuxTerminal.addDataInterceptor(interceptor);
+        if (window.ClawIDETerminal && window.ClawIDETerminal.addDataInterceptor) {
+            window.ClawIDETerminal.addDataInterceptor(interceptor);
         }
 
         // Prevent focus loss on all toolbar buttons
@@ -225,7 +225,7 @@
     }
 
     // Expose for testing
-    window.CCMuxModifierKeys = {
+    window.ClawIDEModifierKeys = {
         getState: function() { return Object.assign({}, modifiers); },
         reset: function() {
             modifiers.ctrl = 'inactive';

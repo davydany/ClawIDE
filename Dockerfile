@@ -20,15 +20,15 @@ RUN cd web/src && npx esbuild xterm-entry.js --bundle --minify --outfile=../stat
 RUN npx tailwindcss@3 -i web/static/css/input.css -o web/static/dist/app.css --minify
 
 # Build Go binary
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /ccmux ./cmd/ccmux
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /clawide ./cmd/clawide
 
 # Runtime stage
 FROM alpine:3.21
 
 RUN apk add --no-cache bash git docker-cli docker-cli-compose curl
 
-COPY --from=builder /ccmux /usr/local/bin/ccmux
+COPY --from=builder /clawide /usr/local/bin/clawide
 
 EXPOSE 9800
 
-ENTRYPOINT ["ccmux"]
+ENTRYPOINT ["clawide"]

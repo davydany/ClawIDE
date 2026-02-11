@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/davydany/ccmux/internal/model"
+	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )

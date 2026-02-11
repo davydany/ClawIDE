@@ -26,7 +26,7 @@
                 <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                CCMux
+                ClawIDE
             </a>
             <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-gray-400 hover:text-white">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +228,7 @@
                                                 html += '<span class="text-gray-500">&#9654;</span> ' + f.name;
                                                 html += '</div><div class="hidden" data-children="' + f.path + '"></div>';
                                             } else {
-                                                html += '<div class="file-tree-item" style="' + indent + '" data-filepath="' + f.path + '" onclick="CCMuxEditor.loadFile(\'' + projectID + '\', \'' + f.path + '\')">';
+                                                html += '<div class="file-tree-item" style="' + indent + '" data-filepath="' + f.path + '" onclick="ClawIDEEditor.loadFile(\'' + projectID + '\', \'' + f.path + '\')">';
                                                 html += '<span class="text-gray-500 text-xs">&#9643;</span> ' + f.name;
                                                 html += '</div>';
                                             }
@@ -279,22 +279,22 @@
                     <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
                         <h3 class="text-sm font-medium text-white">Docker Compose</h3>
                         <div class="ml-auto flex gap-1">
-                            <button onclick="CCMuxDocker.composeUp('{{.Project.ID}}')"
+                            <button onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')"
                                     class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors">
                                 Up
                             </button>
-                            <button onclick="CCMuxDocker.composeDown('{{.Project.ID}}')"
+                            <button onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')"
                                     class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors">
                                 Down
                             </button>
-                            <button onclick="CCMuxDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))"
+                            <button onclick="ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))"
                                     class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
                                 Refresh
                             </button>
                         </div>
                     </div>
                     <div id="docker-services" class="flex-1 overflow-y-auto"
-                         x-init="if (typeof CCMuxDocker !== 'undefined') CCMuxDocker.refresh('{{.Project.ID}}', $el)">
+                         x-init="if (typeof ClawIDEDocker !== 'undefined') ClawIDEDocker.refresh('{{.Project.ID}}', $el)">
                         <div class="text-gray-500 text-sm p-4">Loading services...</div>
                     </div>
                 </div>
@@ -406,7 +406,7 @@ function initSessionPanes(sessionID) {
 
     try {
         var layout = JSON.parse(layoutStr);
-        window.CCMuxPaneLayout.render(container, layout, sessionID, projectID);
+        window.ClawIDEPaneLayout.render(container, layout, sessionID, projectID);
     } catch(e) {
         console.error('Failed to parse pane layout:', e);
     }

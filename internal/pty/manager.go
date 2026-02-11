@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/davydany/ccmux/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/tmux"
 )
 
 type Manager struct {

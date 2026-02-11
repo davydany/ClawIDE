@@ -1,4 +1,4 @@
-// CCMux Terminal Manager
+// ClawIDE Terminal Manager
 (function() {
     'use strict';
 
@@ -155,7 +155,7 @@
     }
 
     // Expose to global scope
-    window.CCMuxTerminal = {
+    window.ClawIDETerminal = {
         create: createTerminal,
         get: function(paneID) { return terminals[paneID]; },
         destroy: function(paneID) {

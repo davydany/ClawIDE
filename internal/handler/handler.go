@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"github.com/davydany/ccmux/internal/config"
-	ptyPkg "github.com/davydany/ccmux/internal/pty"
-	"github.com/davydany/ccmux/internal/store"
-	"github.com/davydany/ccmux/internal/tmpl"
+	"github.com/davydany/ClawIDE/internal/config"
+	ptyPkg "github.com/davydany/ClawIDE/internal/pty"
+	"github.com/davydany/ClawIDE/internal/store"
+	"github.com/davydany/ClawIDE/internal/tmpl"
 )
 
 type Handlers struct {

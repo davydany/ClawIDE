@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/davydany/ccmux/internal/middleware"
-	"github.com/davydany/ccmux/internal/portdetect"
+	"github.com/davydany/ClawIDE/internal/middleware"
+	"github.com/davydany/ClawIDE/internal/portdetect"
 )
 
 // portsResponse is the JSON envelope returned by DetectPorts.

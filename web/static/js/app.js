@@ -1,4 +1,4 @@
-// CCMux main application JS
+// ClawIDE main application JS
 
 document.addEventListener('DOMContentLoaded', function() {
     // Register htmx event handlers

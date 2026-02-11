@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davydany/ccmux/internal/middleware"
+	"github.com/davydany/ClawIDE/internal/middleware"
 )
 
 const maxFileReadSize = 1 << 20 // 1MB

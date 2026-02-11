@@ -1,15 +1,15 @@
 services:
-  ccmux:
+  clawide:
     build: .
     ports:
       - "9800:9800"
     volumes:
-      - ~/.ccmux:/root/.ccmux
+      - ~/.clawide:/root/.clawide
       - ~/projects:/root/projects:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - CCMUX_HOST=0.0.0.0
-      - CCMUX_PORT=9800
-      - CCMUX_PROJECTS_DIR=/root/projects
-      - CCMUX_DATA_DIR=/root/.ccmux
+      - CLAWIDE_HOST=0.0.0.0
+      - CLAWIDE_PORT=9800
+      - CLAWIDE_PROJECTS_DIR=/root/projects
+      - CLAWIDE_DATA_DIR=/root/.clawide
     restart: unless-stopped

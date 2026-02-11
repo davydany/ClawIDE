@@ -1,4 +1,4 @@
-// CCMux File Editor — Multi-pane, multi-tab CodeMirror 6 integration
+// ClawIDE File Editor — Multi-pane, multi-tab CodeMirror 6 integration
 (function() {
     'use strict';
 
@@ -162,7 +162,7 @@
 
         // Destroy CM view
         if (tab.editorView) {
-            window.CCMuxCodeMirror.destroyEditor(tab.editorView);
+            window.ClawIDECodeMirror.destroyEditor(tab.editorView);
             tab.editorView = null;
         }
 
@@ -209,7 +209,7 @@
         var tab = findTabById(paneId, tabId);
         if (!tab || !tab.filePath || !tab.editorView) return;
 
-        var content = window.CCMuxCodeMirror.getContent(tab.editorView);
+        var content = window.ClawIDECodeMirror.getContent(tab.editorView);
 
         fetch('/projects/' + (pid || projectID) + '/api/file?path=' + encodeURIComponent(tab.filePath), {
             method: 'PUT',
@@ -460,12 +460,12 @@
         // No file loaded — skip CM creation
         if (!tab.filePath) return;
 
-        if (typeof window.CCMuxCodeMirror === 'undefined') {
+        if (typeof window.ClawIDECodeMirror === 'undefined') {
             console.error('CodeMirror bundle not loaded');
             return;
         }
 
-        tab.editorView = window.CCMuxCodeMirror.createEditor(
+        tab.editorView = window.ClawIDECodeMirror.createEditor(
             wrapper,
             tab.content || '',
             tab.filePath,
@@ -510,7 +510,7 @@
             } else if (tab.filePath) {
                 // Create editor
                 (function(t, w, pid) {
-                    t.editorView = window.CCMuxCodeMirror.createEditor(
+                    t.editorView = window.ClawIDECodeMirror.createEditor(
                         w,
                         t.content || '',
                         t.filePath,
@@ -684,11 +684,11 @@
         tab.modified = false;
 
         if (tab.editorView) {
-            window.CCMuxCodeMirror.setContent(tab.editorView, content, filePath);
+            window.ClawIDECodeMirror.setContent(tab.editorView, content, filePath);
         } else if (tab.wrapperEl) {
             // Need to create editor in existing wrapper
             tab.wrapperEl.innerHTML = '';
-            tab.editorView = window.CCMuxCodeMirror.createEditor(
+            tab.editorView = window.ClawIDECodeMirror.createEditor(
                 tab.wrapperEl,
                 content,
                 filePath,
@@ -774,7 +774,7 @@
         // Destroy all CM editors in this pane
         for (var i = 0; i < pane.tabs.length; i++) {
             if (pane.tabs[i].editorView) {
-                window.CCMuxCodeMirror.destroyEditor(pane.tabs[i].editorView);
+                window.ClawIDECodeMirror.destroyEditor(pane.tabs[i].editorView);
                 pane.tabs[i].editorView = null;
             }
         }
@@ -851,7 +851,7 @@
     });
 
     // --- Expose to global scope ---
-    window.CCMuxEditor = {
+    window.ClawIDEEditor = {
         loadFile: loadFile,
         saveFile: function(pid) {
             var pid2 = getFocusedPaneId();

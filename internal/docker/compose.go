@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/davydany/ccmux/internal/model"
+	"github.com/davydany/ClawIDE/internal/model"
 )
 
 // Service represents a running Docker Compose service as reported by `docker compose ps`.

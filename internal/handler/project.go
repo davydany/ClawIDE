@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/davydany/ccmux/internal/middleware"
-	"github.com/davydany/ccmux/internal/model"
+	"github.com/davydany/ClawIDE/internal/middleware"
+	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -17,7 +17,7 @@ import (
 func (h *Handlers) ListProjects(w http.ResponseWriter, r *http.Request) {
 	projects := h.store.GetProjects()
 	data := map[string]any{
-		"Title":    "CCMux - Projects",
+		"Title":    "ClawIDE - Projects",
 		"Projects": projects,
 	}
 	if err := h.renderer.RenderHTMX(w, r, "project-list", "project-list", data); err != nil {
@@ -83,7 +83,7 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	sessions := h.store.GetSessions(project.ID)
 
 	data := map[string]any{
-		"Title":    project.Name + " - CCMux",
+		"Title":    project.Name + " - ClawIDE",
 		"Project":  project,
 		"Sessions": sessions,
 		"ActiveTab": "terminal",

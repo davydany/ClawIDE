@@ -1,4 +1,4 @@
-// CCMux Docker Integration
+// ClawIDE Docker Integration
 (function() {
     'use strict';
 
@@ -32,8 +32,8 @@
             html += '<span class="text-xs text-gray-500">' + svc.status + '</span>';
             html += '</div>';
             html += '<div class="flex items-center gap-1">';
-            html += '<button onclick="CCMuxDocker.serviceAction(\'' + projectID + '\', \'' + svc.name + '\', \'restart\')" class="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded">Restart</button>';
-            html += '<button onclick="CCMuxDocker.serviceAction(\'' + projectID + '\', \'' + svc.name + '\', \'stop\')" class="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded">Stop</button>';
+            html += '<button onclick="ClawIDEDocker.serviceAction(\'' + projectID + '\', \'' + svc.name + '\', \'restart\')" class="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded">Restart</button>';
+            html += '<button onclick="ClawIDEDocker.serviceAction(\'' + projectID + '\', \'' + svc.name + '\', \'stop\')" class="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded">Stop</button>';
             html += '</div>';
             html += '</div>';
         });
@@ -78,7 +78,7 @@
             });
     }
 
-    window.CCMuxDocker = {
+    window.ClawIDEDocker = {
         refresh: refreshServices,
         serviceAction: serviceAction,
         composeUp: composeUp,

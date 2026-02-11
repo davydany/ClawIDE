@@ -4,8 +4,8 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/davydany/ccmux/internal/middleware"
-	"github.com/davydany/ccmux/web"
+	"github.com/davydany/ClawIDE/internal/middleware"
+	"github.com/davydany/ClawIDE/web"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 )

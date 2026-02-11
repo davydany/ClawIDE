@@ -1,4 +1,4 @@
-// CCMux Pane Layout Manager
+// ClawIDE Pane Layout Manager
 // Renders PaneNode trees into split terminal panes with resize handles.
 (function() {
     'use strict';
@@ -10,7 +10,7 @@
         // Destroy existing terminals for this session
         if (activeLayouts[sessionID]) {
             activeLayouts[sessionID].forEach(function(paneID) {
-                window.CCMuxTerminal.destroy(paneID);
+                window.ClawIDETerminal.destroy(paneID);
             });
         }
 
@@ -26,7 +26,7 @@
             paneIDs.forEach(function(paneID) {
                 var paneContainer = document.getElementById('pane-' + paneID);
                 if (paneContainer) {
-                    window.CCMuxTerminal.create(sessionID, paneID, paneContainer);
+                    window.ClawIDETerminal.create(sessionID, paneID, paneContainer);
                 }
             });
         });
@@ -163,7 +163,7 @@
                 firstEl.style.flex = '0 0 ' + (ratio * 100) + '%';
 
                 // Refit any terminals in the affected panes
-                Object.keys(window.CCMuxTerminal || {}).forEach(function() {
+                Object.keys(window.ClawIDETerminal || {}).forEach(function() {
                     // Terminals will auto-resize via ResizeObserver
                 });
             }
@@ -252,7 +252,7 @@
     }
 
     // Expose to global scope
-    window.CCMuxPaneLayout = {
+    window.ClawIDEPaneLayout = {
         render: renderLayout,
         splitPane: splitPane,
         closePane: closePane,

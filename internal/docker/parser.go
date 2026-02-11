@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/davydany/ccmux/internal/model"
+	"github.com/davydany/ClawIDE/internal/model"
 	"gopkg.in/yaml.v3"
 )
 

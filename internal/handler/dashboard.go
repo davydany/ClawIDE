@@ -39,7 +39,7 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"Title":      "CCMux - Dashboard",
+		"Title":      "ClawIDE - Dashboard",
 		"Projects":   projects,
 		"Discovered": discovered,
 	}

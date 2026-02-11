@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/davydany/ccmux/internal/model"
+	"github.com/davydany/ClawIDE/internal/model"
 )
 
 type State struct {
