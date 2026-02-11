@@ -132,6 +132,77 @@ func (h *Handlers) DeleteWorktree(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "removed"})
 }
 
+// CheckoutBranch switches the project's repo to the branch specified in the
+// "branch" form field. POST /projects/{id}/api/checkout
+func (h *Handlers) CheckoutBranch(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+
+	if !git.IsGitRepo(project.Path) {
+		http.Error(w, "project path is not a git repository", http.StatusBadRequest)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	branch := r.FormValue("branch")
+	if branch == "" {
+		http.Error(w, "branch is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := git.CheckoutBranch(project.Path, branch); err != nil {
+		log.Printf("Error checking out branch %q in %s: %v", branch, project.Path, err)
+		http.Error(w, "failed to checkout branch: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "ok",
+		"branch": branch,
+	})
+}
+
+// CreateBranch creates a new branch and checks it out. Form fields: "name"
+// (branch name) and "base" (optional base branch).
+// POST /projects/{id}/api/branches
+func (h *Handlers) CreateBranch(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+
+	if !git.IsGitRepo(project.Path) {
+		http.Error(w, "project path is not a git repository", http.StatusBadRequest)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	name := r.FormValue("name")
+	base := r.FormValue("base")
+	if name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+
+	if err := git.CreateBranch(project.Path, name, base); err != nil {
+		log.Printf("Error creating branch %q in %s: %v", name, project.Path, err)
+		http.Error(w, "failed to create branch: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "created",
+		"branch": name,
+	})
+}
+
 // ListBranches returns a JSON array of local and remote branches for the
 // project's repository.
 func (h *Handlers) ListBranches(w http.ResponseWriter, r *http.Request) {

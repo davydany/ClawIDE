@@ -34,6 +34,11 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 
 	ptyMgr := pty.NewManager(cfg.MaxSessions, cfg.ScrollbackSize, cfg.ClaudeCommand)
 
+	snippetStore, err := store.NewSnippetStore(cfg.SnippetsFilePath())
+	if err != nil {
+		log.Fatalf("failed to load snippet store: %v", err)
+	}
+
 	// Recover tmux sessions from previous run
 	recoverTmuxSessions(st)
 
@@ -42,7 +47,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore),
 	}
 
 	router := s.setupRoutes()

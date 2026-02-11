@@ -1,0 +1,523 @@
+{{define "title"}}{{.Title}}{{end}}
+
+{{define "head"}}
+<link rel="stylesheet" href="/static/dist/xterm.css">
+<script src="/static/dist/xterm-bundle.js"></script>
+<script src="/static/js/terminal.js"></script>
+<script src="/static/js/modifier-keys.js"></script>
+<script src="/static/js/pane-layout.js"></script>
+<script src="/static/dist/codemirror-bundle.js"></script>
+<script src="/static/js/editor.js"></script>
+{{end}}
+
+{{define "body"}}
+<div class="flex h-full" x-data="{ sidebarOpen: false }">
+    <!-- Mobile sidebar overlay -->
+    <div x-show="sidebarOpen" x-cloak
+         class="fixed inset-0 z-40 bg-black/50 lg:hidden"
+         @click="sidebarOpen = false"></div>
+
+    <!-- Sidebar -->
+    <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
+            <a href="/" hx-boost="false" class="flex items-center gap-2 text-lg font-semibold text-white">
+                <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                ClawIDE
+            </a>
+            <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100%-3.5rem)]">
+            <a href="/projects/{{.Project.ID}}/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Project
+            </a>
+
+            <!-- Feature info -->
+            <div class="mt-4 px-3 py-3 bg-gray-800/50 rounded-lg">
+                <div class="flex items-center gap-2 mb-1">
+                    <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                    </svg>
+                    <span class="text-sm font-medium text-white">{{.Feature.Name}}</span>
+                </div>
+                <div class="text-xs text-gray-500 ml-6">
+                    <span class="font-mono">{{.Feature.BranchName}}</span>
+                </div>
+            </div>
+
+            <!-- Sessions -->
+            <div class="mt-4">
+                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sessions</h3>
+                <div id="session-sidebar" class="mt-2 space-y-1">
+                    {{range .Sessions}}
+                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 cursor-pointer">
+                        <span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                        <span class="truncate">{{.Name}}</span>
+                    </div>
+                    {{end}}
+                </div>
+
+                <form method="POST" action="/projects/{{.Project.ID}}/features/{{.Feature.ID}}/sessions/">
+                    <input type="hidden" name="name" value="">
+                    <button type="submit"
+                            class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        New Session
+                    </button>
+                </form>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-4 border-t border-gray-800 pt-4 space-y-1" x-data="{ confirmMerge: false, confirmDelete: false }">
+                <button @click="confirmMerge = true"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-green-400 hover:bg-green-900/30 hover:text-green-300 w-full">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Merge to Main
+                </button>
+                <button @click="confirmDelete = true"
+                        class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 w-full">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Delete Feature
+                </button>
+
+                <!-- Merge confirmation dialog -->
+                <div x-show="confirmMerge" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="confirmMerge = false">
+                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-2">Merge Feature</h3>
+                        <p class="text-sm text-gray-400 mb-4">Merge <span class="font-mono text-white">{{.Feature.BranchName}}</span> into the main branch? This will delete the feature workspace after merge.</p>
+                        <div class="flex justify-end gap-2">
+                            <button @click="confirmMerge = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                            <button @click="fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t)); confirmMerge=false}})"
+                                    class="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 text-white rounded transition-colors">Merge</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete confirmation dialog -->
+                <div x-show="confirmDelete" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="confirmDelete = false">
+                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-2">Delete Feature</h3>
+                        <p class="text-sm text-gray-400 mb-4">Delete <span class="font-mono text-white">{{.Feature.Name}}</span>? This will remove the worktree and all sessions. This cannot be undone.</p>
+                        <div class="flex justify-end gap-2">
+                            <button @click="confirmDelete = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                            <button @click="fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{.Project.ID}}/'})"
+                                    class="px-4 py-2 text-sm bg-red-600 hover:bg-red-500 text-white rounded transition-colors">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}' }">
+        <!-- Top bar -->
+        <header class="flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
+            <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <nav class="flex items-center gap-2 text-sm">
+                <a href="/" hx-boost="false" class="text-gray-400 hover:text-white">Dashboard</a>
+                <span class="text-gray-600">/</span>
+                <a href="/projects/{{.Project.ID}}/" class="text-gray-400 hover:text-white">{{.Project.Name}}</a>
+                <span class="text-gray-600">/</span>
+                <span class="text-white font-medium truncate">{{.Feature.Name}}</span>
+            </nav>
+            <div class="ml-auto flex items-center gap-2">
+                <span class="px-2 py-1 text-xs font-mono bg-purple-900/40 text-purple-300 border border-purple-800 rounded">
+                    {{.Feature.BranchName}}
+                </span>
+            </div>
+        </header>
+
+        <!-- Workspace content -->
+        <div class="flex flex-col flex-1 min-h-0">
+            <!-- Desktop tab bar -->
+            <div class="hidden lg:flex items-center gap-1 px-4 border-b border-gray-800 bg-gray-900/30">
+                <button @click="activeTab = 'terminal'"
+                        :class="activeTab === 'terminal' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    Terminal
+                </button>
+                <button @click="activeTab = 'files'"
+                        :class="activeTab === 'files' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    Files
+                </button>
+                <button @click="activeTab = 'commit'"
+                        :class="activeTab === 'commit' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    Commit
+                </button>
+            </div>
+
+            <!-- Tab content -->
+            <div class="flex-1 overflow-hidden">
+                <!-- Terminal panel -->
+                <div x-show="activeTab === 'terminal'" class="h-full flex flex-col"
+                     x-data="{ activeSession: '{{if .Sessions}}{{(index .Sessions 0).ID}}{{end}}' }"
+                     x-init="if (activeSession) { $nextTick(() => initSessionPanes(activeSession)) }">
+
+                    {{if .Sessions}}
+                    <!-- Session tabs -->
+                    <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50 overflow-x-auto">
+                        {{range .Sessions}}
+                        <div class="group flex items-center gap-1 rounded transition-colors"
+                             :class="activeSession === '{{.ID}}' ? 'bg-gray-800' : 'hover:bg-gray-800/50'">
+                            <button @click="activeSession = '{{.ID}}'; $nextTick(() => initSessionPanes('{{.ID}}'))"
+                                    :class="activeSession === '{{.ID}}' ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
+                                    class="flex items-center gap-1.5 px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                <span class="session-name"
+                                      contenteditable="false"
+                                      data-session-id="{{.ID}}"
+                                      data-project-id="{{$.Project.ID}}"
+                                      @dblclick.stop="$el.contentEditable = 'true'; $el.focus(); document.execCommand('selectAll', false, null)"
+                                      @blur="$el.contentEditable = 'false'; renameSession('{{$.Project.ID}}', '{{.ID}}', $el.textContent.trim())"
+                                      @keydown.enter.prevent="$el.blur()">{{.Name}}</span>
+                            </button>
+                            <button class="hidden group-hover:block text-gray-500 hover:text-red-400 pr-1.5 text-xs transition-colors"
+                                    @click.stop="if (confirm('Close session &quot;{{.Name}}&quot;?')) deleteSession('{{$.Project.ID}}', '{{.ID}}')"
+                                    title="Close session">&#x2715;</button>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <!-- Pane layout containers -->
+                    {{range .Sessions}}
+                    <div x-show="activeSession === '{{.ID}}'"
+                         id="session-panes-{{.ID}}"
+                         class="flex-1 flex bg-black min-h-0"
+                         data-layout='{{json .Layout}}'
+                         data-session-id="{{.ID}}"
+                         data-project-id="{{$.Project.ID}}"></div>
+                    {{end}}
+                    {{else}}
+                    <div class="flex items-center justify-center h-full text-gray-500">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p class="text-sm">Create a session to start a terminal</p>
+                        </div>
+                    </div>
+                    {{end}}
+
+                    <!-- Virtual modifier keys toolbar -->
+                    <div id="modifier-toolbar" class="modifier-toolbar" role="toolbar" aria-label="Terminal modifier keys">
+                        <button data-modifier="ctrl" aria-pressed="false">Ctrl</button>
+                        <button data-modifier="alt" aria-pressed="false">Alt</button>
+                        <button data-modifier="meta" aria-pressed="false">Cmd</button>
+                        <div class="modifier-separator"></div>
+                        <button data-key="tab">Tab</button>
+                        <button data-key="esc">Esc</button>
+                        <div class="modifier-separator"></div>
+                        <button data-key="left" aria-label="Left arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <button data-key="down" aria-label="Down arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <button data-key="up" aria-label="Up arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <button data-key="right" aria-label="Right arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Files panel -->
+                <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
+                     x-data="{ fileTree: [], currentFile: null, fileContent: '' }">
+
+                    <!-- File tree sidebar -->
+                    <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
+                        <div class="p-2 border-b border-gray-800">
+                            <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                        </div>
+                        <div id="feature-file-tree" class="p-1">
+                            <div class="text-gray-500 text-xs p-2">Loading...</div>
+                        </div>
+                        <script>
+                        (function() {
+                            var projectID = '{{.Project.ID}}';
+                            var featureID = '{{.Feature.ID}}';
+                            var baseURL = '/projects/' + projectID + '/features/' + featureID;
+                            function loadDir(path, container, depth) {
+                                fetch(baseURL + '/api/files' + (path ? '?path=' + encodeURIComponent(path) : ''))
+                                    .then(function(r) { return r.json(); })
+                                    .then(function(files) {
+                                        var html = '';
+                                        files.forEach(function(f) {
+                                            var indent = 'padding-left:' + ((depth || 0) * 16 + 8) + 'px';
+                                            if (f.is_dir) {
+                                                html += '<div class="file-tree-item" style="' + indent + '" data-path="' + f.path + '" onclick="featureToggleDir(this, \'' + f.path + '\', ' + ((depth||0)+1) + ')">';
+                                                html += '<span class="text-gray-500">&#9654;</span> ' + f.name;
+                                                html += '</div><div class="hidden" data-children="' + f.path + '"></div>';
+                                            } else {
+                                                html += '<div class="file-tree-item" style="' + indent + '" data-filepath="' + f.path + '" onclick="featureLoadFile(\'' + f.path + '\')">';
+                                                html += '<span class="text-gray-500 text-xs">&#9643;</span> ' + f.name;
+                                                html += '</div>';
+                                            }
+                                        });
+                                        container.innerHTML = html || '<div class="text-gray-500 text-xs p-2">Empty</div>';
+                                    })
+                                    .catch(function() {
+                                        container.innerHTML = '<div class="text-gray-500 text-xs p-2">Failed to load</div>';
+                                    });
+                            }
+                            window.featureToggleDir = function(el, path, depth) {
+                                var children = el.nextElementSibling;
+                                if (children.classList.contains('hidden')) {
+                                    children.classList.remove('hidden');
+                                    el.querySelector('span').innerHTML = '&#9660;';
+                                    if (!children.dataset.loaded) {
+                                        loadDir(path, children, depth);
+                                        children.dataset.loaded = 'true';
+                                    }
+                                } else {
+                                    children.classList.add('hidden');
+                                    el.querySelector('span').innerHTML = '&#9654;';
+                                }
+                            };
+                            window.featureLoadFile = function(path) {
+                                if (typeof ClawIDEEditor !== 'undefined') {
+                                    // Use feature-scoped URL for file reading
+                                    ClawIDEEditor.loadFileFromURL(baseURL + '/api/file?path=' + encodeURIComponent(path), path, baseURL + '/api/file?path=' + encodeURIComponent(path));
+                                }
+                            };
+                            loadDir('', document.getElementById('feature-file-tree'), 0);
+                        })();
+                        </script>
+                    </div>
+
+                    <!-- Editor area -->
+                    <div id="editor-pane-root" class="flex-1 flex min-w-0"
+                         data-project-id="{{.Project.ID}}">
+                        <div id="editor-empty-state" class="flex items-center justify-center flex-1 text-gray-500">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                </svg>
+                                <p class="text-sm">Select a file to edit</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Commit panel -->
+                <div x-show="activeTab === 'commit'" x-cloak class="h-full flex flex-col"
+                     x-data="{
+                         files: [],
+                         commitMsg: '',
+                         loading: false,
+                         error: '',
+                         success: '',
+                         selectAll: false,
+                         fetchStatus() {
+                             this.loading = true;
+                             this.error = '';
+                             this.success = '';
+                             fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/status')
+                                 .then(r => r.json())
+                                 .then(d => { this.files = (d.files || []).map(f => ({...f, selected: false})); this.loading = false; })
+                                 .catch(e => { this.error = 'Failed to load status'; this.loading = false; });
+                         },
+                         toggleAll() {
+                             this.selectAll = !this.selectAll;
+                             this.files.forEach(f => f.selected = this.selectAll);
+                         },
+                         doCommit() {
+                             var selected = this.files.filter(f => f.selected).map(f => f.path);
+                             if (selected.length === 0) { this.error = 'No files selected'; return; }
+                             if (!this.commitMsg.trim()) { this.error = 'Commit message is required'; return; }
+                             this.loading = true;
+                             this.error = '';
+                             this.success = '';
+                             fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/commit', {
+                                 method: 'POST',
+                                 headers: { 'Content-Type': 'application/json' },
+                                 body: JSON.stringify({ files: selected, message: this.commitMsg.trim() })
+                             })
+                             .then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t) }); return r.json(); })
+                             .then(d => { this.success = 'Committed successfully'; this.commitMsg = ''; this.fetchStatus(); })
+                             .catch(e => { this.error = e.message || 'Commit failed'; this.loading = false; });
+                         },
+                         statusColor(s) {
+                             switch(s) {
+                                 case 'M': return 'bg-yellow-600';
+                                 case 'A': return 'bg-green-600';
+                                 case 'D': return 'bg-red-600';
+                                 case '?': return 'bg-blue-600';
+                                 case 'R': return 'bg-purple-600';
+                                 default: return 'bg-gray-600';
+                             }
+                         },
+                         statusLabel(s) {
+                             switch(s) {
+                                 case 'M': return 'Modified';
+                                 case 'A': return 'Added';
+                                 case 'D': return 'Deleted';
+                                 case '?': return 'Untracked';
+                                 case 'R': return 'Renamed';
+                                 default: return s;
+                             }
+                         }
+                     }"
+                     x-init="fetchStatus()">
+
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
+                        <h3 class="text-sm font-medium text-white">Commit Changes</h3>
+                        <div class="ml-auto">
+                            <button @click="fetchStatus()" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Success/Error messages -->
+                    <template x-if="success">
+                        <div class="mx-4 mt-2 px-3 py-2 text-xs bg-green-900/30 border border-green-800 text-green-300 rounded" x-text="success"></div>
+                    </template>
+                    <template x-if="error">
+                        <div class="mx-4 mt-2 px-3 py-2 text-xs bg-red-900/30 border border-red-800 text-red-300 rounded" x-text="error"></div>
+                    </template>
+
+                    <!-- File list -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <template x-if="loading && files.length === 0">
+                            <div class="text-gray-500 text-sm">Loading status...</div>
+                        </template>
+                        <template x-if="!loading && files.length === 0">
+                            <div class="text-gray-500 text-sm">No changes detected</div>
+                        </template>
+                        <template x-if="files.length > 0">
+                            <div>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                                        <input type="checkbox" :checked="selectAll" @change="toggleAll()" class="rounded bg-gray-800 border-gray-600 text-indigo-500 focus:ring-indigo-500">
+                                        <span x-text="selectAll ? 'Deselect All' : 'Select All'"></span>
+                                    </label>
+                                    <span class="text-xs text-gray-600" x-text="files.filter(f=>f.selected).length + ' of ' + files.length + ' selected'"></span>
+                                </div>
+                                <div class="space-y-1">
+                                    <template x-for="(f, idx) in files" :key="f.path + f.status + f.staged">
+                                        <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800/50 cursor-pointer transition-colors">
+                                            <input type="checkbox" x-model="f.selected" class="rounded bg-gray-800 border-gray-600 text-indigo-500 focus:ring-indigo-500">
+                                            <span class="px-1.5 py-0.5 text-[10px] font-mono font-semibold rounded text-white" :class="statusColor(f.status)" x-text="f.status"></span>
+                                            <span class="text-sm text-gray-300 truncate" x-text="f.path"></span>
+                                            <span x-show="f.staged" class="text-[10px] text-green-500 ml-auto">staged</span>
+                                        </label>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Commit form -->
+                    <div class="border-t border-gray-800 p-4">
+                        <textarea x-model="commitMsg" placeholder="Commit message..."
+                                  class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
+                                  rows="3"></textarea>
+                        <button @click="doCommit()" :disabled="loading"
+                                class="mt-2 w-full px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded transition-colors">
+                            Stage Selected & Commit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile bottom tab bar -->
+        <div class="lg:hidden flex items-center justify-around border-t border-gray-800 bg-gray-900 safe-bottom">
+            <button @click="activeTab = 'terminal'"
+                    :class="activeTab === 'terminal' ? 'text-indigo-400' : 'text-gray-500'"
+                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="text-[10px]">Terminal</span>
+            </button>
+            <button @click="activeTab = 'files'"
+                    :class="activeTab === 'files' ? 'text-indigo-400' : 'text-gray-500'"
+                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+                <span class="text-[10px]">Files</span>
+            </button>
+            <button @click="activeTab = 'commit'"
+                    :class="activeTab === 'commit' ? 'text-indigo-400' : 'text-gray-500'"
+                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-[10px]">Commit</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function initSessionPanes(sessionID) {
+    var container = document.getElementById('session-panes-' + sessionID);
+    if (!container) return;
+
+    var layoutStr = container.getAttribute('data-layout');
+    var projectID = container.getAttribute('data-project-id');
+
+    if (!layoutStr) return;
+
+    if (container.children.length > 0) {
+        return;
+    }
+
+    try {
+        var layout = JSON.parse(layoutStr);
+        window.ClawIDEPaneLayout.render(container, layout, sessionID, projectID);
+    } catch(e) {
+        console.error('Failed to parse pane layout:', e);
+    }
+}
+
+function renameSession(projectID, sessionID, newName) {
+    if (!newName) return;
+    fetch('/projects/' + projectID + '/sessions/' + sessionID, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'HX-Request': 'true' },
+        body: 'name=' + encodeURIComponent(newName),
+    }).catch(function(err) {
+        console.error('Failed to rename session:', err);
+    });
+}
+
+function deleteSession(projectID, sessionID) {
+    fetch('/projects/' + projectID + '/sessions/' + sessionID, {
+        method: 'DELETE',
+        headers: { 'HX-Request': 'true' },
+    }).then(function() {
+        window.location.reload();
+    }).catch(function(err) {
+        console.error('Failed to delete session:', err);
+    });
+}
+</script>
+{{end}}

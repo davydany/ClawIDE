@@ -124,6 +124,10 @@ func (c *Config) PidFilePath() string {
 	return filepath.Join(c.DataDir, "clawide.pid")
 }
 
+func (c *Config) SnippetsFilePath() string {
+	return filepath.Join(c.DataDir, "snippets.json")
+}
+
 func (c *Config) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }

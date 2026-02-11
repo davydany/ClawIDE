@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -41,6 +42,44 @@ func CurrentBranch(repoPath string) (string, error) {
 		return "", nil
 	}
 	return branch, nil
+}
+
+// CheckoutBranch switches the repository at repoPath to the specified branch.
+func CheckoutBranch(repoPath, branch string) error {
+	cmd := exec.Command("git", "checkout", branch)
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout %s: %s: %w", branch, strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
+// CreateBranch creates a new branch at repoPath based on the given base branch
+// and switches to it. Equivalent to `git checkout -b <name> <base>`.
+func CreateBranch(repoPath, name, base string) error {
+	args := []string{"checkout", "-b", name}
+	if base != "" {
+		args = append(args, base)
+	}
+	cmd := exec.Command("git", args...)
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout -b %s: %s: %w", name, strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
+// DetectMainBranch returns the name of the main integration branch (either
+// "main" or "master") by checking which exists locally.
+func DetectMainBranch(repoPath string) (string, error) {
+	for _, candidate := range []string{"main", "master"} {
+		cmd := exec.Command("git", "rev-parse", "--verify", candidate)
+		cmd.Dir = repoPath
+		if err := cmd.Run(); err == nil {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("neither main nor master branch found")
 }
 
 // ListBranches returns all local and remote branches for the repository
