@@ -1,0 +1,33 @@
+# Go
+/ccmux
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (build tools only)
+web/src/node_modules/
+
+# Build output (dist is committed)
+# web/static/dist/
+
+# Config
+.env
+
+# Scratchpad
+scratchpad/

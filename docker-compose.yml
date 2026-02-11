@@ -1,0 +1,15 @@
+services:
+  ccmux:
+    build: .
+    ports:
+      - "9800:9800"
+    volumes:
+      - ~/.ccmux:/root/.ccmux
+      - ~/projects:/root/projects:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - CCMUX_HOST=0.0.0.0
+      - CCMUX_PORT=9800
+      - CCMUX_PROJECTS_DIR=/root/projects
+      - CCMUX_DATA_DIR=/root/.ccmux
+    restart: unless-stopped

@@ -1,0 +1,24 @@
+package handler
+
+import (
+	"github.com/davydany/ccmux/internal/config"
+	ptyPkg "github.com/davydany/ccmux/internal/pty"
+	"github.com/davydany/ccmux/internal/store"
+	"github.com/davydany/ccmux/internal/tmpl"
+)
+
+type Handlers struct {
+	cfg        *config.Config
+	store      *store.Store
+	renderer   *tmpl.Renderer
+	ptyManager *ptyPkg.Manager
+}
+
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager) *Handlers {
+	return &Handlers{
+		cfg:        cfg,
+		store:      st,
+		renderer:   renderer,
+		ptyManager: ptyMgr,
+	}
+}

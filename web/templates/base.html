@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{block "title" .}}CCMux{{end}}</title>
+
+    <!-- Tailwind compiled CSS -->
+    <link rel="stylesheet" href="/static/dist/app.css">
+
+    <!-- Vendored JS -->
+    <script src="/static/vendor/htmx.min.js"></script>
+    <script src="/static/vendor/alpine.min.js" defer></script>
+
+    {{block "head" .}}{{end}}
+</head>
+<body class="h-full text-gray-100 antialiased" hx-boost="true">
+    {{block "body" .}}{{end}}
+
+    {{block "scripts" .}}{{end}}
+</body>
+</html>
