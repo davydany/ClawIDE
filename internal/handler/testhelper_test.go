@@ -62,6 +62,9 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 		Host:        "0.0.0.0",
 		Port:        9800,
 	}
-	h := New(cfg, st, renderer, nil)
+	snippetSt, err := store.NewSnippetStore(filepath.Join(storeDir, "snippets.json"))
+	require.NoError(t, err)
+
+	h := New(cfg, st, renderer, nil, snippetSt)
 	return h, st
 }
