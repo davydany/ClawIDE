@@ -50,9 +50,14 @@ clean:
 
 # Run tests
 test:
-	go test ./...
+	go test -race ./...
 
 tests: test
+
+# Run tests with coverage report
+coverage:
+	go test -race -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
 
 # Docker compose commands
 start:
