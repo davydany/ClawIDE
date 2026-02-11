@@ -72,9 +72,31 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/worktrees", s.handlers.CreateWorktree)
 			r.Delete("/api/worktrees/{wid}", s.handlers.DeleteWorktree)
 			r.Get("/api/branches", s.handlers.ListBranches)
+			r.Post("/api/checkout", s.handlers.CheckoutBranch)
+			r.Post("/api/branches", s.handlers.CreateBranch)
 
 			// Port detection
 			r.Get("/api/ports", s.handlers.DetectPorts)
+
+			// Feature routes
+			r.Post("/features/", s.handlers.CreateFeature)
+			r.Route("/features/{fid}", func(r chi.Router) {
+				r.Get("/", s.handlers.FeatureWorkspace)
+				r.Delete("/", s.handlers.DeleteFeature)
+
+				// Feature sessions
+				r.Post("/sessions/", s.handlers.CreateFeatureSession)
+
+				// Feature file browser
+				r.Get("/api/files", s.handlers.FeatureListFiles)
+				r.Get("/api/file", s.handlers.FeatureReadFile)
+				r.Put("/api/file", s.handlers.FeatureWriteFile)
+
+				// Feature git operations
+				r.Get("/api/status", s.handlers.FeatureGitStatus)
+				r.Post("/api/commit", s.handlers.FeatureGitCommit)
+				r.Post("/api/merge", s.handlers.FeatureMerge)
+			})
 		})
 	})
 
