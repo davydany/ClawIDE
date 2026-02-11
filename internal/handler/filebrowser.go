@@ -48,25 +48,17 @@ func resolveAndValidatePath(projectRoot, requestedPath string) (string, bool) {
 	return "", false
 }
 
-// ListFiles handles GET /projects/{id}/api/files?path=...
-// It returns a JSON array of FileEntry objects for the requested directory.
-// Query parameters:
-//   - path: relative path within the project (default ".")
-//   - hidden: if "true", include hidden files (dotfiles)
-func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
-	if project.Path == "" {
-		http.Error(w, "project path not configured", http.StatusInternalServerError)
-		return
-	}
-
+// listFilesForRoot is the shared implementation for listing directory contents
+// under a given root path. Both the project and feature file browsers delegate
+// to this function.
+func listFilesForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
 	requestedPath := r.URL.Query().Get("path")
 	if requestedPath == "" {
 		requestedPath = "."
 	}
 	showHidden := r.URL.Query().Get("hidden") == "true"
 
-	absPath, ok := resolveAndValidatePath(project.Path, requestedPath)
+	absPath, ok := resolveAndValidatePath(rootPath, requestedPath)
 	if !ok {
 		http.Error(w, "invalid path", http.StatusBadRequest)
 		return
@@ -92,22 +84,20 @@ func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cleanRoot := filepath.Clean(project.Path)
+	cleanRoot := filepath.Clean(rootPath)
 	var files []FileEntry
 	for _, entry := range entries {
 		name := entry.Name()
 
-		// Skip hidden files unless explicitly requested.
 		if !showHidden && strings.HasPrefix(name, ".") {
 			continue
 		}
 
 		entryInfo, err := entry.Info()
 		if err != nil {
-			continue // skip entries we cannot stat
+			continue
 		}
 
-		// Build the relative path from the project root for the response.
 		entryAbsPath := filepath.Join(absPath, name)
 		relPath, err := filepath.Rel(cleanRoot, entryAbsPath)
 		if err != nil {
@@ -123,7 +113,6 @@ func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Sort: directories first, then alphabetical by name (case-insensitive).
 	sort.Slice(files, func(i, j int) bool {
 		if files[i].IsDir != files[j].IsDir {
 			return files[i].IsDir
@@ -131,7 +120,6 @@ func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 		return strings.ToLower(files[i].Name) < strings.ToLower(files[j].Name)
 	})
 
-	// Return empty array instead of null when there are no entries.
 	if files == nil {
 		files = []FileEntry{}
 	}
@@ -140,24 +128,16 @@ func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(files)
 }
 
-// ReadFile handles GET /projects/{id}/api/file?path=...
-// It reads a file from the project directory and returns its contents.
-// Text files are served as text/plain; binary files as application/octet-stream.
-// Files larger than 1MB are rejected.
-func (h *Handlers) ReadFile(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
-	if project.Path == "" {
-		http.Error(w, "project path not configured", http.StatusInternalServerError)
-		return
-	}
-
+// readFileFromRoot is the shared implementation for reading a file under a
+// given root path.
+func readFileFromRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
 	requestedPath := r.URL.Query().Get("path")
 	if requestedPath == "" {
 		http.Error(w, "path parameter is required", http.StatusBadRequest)
 		return
 	}
 
-	absPath, ok := resolveAndValidatePath(project.Path, requestedPath)
+	absPath, ok := resolveAndValidatePath(rootPath, requestedPath)
 	if !ok {
 		http.Error(w, "invalid path", http.StatusBadRequest)
 		return
@@ -188,7 +168,6 @@ func (h *Handlers) ReadFile(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 
-	// Read the file content (capped at maxFileReadSize).
 	data, err := io.ReadAll(io.LimitReader(f, maxFileReadSize+1))
 	if err != nil {
 		http.Error(w, "failed to read file", http.StatusInternalServerError)
@@ -200,28 +179,21 @@ func (h *Handlers) ReadFile(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-// WriteFile handles PUT /projects/{id}/api/file?path=...
-// It writes the request body to the specified file within the project directory.
-func (h *Handlers) WriteFile(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
-	if project.Path == "" {
-		http.Error(w, "project path not configured", http.StatusInternalServerError)
-		return
-	}
-
+// writeFileToRoot is the shared implementation for writing a file under a
+// given root path.
+func writeFileToRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
 	requestedPath := r.URL.Query().Get("path")
 	if requestedPath == "" {
 		http.Error(w, "path parameter is required", http.StatusBadRequest)
 		return
 	}
 
-	absPath, ok := resolveAndValidatePath(project.Path, requestedPath)
+	absPath, ok := resolveAndValidatePath(rootPath, requestedPath)
 	if !ok {
 		http.Error(w, "invalid path", http.StatusBadRequest)
 		return
 	}
 
-	// Ensure the parent directory exists.
 	dir := filepath.Dir(absPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		http.Error(w, "failed to create directory", http.StatusInternalServerError)
@@ -241,6 +213,36 @@ func (h *Handlers) WriteFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// ListFiles handles GET /projects/{id}/api/files?path=...
+func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	listFilesForRoot(w, r, project.Path)
+}
+
+// ReadFile handles GET /projects/{id}/api/file?path=...
+func (h *Handlers) ReadFile(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	readFileFromRoot(w, r, project.Path)
+}
+
+// WriteFile handles PUT /projects/{id}/api/file?path=...
+func (h *Handlers) WriteFile(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	writeFileToRoot(w, r, project.Path)
 }
 
 // detectContentType determines whether content is text or binary.

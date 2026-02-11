@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/go-chi/chi/v5"
@@ -81,12 +82,22 @@ func (h *Handlers) CreateProject(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
 	sessions := h.store.GetSessions(project.ID)
+	features := h.store.GetFeatures(project.ID)
+
+	isGitRepo := git.IsGitRepo(project.Path)
+	var currentBranch string
+	if isGitRepo {
+		currentBranch, _ = git.CurrentBranch(project.Path)
+	}
 
 	data := map[string]any{
-		"Title":    project.Name + " - ClawIDE",
-		"Project":  project,
-		"Sessions": sessions,
-		"ActiveTab": "terminal",
+		"Title":         project.Name + " - ClawIDE",
+		"Project":       project,
+		"Sessions":      sessions,
+		"Features":      features,
+		"ActiveTab":     "terminal",
+		"IsGitRepo":     isGitRepo,
+		"CurrentBranch": currentBranch,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {
