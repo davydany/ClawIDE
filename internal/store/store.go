@@ -12,6 +12,7 @@ import (
 type State struct {
 	Projects []model.Project `json:"projects"`
 	Sessions []model.Session `json:"sessions"`
+	Features []model.Feature `json:"features"`
 }
 
 type Store struct {
@@ -83,18 +84,28 @@ func (s *Store) DeleteProject(id string) error {
 				}
 			}
 			s.state.Sessions = filtered
+			// Also remove associated features
+			filteredFeatures := s.state.Features[:0]
+			for _, f := range s.state.Features {
+				if f.ProjectID != id {
+					filteredFeatures = append(filteredFeatures, f)
+				}
+			}
+			s.state.Features = filteredFeatures
 			return s.save()
 		}
 	}
 	return fmt.Errorf("project %s not found", id)
 }
 
+// GetSessions returns sessions for the given project that are NOT part of a
+// feature. Feature-scoped sessions are retrieved via GetFeatureSessions.
 func (s *Store) GetSessions(projectID string) []model.Session {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var out []model.Session
 	for _, sess := range s.state.Sessions {
-		if sess.ProjectID == projectID {
+		if sess.ProjectID == projectID && sess.FeatureID == "" {
 			out = append(out, sess)
 		}
 	}
@@ -149,6 +160,95 @@ func (s *Store) GetAllSessions() []model.Session {
 	out := make([]model.Session, len(s.state.Sessions))
 	copy(out, s.state.Sessions)
 	return out
+}
+
+// --------------- Feature operations ---------------
+
+func (s *Store) GetFeatures(projectID string) []model.Feature {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []model.Feature
+	for _, f := range s.state.Features {
+		if f.ProjectID == projectID {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+func (s *Store) GetFeature(id string) (model.Feature, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, f := range s.state.Features {
+		if f.ID == id {
+			return f, true
+		}
+	}
+	return model.Feature{}, false
+}
+
+func (s *Store) AddFeature(f model.Feature) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state.Features = append(s.state.Features, f)
+	return s.save()
+}
+
+func (s *Store) UpdateFeature(f model.Feature) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.state.Features {
+		if existing.ID == f.ID {
+			s.state.Features[i] = f
+			return s.save()
+		}
+	}
+	return fmt.Errorf("feature %s not found", f.ID)
+}
+
+func (s *Store) DeleteFeature(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, f := range s.state.Features {
+		if f.ID == id {
+			s.state.Features = append(s.state.Features[:i], s.state.Features[i+1:]...)
+			// Cascade-delete sessions belonging to this feature
+			filtered := s.state.Sessions[:0]
+			for _, sess := range s.state.Sessions {
+				if sess.FeatureID != id {
+					filtered = append(filtered, sess)
+				}
+			}
+			s.state.Sessions = filtered
+			return s.save()
+		}
+	}
+	return fmt.Errorf("feature %s not found", id)
+}
+
+func (s *Store) GetFeatureSessions(featureID string) []model.Session {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []model.Session
+	for _, sess := range s.state.Sessions {
+		if sess.FeatureID == featureID {
+			out = append(out, sess)
+		}
+	}
+	return out
+}
+
+func (s *Store) DeleteFeatureSessionsByFeatureID(featureID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	filtered := s.state.Sessions[:0]
+	for _, sess := range s.state.Sessions {
+		if sess.FeatureID != featureID {
+			filtered = append(filtered, sess)
+		}
+	}
+	s.state.Sessions = filtered
+	return s.save()
 }
 
 func (s *Store) load() error {
