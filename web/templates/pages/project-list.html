@@ -88,6 +88,31 @@
                     </div>
                     {{end}}
                 </div>
+
+                {{if .Discovered}}
+                <!-- Discovered Projects -->
+                <div class="mt-8">
+                    <h2 class="text-lg font-semibold text-gray-400 mb-4">Discovered in Projects Directory</h2>
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {{range .Discovered}}
+                        <div class="bg-gray-900/50 rounded-xl border border-dashed border-gray-700 p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-medium text-gray-300 truncate">{{.Name}}</h3>
+                                    <p class="text-xs text-gray-600 mt-1 truncate font-mono">{{.Path}}</p>
+                                </div>
+                                <button hx-post="/projects/"
+                                        hx-vals='{"name": "{{.Name}}", "path": "{{.Path}}"}'
+                                        hx-swap="none"
+                                        class="flex-shrink-0 ml-3 px-3 py-1 text-xs bg-gray-800 hover:bg-indigo-600 text-gray-300 hover:text-white rounded-lg border border-gray-700 hover:border-indigo-500 transition-colors">
+                                    Import
+                                </button>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
             </div>
 
             <!-- New Project Modal -->

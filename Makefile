@@ -41,6 +41,7 @@ vendor-js:
 		curl -sL https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js -o web/static/vendor/alpine.min.js; \
 		echo "Downloaded alpine.min.js"; \
 	fi
+	@cd web/src && npm install && npm run build
 
 # Clean build artifacts
 clean:

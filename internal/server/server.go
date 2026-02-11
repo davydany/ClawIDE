@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/davydany/ccmux/internal/config"
@@ -12,6 +13,7 @@ import (
 	"github.com/davydany/ccmux/internal/pty"
 	"github.com/davydany/ccmux/internal/store"
 	"github.com/davydany/ccmux/internal/tmpl"
+	"github.com/davydany/ccmux/internal/tmux"
 )
 
 type Server struct {
@@ -24,7 +26,16 @@ type Server struct {
 }
 
 func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
+	// Check tmux dependency
+	if err := tmux.Check(); err != nil {
+		log.Fatalf("tmux is required: %v", err)
+	}
+	log.Println("tmux check passed")
+
 	ptyMgr := pty.NewManager(cfg.MaxSessions, cfg.ScrollbackSize, cfg.ClaudeCommand)
+
+	// Recover tmux sessions from previous run
+	recoverTmuxSessions(st)
 
 	s := &Server{
 		cfg:        cfg,
@@ -45,6 +56,49 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 	}
 
 	return s
+}
+
+// recoverTmuxSessions cleans up orphan tmux sessions that are not referenced in state.json.
+func recoverTmuxSessions(st *store.Store) {
+	tmuxSessions, err := tmux.ListCCMuxSessions()
+	if err != nil {
+		log.Printf("Warning: could not list tmux sessions: %v", err)
+		return
+	}
+
+	if len(tmuxSessions) == 0 {
+		return
+	}
+
+	// Build set of all valid pane IDs from stored sessions
+	validPanes := make(map[string]bool)
+	allSessions := st.GetAllSessions()
+	for _, sess := range allSessions {
+		if sess.Layout != nil {
+			for _, paneID := range sess.Layout.CollectLeaves() {
+				validPanes["ccmux-"+paneID] = true
+			}
+		}
+	}
+
+	// Kill orphan tmux sessions (not referenced in state.json)
+	surviving := 0
+	for _, tmuxSess := range tmuxSessions {
+		if validPanes[tmuxSess] {
+			paneID := strings.TrimPrefix(tmuxSess, "ccmux-")
+			log.Printf("Surviving tmux session: %s (pane %s) — will reconnect lazily", tmuxSess, paneID)
+			surviving++
+		} else {
+			log.Printf("Killing orphan tmux session: %s", tmuxSess)
+			if err := tmux.KillSession(tmuxSess); err != nil {
+				log.Printf("Warning: failed to kill orphan tmux session %s: %v", tmuxSess, err)
+			}
+		}
+	}
+
+	if surviving > 0 {
+		log.Printf("Found %d surviving tmux sessions (will reconnect on WebSocket connect)", surviving)
+	}
 }
 
 func (s *Server) Start() error {

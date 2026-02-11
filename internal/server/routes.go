@@ -44,7 +44,15 @@ func (s *Server) setupRoutes() *chi.Mux {
 			// Sessions
 			r.Get("/sessions/", s.handlers.ListSessions)
 			r.Post("/sessions/", s.handlers.CreateSession)
-			r.Delete("/sessions/{sid}", s.handlers.DeleteSession)
+			r.Route("/sessions/{sid}", func(r chi.Router) {
+				r.Patch("/", s.handlers.RenameSession)
+				r.Delete("/", s.handlers.DeleteSession)
+
+				// Pane operations
+				r.Post("/panes/{pid}/split", s.handlers.SplitPane)
+				r.Delete("/panes/{pid}", s.handlers.ClosePane)
+				r.Patch("/panes/{pid}/resize", s.handlers.ResizePane)
+			})
 
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
@@ -71,7 +79,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	})
 
 	// WebSocket endpoints (no project middleware, session ID is in URL)
-	r.Get("/ws/terminal/{sessionID}", s.handlers.TerminalWS)
+	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)
 
 	return r

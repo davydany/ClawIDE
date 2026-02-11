@@ -1,6 +1,7 @@
 package tmpl
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -40,6 +41,10 @@ func (r *Renderer) parseTemplates() error {
 		"contains": strings.Contains,
 		"join":     strings.Join,
 		"dict":     dictFunc,
+		"json": func(v any) template.JS {
+			b, _ := json.Marshal(v)
+			return template.JS(b)
+		},
 	}
 
 	base, err := template.New("").Funcs(funcMap).ParseFS(r.fs, "templates/base.html")

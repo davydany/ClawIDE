@@ -26,25 +26,32 @@ type resizeMsg struct {
 
 func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionID")
-	if sessionID == "" {
-		http.Error(w, "session ID required", http.StatusBadRequest)
+	paneID := chi.URLParam(r, "paneID")
+
+	if sessionID == "" || paneID == "" {
+		http.Error(w, "session ID and pane ID required", http.StatusBadRequest)
 		return
 	}
 
-	// Get or create PTY session
-	ptySess, ok := h.ptyManager.GetSession(sessionID)
+	// Validate that session exists and pane is in its layout
+	sess, ok := h.store.GetSession(sessionID)
 	if !ok {
-		// Look up the session in the store to get work dir
-		sess, ok := h.store.GetSession(sessionID)
-		if !ok {
-			http.Error(w, "session not found", http.StatusNotFound)
-			return
-		}
+		http.Error(w, "session not found", http.StatusNotFound)
+		return
+	}
 
+	if sess.Layout == nil || !sess.Layout.HasPane(paneID) {
+		http.Error(w, "pane not found in session layout", http.StatusNotFound)
+		return
+	}
+
+	// Get or create PTY session keyed by paneID
+	ptySess, ok := h.ptyManager.GetSession(paneID)
+	if !ok {
 		var err error
-		ptySess, err = h.ptyManager.CreateSession(sessionID, sess.WorkDir)
+		ptySess, err = h.ptyManager.CreateSession(paneID, sess.WorkDir)
 		if err != nil {
-			log.Printf("Failed to create PTY session: %v", err)
+			log.Printf("Failed to create PTY session for pane %s: %v", paneID, err)
 			http.Error(w, "Failed to create terminal session", http.StatusInternalServerError)
 			return
 		}

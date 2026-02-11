@@ -8,5 +8,7 @@ type Session struct {
 	Name      string    `json:"name"`
 	Branch    string    `json:"branch"`
 	WorkDir   string    `json:"work_dir"`
+	Layout    *PaneNode `json:"layout"`
 	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

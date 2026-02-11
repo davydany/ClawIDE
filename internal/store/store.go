@@ -119,6 +119,18 @@ func (s *Store) AddSession(sess model.Session) error {
 	return s.save()
 }
 
+func (s *Store) UpdateSession(sess model.Session) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.state.Sessions {
+		if existing.ID == sess.ID {
+			s.state.Sessions[i] = sess
+			return s.save()
+		}
+	}
+	return fmt.Errorf("session %s not found", sess.ID)
+}
+
 func (s *Store) DeleteSession(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -131,12 +143,36 @@ func (s *Store) DeleteSession(id string) error {
 	return fmt.Errorf("session %s not found", id)
 }
 
+func (s *Store) GetAllSessions() []model.Session {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]model.Session, len(s.state.Sessions))
+	copy(out, s.state.Sessions)
+	return out
+}
+
 func (s *Store) load() error {
 	data, err := os.ReadFile(s.filePath)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, &s.state)
+	if err := json.Unmarshal(data, &s.state); err != nil {
+		return err
+	}
+
+	// Migration: backfill Layout for sessions that have none
+	changed := false
+	for i := range s.state.Sessions {
+		if s.state.Sessions[i].Layout == nil {
+			s.state.Sessions[i].Layout = model.NewLeafPane(s.state.Sessions[i].ID)
+			changed = true
+		}
+	}
+	if changed {
+		return s.save()
+	}
+
+	return nil
 }
 
 func (s *Store) save() error {

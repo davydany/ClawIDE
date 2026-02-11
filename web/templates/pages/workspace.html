@@ -4,6 +4,9 @@
 <link rel="stylesheet" href="/static/dist/xterm.css">
 <script src="/static/dist/xterm-bundle.js"></script>
 <script src="/static/js/terminal.js"></script>
+<script src="/static/js/modifier-keys.js"></script>
+<script src="/static/js/pane-layout.js"></script>
+<script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
 <script src="/static/js/docker.js"></script>
 {{end}}
@@ -19,7 +22,7 @@
     <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
-            <a href="/" class="flex items-center gap-2 text-lg font-semibold text-white">
+            <a href="/" hx-boost="false" class="flex items-center gap-2 text-lg font-semibold text-white">
                 <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
@@ -32,7 +35,7 @@
             </button>
         </div>
         <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100%-3.5rem)]">
-            <a href="/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+            <a href="/" hx-boost="false" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
@@ -83,7 +86,7 @@
                 </svg>
             </button>
             <nav class="flex items-center gap-2 text-sm">
-                <a href="/" class="text-gray-400 hover:text-white">Dashboard</a>
+                <a href="/" hx-boost="false" class="text-gray-400 hover:text-white">Dashboard</a>
                 <span class="text-gray-600">/</span>
                 <span class="text-white font-medium truncate">{{.Project.Name}}</span>
             </nav>
@@ -120,26 +123,41 @@
                 <!-- Terminal panel -->
                 <div x-show="activeTab === 'terminal'" class="h-full flex flex-col"
                      x-data="{ activeSession: '{{if .Sessions}}{{(index .Sessions 0).ID}}{{end}}' }"
-                     x-init="if (activeSession) { $nextTick(() => initTerminal(activeSession)) }">
+                     x-init="if (activeSession) { $nextTick(() => initSessionPanes(activeSession)) }">
 
                     {{if .Sessions}}
-                    <!-- Session tabs -->
+                    <!-- Session tabs with rename and close -->
                     <div class="flex items-center gap-1 px-2 py-1 border-b border-gray-800 bg-gray-900/50 overflow-x-auto">
                         {{range .Sessions}}
-                        <button @click="activeSession = '{{.ID}}'; $nextTick(() => initTerminal('{{.ID}}'))"
-                                :class="activeSession === '{{.ID}}' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-gray-200'"
-                                class="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors">
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                            {{.Name}}
-                        </button>
+                        <div class="group flex items-center gap-1 rounded transition-colors"
+                             :class="activeSession === '{{.ID}}' ? 'bg-gray-800' : 'hover:bg-gray-800/50'">
+                            <button @click="activeSession = '{{.ID}}'; $nextTick(() => initSessionPanes('{{.ID}}'))"
+                                    :class="activeSession === '{{.ID}}' ? 'text-white' : 'text-gray-400 hover:text-gray-200'"
+                                    class="flex items-center gap-1.5 px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                <span class="session-name"
+                                      contenteditable="false"
+                                      data-session-id="{{.ID}}"
+                                      data-project-id="{{$.Project.ID}}"
+                                      @dblclick.stop="$el.contentEditable = 'true'; $el.focus(); document.execCommand('selectAll', false, null)"
+                                      @blur="$el.contentEditable = 'false'; renameSession('{{$.Project.ID}}', '{{.ID}}', $el.textContent.trim())"
+                                      @keydown.enter.prevent="$el.blur()">{{.Name}}</span>
+                            </button>
+                            <button class="hidden group-hover:block text-gray-500 hover:text-red-400 pr-1.5 text-xs transition-colors"
+                                    @click.stop="if (confirm('Close session &quot;{{.Name}}&quot;?')) deleteSession('{{$.Project.ID}}', '{{.ID}}')"
+                                    title="Close session">&#x2715;</button>
+                        </div>
                         {{end}}
                     </div>
 
-                    <!-- Terminal containers -->
+                    <!-- Pane layout containers (one per session, rendered by pane-layout.js) -->
                     {{range .Sessions}}
                     <div x-show="activeSession === '{{.ID}}'"
-                         id="term-{{.ID}}"
-                         class="flex-1 bg-black xterm-container"></div>
+                         id="session-panes-{{.ID}}"
+                         class="flex-1 flex bg-black min-h-0"
+                         data-layout='{{json .Layout}}'
+                         data-session-id="{{.ID}}"
+                         data-project-id="{{$.Project.ID}}"></div>
                     {{end}}
                     {{else}}
                     <div class="flex items-center justify-center h-full text-gray-500">
@@ -151,6 +169,36 @@
                         </div>
                     </div>
                     {{end}}
+
+                    <!-- Virtual modifier keys toolbar (touch devices only) -->
+                    <div id="modifier-toolbar" class="modifier-toolbar" role="toolbar" aria-label="Terminal modifier keys">
+                        <!-- Modifier keys (toggle/lock) -->
+                        <button data-modifier="ctrl" aria-pressed="false">Ctrl</button>
+                        <button data-modifier="alt" aria-pressed="false">Alt</button>
+                        <button data-modifier="meta" aria-pressed="false">Cmd</button>
+
+                        <div class="modifier-separator"></div>
+
+                        <!-- Direct send keys -->
+                        <button data-key="tab">Tab</button>
+                        <button data-key="esc">Esc</button>
+
+                        <div class="modifier-separator"></div>
+
+                        <!-- Arrow keys -->
+                        <button data-key="left" aria-label="Left arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <button data-key="down" aria-label="Down arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </button>
+                        <button data-key="up" aria-label="Up arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                        </button>
+                        <button data-key="right" aria-label="Right arrow">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Files panel -->
@@ -180,7 +228,7 @@
                                                 html += '<span class="text-gray-500">&#9654;</span> ' + f.name;
                                                 html += '</div><div class="hidden" data-children="' + f.path + '"></div>';
                                             } else {
-                                                html += '<div class="file-tree-item" style="' + indent + '" onclick="CCMuxEditor.loadFile(\'' + projectID + '\', \'' + f.path + '\')">';
+                                                html += '<div class="file-tree-item" style="' + indent + '" data-filepath="' + f.path + '" onclick="CCMuxEditor.loadFile(\'' + projectID + '\', \'' + f.path + '\')">';
                                                 html += '<span class="text-gray-500 text-xs">&#9643;</span> ' + f.name;
                                                 html += '</div>';
                                             }
@@ -211,19 +259,17 @@
                     </div>
 
                     <!-- Editor area -->
-                    <div class="flex-1 flex flex-col min-w-0">
-                        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-800 bg-gray-900/50">
-                            <span id="editor-filename" class="text-xs text-gray-400 font-mono">No file selected</span>
-                            <span id="editor-modified" class="text-xs text-yellow-500 hidden">modified</span>
-                            <button onclick="CCMuxEditor.saveFile('{{.Project.ID}}')"
-                                    class="ml-auto text-xs text-gray-500 hover:text-white px-2 py-1 rounded hover:bg-gray-800">
-                                Save
-                            </button>
+                    <div id="editor-pane-root" class="flex-1 flex min-w-0"
+                         data-project-id="{{.Project.ID}}">
+                        <!-- Empty state shown when no file is open -->
+                        <div id="editor-empty-state" class="flex items-center justify-center flex-1 text-gray-500">
+                            <div class="text-center">
+                                <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                </svg>
+                                <p class="text-sm">Select a file to edit</p>
+                            </div>
                         </div>
-                        <textarea id="editor-content"
-                                  class="flex-1 w-full bg-gray-950 text-gray-300 font-mono text-sm p-4 resize-none focus:outline-none"
-                                  placeholder="Select a file to edit..."
-                                  spellcheck="false"></textarea>
                     </div>
                 </div>
 
@@ -343,15 +389,49 @@
 </div>
 
 <script>
-function initTerminal(sessionID) {
-    var container = document.getElementById('term-' + sessionID);
+function initSessionPanes(sessionID) {
+    var container = document.getElementById('session-panes-' + sessionID);
     if (!container) return;
-    if (window.CCMuxTerminal.get(sessionID)) {
-        // Already initialized, just refit
-        window.CCMuxTerminal.get(sessionID).fitAddon.fit();
+
+    var layoutStr = container.getAttribute('data-layout');
+    var projectID = container.getAttribute('data-project-id');
+
+    if (!layoutStr) return;
+
+    // Check if already rendered (has child elements with pane terminals)
+    if (container.children.length > 0) {
+        // Already rendered — just refit existing terminals
         return;
     }
-    window.CCMuxTerminal.create(sessionID, container);
+
+    try {
+        var layout = JSON.parse(layoutStr);
+        window.CCMuxPaneLayout.render(container, layout, sessionID, projectID);
+    } catch(e) {
+        console.error('Failed to parse pane layout:', e);
+    }
+}
+
+function renameSession(projectID, sessionID, newName) {
+    if (!newName) return;
+    fetch('/projects/' + projectID + '/sessions/' + sessionID, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'HX-Request': 'true' },
+        body: 'name=' + encodeURIComponent(newName),
+    }).catch(function(err) {
+        console.error('Failed to rename session:', err);
+    });
+}
+
+function deleteSession(projectID, sessionID) {
+    fetch('/projects/' + projectID + '/sessions/' + sessionID, {
+        method: 'DELETE',
+        headers: { 'HX-Request': 'true' },
+    }).then(function() {
+        window.location.reload();
+    }).catch(function(err) {
+        console.error('Failed to delete session:', err);
+    });
 }
 </script>
 {{end}}

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/creack/pty"
+	"github.com/davydany/ccmux/internal/tmux"
 )
 
 type Session struct {
@@ -196,11 +197,24 @@ func (s *Session) Close() error {
 		s.ptmx.Close()
 	}
 
-	// Kill the process
+	// Kill the process (the tmux client, not the tmux server-side session)
 	if s.cmd != nil && s.cmd.Process != nil {
 		s.cmd.Process.Kill()
 		s.cmd.Wait()
 	}
 
+	return nil
+}
+
+// Destroy closes the PTY session and kills the underlying tmux session.
+// Use this for explicit user-initiated pane close (not graceful shutdown).
+func (s *Session) Destroy(tmuxName string) error {
+	if err := s.Close(); err != nil {
+		log.Printf("Error closing PTY session %s: %v", s.ID, err)
+	}
+	// Kill the actual tmux server-side session
+	if tmux.HasSession(tmuxName) {
+		return tmux.KillSession(tmuxName)
+	}
 	return nil
 }

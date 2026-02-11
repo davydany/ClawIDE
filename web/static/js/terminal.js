@@ -2,11 +2,13 @@
 (function() {
     'use strict';
 
-    const terminals = {};
+    const terminals = {}; // keyed by paneID
+    let focusedPaneID = null;
+    const dataInterceptors = [];
 
-    function createTerminal(sessionID, container) {
-        if (terminals[sessionID]) {
-            return terminals[sessionID];
+    function createTerminal(sessionID, paneID, container) {
+        if (terminals[paneID]) {
+            return terminals[paneID];
         }
 
         const term = new window.XtermTerminal({
@@ -47,18 +49,31 @@
         term.open(container);
         fitAddon.fit();
 
-        // Connect WebSocket
+        // Track focus for modifier toolbar
+        if (term.textarea) {
+            term.textarea.addEventListener('focus', function() {
+                focusedPaneID = paneID;
+            });
+        }
+
+        // Connect WebSocket with both sessionID and paneID
         const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsURL = `${proto}//${window.location.host}/ws/terminal/${sessionID}`;
+        const wsURL = `${proto}//${window.location.host}/ws/terminal/${sessionID}/${paneID}`;
         let ws = null;
         let reconnectTimer = null;
+
+        function sendData(data) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(new TextEncoder().encode(data));
+            }
+        }
 
         function connect() {
             ws = new WebSocket(wsURL);
             ws.binaryType = 'arraybuffer';
 
             ws.onopen = function() {
-                console.log(`Terminal ${sessionID} connected`);
+                console.log(`Terminal pane ${paneID} connected`);
                 // Send initial size
                 sendResize();
             };
@@ -72,15 +87,15 @@
             };
 
             ws.onclose = function() {
-                console.log(`Terminal ${sessionID} disconnected`);
+                console.log(`Terminal pane ${paneID} disconnected`);
                 // Reconnect after delay
-                if (!terminals[sessionID]?.closed) {
+                if (!terminals[paneID]?.closed) {
                     reconnectTimer = setTimeout(connect, 2000);
                 }
             };
 
             ws.onerror = function(err) {
-                console.error(`Terminal ${sessionID} error:`, err);
+                console.error(`Terminal pane ${paneID} error:`, err);
             };
         }
 
@@ -94,11 +109,13 @@
             }
         }
 
-        // Write to PTY
+        // Write to PTY - run data through interceptors first
         term.onData(function(data) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(new TextEncoder().encode(data));
+            var processed = data;
+            for (var i = 0; i < dataInterceptors.length; i++) {
+                processed = dataInterceptors[i](processed);
             }
+            sendData(processed);
         });
 
         // Handle resize
@@ -114,29 +131,54 @@
             term: term,
             fitAddon: fitAddon,
             ws: ws,
+            paneID: paneID,
+            sessionID: sessionID,
             closed: false,
+            sendInput: function(data) {
+                sendData(data);
+            },
             destroy: function() {
                 this.closed = true;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
                 if (ws) ws.close();
                 resizeObserver.disconnect();
                 term.dispose();
-                delete terminals[sessionID];
+                if (focusedPaneID === paneID) {
+                    focusedPaneID = null;
+                }
+                delete terminals[paneID];
             }
         };
 
-        terminals[sessionID] = termState;
+        terminals[paneID] = termState;
         return termState;
     }
 
     // Expose to global scope
     window.CCMuxTerminal = {
         create: createTerminal,
-        get: function(id) { return terminals[id]; },
+        get: function(paneID) { return terminals[paneID]; },
+        destroy: function(paneID) {
+            if (terminals[paneID]) {
+                terminals[paneID].destroy();
+            }
+        },
         destroyAll: function() {
             Object.keys(terminals).forEach(function(id) {
                 terminals[id].destroy();
             });
+        },
+        getFocusedPaneID: function() {
+            return focusedPaneID;
+        },
+        sendInput: function(paneID, data) {
+            var ts = terminals[paneID];
+            if (ts) {
+                ts.sendInput(data);
+            }
+        },
+        addDataInterceptor: function(fn) {
+            dataInterceptors.push(fn);
         }
     };
 })();
