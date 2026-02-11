@@ -29,6 +29,10 @@
                     window.ClawIDETerminal.create(sessionID, paneID, paneContainer);
                 }
             });
+            // Ensure a pane is focused after render (mobile: toolbar needs a target)
+            if (!window.ClawIDETerminal.getFocusedPaneID() && paneIDs.length > 0) {
+                window.ClawIDETerminal.setFocusedPaneID(paneIDs[0]);
+            }
         });
     }
 

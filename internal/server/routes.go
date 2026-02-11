@@ -78,6 +78,14 @@ func (s *Server) setupRoutes() *chi.Mux {
 		})
 	})
 
+	// Snippets API (global, not project-scoped)
+	r.Route("/api/snippets", func(r chi.Router) {
+		r.Get("/", s.handlers.ListSnippets)
+		r.Post("/", s.handlers.CreateSnippet)
+		r.Put("/{snippetID}", s.handlers.UpdateSnippet)
+		r.Delete("/{snippetID}", s.handlers.DeleteSnippet)
+	})
+
 	// WebSocket endpoints (no project middleware, session ID is in URL)
 	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)

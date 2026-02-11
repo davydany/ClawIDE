@@ -151,6 +151,12 @@
         };
 
         terminals[paneID] = termState;
+
+        // Auto-set focus to first terminal created (mobile: users tap toolbar before terminal)
+        if (focusedPaneID === null) {
+            focusedPaneID = paneID;
+        }
+
         return termState;
     }
 
@@ -170,6 +176,21 @@
         },
         getFocusedPaneID: function() {
             return focusedPaneID;
+        },
+        setFocusedPaneID: function(paneID) {
+            if (terminals[paneID]) {
+                focusedPaneID = paneID;
+            }
+        },
+        getAllPaneIDs: function() {
+            return Object.keys(terminals);
+        },
+        getTerminalSelection: function(paneID) {
+            var ts = terminals[paneID];
+            if (ts && ts.term) {
+                return ts.term.getSelection();
+            }
+            return '';
         },
         sendInput: function(paneID, data) {
             var ts = terminals[paneID];

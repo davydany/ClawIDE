@@ -143,7 +143,13 @@
     // Send a key sequence to the focused terminal pane
     function sendKey(sequence) {
         var paneID = window.ClawIDETerminal.getFocusedPaneID();
-        if (!paneID) return;
+        // Fallback to first available pane (mobile: user taps toolbar before terminal)
+        if (!paneID) {
+            var allPanes = window.ClawIDETerminal.getAllPaneIDs();
+            if (allPanes.length === 0) return;
+            paneID = allPanes[0];
+            window.ClawIDETerminal.setFocusedPaneID(paneID);
+        }
         window.ClawIDETerminal.sendInput(paneID, sequence);
     }
 
@@ -169,6 +175,41 @@
         down: function() { sendKey(arrowSequence('B')); },
         right: function() { sendKey(arrowSequence('C')); },
         left: function() { sendKey(arrowSequence('D')); }
+    };
+
+    // Clipboard: copy selected text from focused terminal
+    function handleCopy() {
+        var paneID = window.ClawIDETerminal.getFocusedPaneID();
+        if (!paneID) {
+            var allPanes = window.ClawIDETerminal.getAllPaneIDs();
+            if (allPanes.length === 0) return;
+            paneID = allPanes[0];
+        }
+        var text = window.ClawIDETerminal.getTerminalSelection(paneID);
+        if (text && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).catch(function(err) {
+                console.error('Copy failed:', err);
+            });
+        }
+    }
+
+    // Clipboard: paste text into focused terminal
+    function handlePaste() {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard.readText().then(function(text) {
+                if (text) {
+                    sendKey(text);
+                }
+            }).catch(function(err) {
+                console.error('Paste failed:', err);
+            });
+        }
+    }
+
+    // Action handlers for data-action buttons
+    var actions = {
+        copy: handleCopy,
+        paste: handlePaste
     };
 
     // Initialize toolbar interactions
@@ -214,6 +255,19 @@
                     }
                 });
             })(keyBtns[j]);
+        }
+
+        // Action buttons (copy/paste)
+        var actionBtns = toolbar.querySelectorAll('[data-action]');
+        for (var k = 0; k < actionBtns.length; k++) {
+            (function(btn) {
+                var actionName = btn.getAttribute('data-action');
+                btn.addEventListener('click', function() {
+                    if (actions[actionName]) {
+                        actions[actionName]();
+                    }
+                });
+            })(actionBtns[k]);
         }
     }
 

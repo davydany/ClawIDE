@@ -9,6 +9,7 @@
 <script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
 <script src="/static/js/docker.js"></script>
+<script src="/static/js/snippets.js"></script>
 {{end}}
 
 {{define "body"}}
@@ -90,6 +91,13 @@
                 <span class="text-gray-600">/</span>
                 <span class="text-white font-medium truncate">{{.Project.Name}}</span>
             </nav>
+            <div class="ml-auto">
+                <button id="snippet-toggle" class="p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Snippets">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 18l2-2-2-2"/><path d="M8 18l-2-2 2-2"/><path d="M11.5 12h1"/>
+                    </svg>
+                </button>
+            </div>
         </header>
 
         <!-- Workspace content -->
@@ -197,6 +205,16 @@
                         </button>
                         <button data-key="right" aria-label="Right arrow">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+
+                        <div class="modifier-separator"></div>
+
+                        <!-- Clipboard -->
+                        <button data-action="copy" aria-label="Copy">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        </button>
+                        <button data-action="paste" aria-label="Paste">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                         </button>
                     </div>
                 </div>
@@ -386,6 +404,51 @@
             </button>
         </div>
     </div>
+</div>
+
+<!-- Snippet drawer overlay -->
+<div id="snippet-overlay" class="snippet-overlay"></div>
+
+<!-- Snippet floating drawer -->
+<div id="snippet-drawer" class="snippet-drawer">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+        <h2 class="text-sm font-semibold text-white">Snippets</h2>
+        <button onclick="ClawIDESnippets.close()" class="text-gray-400 hover:text-white p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Search -->
+    <div class="px-4 py-2 border-b border-gray-800">
+        <input id="snippet-search" type="text" placeholder="Search snippets..."
+               class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+    </div>
+
+    <!-- Create/Edit form -->
+    <div class="px-4 py-3 border-b border-gray-800">
+        <h3 id="snippet-form-title" class="text-xs font-semibold text-gray-400 uppercase mb-2">New Snippet</h3>
+        <form id="snippet-form" class="space-y-2">
+            <input id="snippet-name" type="text" placeholder="Snippet name" required
+                   class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+            <textarea id="snippet-content" placeholder="Snippet content..." rows="3"
+                      class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
+            <div class="flex items-center gap-2">
+                <button type="submit"
+                        class="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
+                    Save
+                </button>
+                <button type="button" id="snippet-cancel" style="display:none"
+                        class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Snippet list -->
+    <div id="snippet-list" class="flex-1 overflow-y-auto"></div>
 </div>
 
 <script>
