@@ -18,6 +18,7 @@ type Config struct {
 	ClaudeCommand  string `json:"claude_command"`
 	LogLevel       string `json:"log_level"`
 	DataDir        string `json:"data_dir"`
+	Restart        bool   `json:"-"`
 }
 
 func DefaultConfig() *Config {
@@ -109,11 +110,16 @@ func (c *Config) loadFlags() {
 	flag.StringVar(&c.ClaudeCommand, "claude-command", c.ClaudeCommand, "Claude CLI command")
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
+	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")
 	flag.Parse()
 }
 
 func (c *Config) StateFilePath() string {
 	return filepath.Join(c.DataDir, "state.json")
+}
+
+func (c *Config) PidFilePath() string {
+	return filepath.Join(c.DataDir, "clawide.pid")
 }
 
 func (c *Config) Addr() string {

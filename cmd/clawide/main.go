@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/pidfile"
 	"github.com/davydany/ClawIDE/internal/server"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
@@ -20,6 +22,27 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	// Single-instance enforcement via PID file
+	pidPath := cfg.PidFilePath()
+	existingPID, err := pidfile.Read(pidPath)
+	if err == nil && pidfile.IsRunning(existingPID) {
+		if cfg.Restart {
+			log.Printf("Killing existing ClawIDE instance (PID %d)...", existingPID)
+			if err := pidfile.Kill(existingPID); err != nil {
+				log.Fatalf("Failed to kill existing instance: %v", err)
+			}
+			log.Println("Existing instance stopped")
+		} else {
+			fmt.Fprintf(os.Stderr, "\033[31mError: ClawIDE is already running (PID %d).\nUse --restart to kill the existing instance and start a new one.\033[0m\n", existingPID)
+			os.Exit(1)
+		}
+	}
+
+	if err := pidfile.Write(pidPath); err != nil {
+		log.Fatalf("Failed to write PID file: %v", err)
+	}
+	defer pidfile.Remove(pidPath)
 
 	st, err := store.New(cfg.StateFilePath())
 	if err != nil {
