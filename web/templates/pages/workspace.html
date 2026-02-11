@@ -217,10 +217,11 @@
                     </div>
                 </div>
                 {{end}}
-                <button id="snippet-toggle" class="p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Snippets">
+                <button id="snippet-toggle" class="flex items-center gap-1.5 p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Snippets">
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 18l2-2-2-2"/><path d="M8 18l-2-2 2-2"/><path d="M11.5 12h1"/>
                     </svg>
+                    <span class="text-xs font-medium">Snippets</span>
                 </button>
             </div>
         </header>
@@ -558,7 +559,7 @@
     <!-- Create/Edit form -->
     <div class="px-4 py-3 border-b border-gray-800">
         <h3 id="snippet-form-title" class="text-xs font-semibold text-gray-400 uppercase mb-2">New Snippet</h3>
-        <form id="snippet-form" class="space-y-2">
+        <form id="snippet-form" hx-boost="false" class="space-y-2">
             <input id="snippet-name" type="text" placeholder="Snippet name" required
                    class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
             <textarea id="snippet-content" placeholder="Snippet content..." rows="3"
