@@ -30,6 +30,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Get("/settings", s.handlers.SettingsPage)
 	r.Put("/api/settings", s.handlers.UpdateSettings)
 
+	// Onboarding
+	r.Post("/api/onboarding/complete", s.handlers.CompleteOnboarding)
+	r.Post("/api/onboarding/workspace-tour-complete", s.handlers.CompleteWorkspaceTour)
+	r.Post("/api/onboarding/reset", s.handlers.ResetOnboarding)
+
 	// Project routes
 	r.Route("/projects", func(r chi.Router) {
 		r.Get("/", s.handlers.ListProjects)

@@ -53,7 +53,8 @@
                     {{end}}
                 </div>
 
-                <button hx-post="/projects/{{.Project.ID}}/sessions/"
+                <button data-tour="new-session"
+                        hx-post="/projects/{{.Project.ID}}/sessions/"
                         hx-vals='{"name": ""}'
                         hx-swap="none"
                         class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
@@ -96,22 +97,26 @@
         <div class="flex flex-col flex-1 min-h-0">
             <!-- Desktop tab bar -->
             <div class="hidden lg:flex items-center gap-1 px-4 border-b border-gray-800 bg-gray-900/30">
-                <button @click="activeTab = 'terminal'"
+                <button data-tour="tab-terminal"
+                        @click="activeTab = 'terminal'"
                         :class="activeTab === 'terminal' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Terminal
                 </button>
-                <button @click="activeTab = 'files'"
+                <button data-tour="tab-files"
+                        @click="activeTab = 'files'"
                         :class="activeTab === 'files' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Files
                 </button>
-                <button @click="activeTab = 'docker'"
+                <button data-tour="tab-docker"
+                        @click="activeTab = 'docker'"
                         :class="activeTab === 'docker' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Docker
                 </button>
-                <button @click="activeTab = 'ports'"
+                <button data-tour="tab-ports"
+                        @click="activeTab = 'ports'"
                         :class="activeTab === 'ports' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Ports
@@ -434,4 +439,15 @@ function deleteSession(projectID, sessionID) {
     });
 }
 </script>
+
+{{if .StartTour}}
+<script src="/static/js/tour.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.ClawIDETour && window.ClawIDETour.start('workspace', function() {
+        fetch('/api/onboarding/workspace-tour-complete', { method: 'POST' });
+    });
+});
+</script>
+{{end}}
 {{end}}

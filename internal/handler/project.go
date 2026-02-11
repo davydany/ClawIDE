@@ -83,10 +83,11 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	sessions := h.store.GetSessions(project.ID)
 
 	data := map[string]any{
-		"Title":    project.Name + " - ClawIDE",
-		"Project":  project,
-		"Sessions": sessions,
+		"Title":     project.Name + " - ClawIDE",
+		"Project":   project,
+		"Sessions":  sessions,
 		"ActiveTab": "terminal",
+		"StartTour": !h.cfg.WorkspaceTourCompleted,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {

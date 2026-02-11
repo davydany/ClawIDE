@@ -262,3 +262,33 @@
 dialog::backdrop {
     background: rgba(0, 0, 0, 0.5);
 }
+
+/* Tour overlay and spotlight */
+.tour-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9997;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.tour-spotlight {
+    position: fixed;
+    z-index: 9998;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+    background: transparent;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.tour-tooltip {
+    position: fixed;
+    z-index: 9999;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    pointer-events: auto;
+    transition: top 0.3s ease, left 0.3s ease;
+}

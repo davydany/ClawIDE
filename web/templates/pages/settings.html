@@ -74,6 +74,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
+                        <h3 class="text-sm font-medium text-white mb-4">Onboarding</h3>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-300">Welcome Tour</p>
+                                <p class="text-xs text-gray-500 mt-1">Restart the welcome screen and guided tours</p>
+                            </div>
+                            <button hx-post="/api/onboarding/reset"
+                                    class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                Restart Onboarding
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>

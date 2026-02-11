@@ -8,7 +8,7 @@
          @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
+    <aside data-tour="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
             <a href="/" class="flex items-center gap-2 text-lg font-semibold text-white">
@@ -30,7 +30,7 @@
                 </svg>
                 Dashboard
             </a>
-            <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+            <a href="/settings" data-tour="settings-link" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -63,7 +63,7 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-semibold text-white">Projects</h2>
-                    <button onclick="document.getElementById('newProjectModal').showModal()"
+                    <button data-tour="new-project" onclick="document.getElementById('newProjectModal').showModal()"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -73,7 +73,7 @@
                 </div>
 
                 <!-- Project grid -->
-                <div id="project-list" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div id="project-list" data-tour="project-grid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {{if .Projects}}
                         {{range .Projects}}
                         {{template "project-card" .}}
@@ -152,4 +152,13 @@
         </main>
     </div>
 </div>
+
+{{if .StartTour}}
+<script src="/static/js/tour.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.ClawIDETour && window.ClawIDETour.start('dashboard');
+});
+</script>
+{{end}}
 {{end}}

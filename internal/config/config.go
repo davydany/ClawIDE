@@ -17,8 +17,10 @@ type Config struct {
 	ScrollbackSize int    `json:"scrollback_size"`
 	ClaudeCommand  string `json:"claude_command"`
 	LogLevel       string `json:"log_level"`
-	DataDir        string `json:"data_dir"`
-	Restart        bool   `json:"-"`
+	DataDir                string `json:"data_dir"`
+	OnboardingCompleted    bool   `json:"onboarding_completed"`
+	WorkspaceTourCompleted bool   `json:"workspace_tour_completed"`
+	Restart                bool   `json:"-"`
 }
 
 func DefaultConfig() *Config {

@@ -8,6 +8,18 @@ import (
 )
 
 func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
+	// Show welcome screen if onboarding not completed
+	if !h.cfg.OnboardingCompleted {
+		data := map[string]any{
+			"Title": "Welcome to ClawIDE",
+		}
+		if err := h.renderer.RenderHTMX(w, r, "welcome", "welcome", data); err != nil {
+			log.Printf("Error rendering welcome: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		return
+	}
+
 	projects := h.store.GetProjects()
 
 	// Scan projects_dir for discoverable folders
@@ -42,6 +54,7 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 		"Title":      "ClawIDE - Dashboard",
 		"Projects":   projects,
 		"Discovered": discovered,
+		"StartTour":  r.URL.Query().Get("tour") == "dashboard",
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "project-list", "project-list", data); err != nil {
