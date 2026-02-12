@@ -8,6 +8,7 @@ type PaneNode struct {
 	Type      string    `json:"type"`                 // "leaf" or "split"
 	PaneID    string    `json:"pane_id,omitempty"`    // leaf only
 	TmuxName  string    `json:"tmux_name,omitempty"`  // leaf only: "clawide-{PaneID}"
+	Name      string    `json:"name,omitempty"`        // leaf only: user-assigned display name
 	Direction string    `json:"direction,omitempty"`   // split only: "horizontal" or "vertical"
 	Ratio     float64   `json:"ratio,omitempty"`       // split only: 0.1-0.9
 	First     *PaneNode `json:"first,omitempty"`       // split only
@@ -91,6 +92,7 @@ func (n *PaneNode) Clone() *PaneNode {
 		Type:      n.Type,
 		PaneID:    n.PaneID,
 		TmuxName:  n.TmuxName,
+		Name:      n.Name,
 		Direction: n.Direction,
 		Ratio:     n.Ratio,
 	}

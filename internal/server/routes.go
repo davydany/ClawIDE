@@ -60,6 +60,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Post("/panes/{pid}/split", s.handlers.SplitPane)
 				r.Delete("/panes/{pid}", s.handlers.ClosePane)
 				r.Patch("/panes/{pid}/resize", s.handlers.ResizePane)
+			r.Patch("/panes/{pid}/rename", s.handlers.RenamePane)
 			})
 
 			// File browser API

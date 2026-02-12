@@ -46,6 +46,7 @@
         var selStartRow = 0;
         var copyBtn = null;
         var copyBtnTimer = null;
+        var isCarouselSwipe = false;    // true when swiping horizontally in phone carousel mode
 
         // --- Helpers ---
 
@@ -291,8 +292,13 @@
                         // Vertical swipe -> scroll
                         state = STATE.SCROLLING;
                         e.preventDefault();
+                    } else if (window.ClawIDEPaneLayout && window.ClawIDEPaneLayout.isPhoneLayout()) {
+                        // Horizontal swipe in phone carousel mode -> track for navigation
+                        isCarouselSwipe = true;
+                        state = STATE.SCROLLING; // reuse scrolling state to block other gestures
+                        e.preventDefault();
                     } else {
-                        // Horizontal swipe -> let browser/xterm handle
+                        // Horizontal swipe on desktop -> let browser/xterm handle
                         state = STATE.IDLE;
                         return;
                     }
@@ -335,6 +341,31 @@
             }
 
             if (state === STATE.SCROLLING) {
+                if (isCarouselSwipe) {
+                    // Horizontal swipe in carousel mode -> navigate panes
+                    isCarouselSwipe = false;
+                    state = STATE.IDLE;
+                    var lastTouch = e.changedTouches[0];
+                    if (lastTouch) {
+                        var swipeDx = lastTouch.clientX - startX;
+                        if (Math.abs(swipeDx) > 50 && window.ClawIDEPaneLayout) {
+                            // Find the session ID from the closest session pane container
+                            var csStates = window.ClawIDEPaneLayout.getCarouselState();
+                            var sessionIDs = Object.keys(csStates);
+                            for (var si = 0; si < sessionIDs.length; si++) {
+                                var cs = csStates[sessionIDs[si]];
+                                if (cs) {
+                                    // Swipe left = next, swipe right = prev
+                                    var newIdx = swipeDx < 0 ? cs.currentIndex + 1 : cs.currentIndex - 1;
+                                    window.ClawIDEPaneLayout.navigateCarousel(sessionIDs[si], newIdx);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    return;
+                }
+
                 var velocity = computeVelocity();
                 if (Math.abs(velocity) > MOMENTUM_MIN_VELOCITY) {
                     startMomentum(velocity);
@@ -366,6 +397,7 @@
             cancelLongPress();
             cancelMomentum();
             removeCopyButton();
+            isCarouselSwipe = false;
             container.classList.remove('touch-selecting');
             state = STATE.IDLE;
         }
