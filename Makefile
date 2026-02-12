@@ -1,11 +1,17 @@
-.PHONY: build dev clean vendor-js css css-watch run test
+.PHONY: build dev clean vendor-js css css-watch run test version
 
 # Binary name
 BINARY := clawide
 BUILD_DIR := .
 
+# Version injection
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+PKG     := github.com/davydany/ClawIDE/internal/version
+
 # Go build flags
-LDFLAGS := -s -w
+LDFLAGS := -s -w -X $(PKG).Version=$(VERSION) -X $(PKG).Commit=$(COMMIT) -X $(PKG).Date=$(DATE)
 
 # Default target
 all: vendor-js css build
@@ -81,6 +87,12 @@ ifdef SERVICE
 else
 	docker compose logs -f
 endif
+
+# Print version info (for debugging)
+version:
+	@echo "Version: $(VERSION)"
+	@echo "Commit:  $(COMMIT)"
+	@echo "Date:    $(DATE)"
 
 # Format code
 fmt:

@@ -21,6 +21,7 @@ type Config struct {
 	OnboardingCompleted    bool   `json:"onboarding_completed"`
 	WorkspaceTourCompleted bool   `json:"workspace_tour_completed"`
 	Restart                bool   `json:"-"`
+	ShowVersion            bool   `json:"-"`
 }
 
 func DefaultConfig() *Config {
@@ -113,6 +114,7 @@ func (c *Config) loadFlags() {
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
 	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")
+	flag.BoolVar(&c.ShowVersion, "version", false, "Print version information and exit")
 	flag.Parse()
 }
 

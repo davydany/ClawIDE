@@ -14,6 +14,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/server"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
+	"github.com/davydany/ClawIDE/internal/version"
 	"github.com/davydany/ClawIDE/web"
 )
 
@@ -22,6 +23,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	if cfg.ShowVersion {
+		fmt.Println(version.String())
+		os.Exit(0)
+	}
+
+	log.Printf("Starting %s", version.String())
 
 	// Single-instance enforcement via PID file
 	pidPath := cfg.PidFilePath()
