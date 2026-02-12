@@ -95,6 +95,32 @@
             </div>
         </div>
 
+        <!-- Claude Code Detection -->
+        <div class="mb-10 mx-auto max-w-2xl"
+             x-data="{ detected: false, hookConfigured: false, loaded: false, setting: false }"
+             x-init="fetch('/api/claude/detect').then(r=>r.json()).then(d=>{ detected=d.detected; hookConfigured=d.hook_configured; loaded=true; }).catch(()=>{ loaded=true; })">
+            <template x-if="loaded && detected && !hookConfigured">
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 text-left">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600/20 border border-indigo-500/30">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-white">Claude Code Detected</h3>
+                            <p class="text-xs text-gray-400">Get notified when Claude Code finishes a task</p>
+                        </div>
+                        <button @click="setting=true; fetch('/api/claude/setup-hook',{method:'POST'}).then(r=>{if(r.ok){hookConfigured=true}}).finally(()=>setting=false)"
+                                :disabled="setting"
+                                class="ml-auto px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors">
+                            Enable Notifications
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex items-center justify-center gap-4">
             <button hx-post="/api/onboarding/complete"

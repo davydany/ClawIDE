@@ -20,6 +20,8 @@ type Config struct {
 	DataDir                string `json:"data_dir"`
 	OnboardingCompleted    bool   `json:"onboarding_completed"`
 	WorkspaceTourCompleted bool   `json:"workspace_tour_completed"`
+	ClaudeHookConfigured   bool   `json:"claude_hook_configured"`
+	MaxNotifications       int    `json:"max_notifications"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -33,8 +35,9 @@ func DefaultConfig() *Config {
 		MaxSessions:    10,
 		ScrollbackSize: 65536,
 		ClaudeCommand:  "claude",
-		LogLevel:       "info",
-		DataDir:        filepath.Join(home, ".clawide"),
+		LogLevel:         "info",
+		DataDir:          filepath.Join(home, ".clawide"),
+		MaxNotifications: 200,
 	}
 }
 
@@ -128,6 +131,14 @@ func (c *Config) PidFilePath() string {
 
 func (c *Config) SnippetsFilePath() string {
 	return filepath.Join(c.DataDir, "snippets.json")
+}
+
+func (c *Config) NotificationsFilePath() string {
+	return filepath.Join(c.DataDir, "notifications.json")
+}
+
+func (c *Config) HooksDir() string {
+	return filepath.Join(c.DataDir, "hooks")
 }
 
 func (c *Config) Addr() string {

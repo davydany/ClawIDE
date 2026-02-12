@@ -141,6 +141,7 @@
                 <span class="text-white font-medium truncate">{{.Project.Name}}</span>
             </nav>
             <div class="ml-auto flex items-center gap-2">
+                {{template "notification-bell" .}}
                 {{if .IsGitRepo}}
                 <!-- Branch indicator -->
                 <div class="relative" x-data="{ branchOpen: false, branches: [], filter: '', creating: false, newBranch: '', baseBranch: '' }">

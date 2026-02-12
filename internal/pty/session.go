@@ -16,6 +16,7 @@ type Session struct {
 	WorkDir   string
 	Command   string
 	Args      []string
+	Env       map[string]string
 	ptmx      *os.File
 	cmd       *exec.Cmd
 	mu        sync.RWMutex
@@ -69,12 +70,13 @@ func (rb *RingBuffer) Bytes() []byte {
 	return out
 }
 
-func NewSession(id, workDir, command string, args []string, scrollbackSize int) *Session {
+func NewSession(id, workDir, command string, args []string, scrollbackSize int, env map[string]string) *Session {
 	return &Session{
 		ID:         id,
 		WorkDir:    workDir,
 		Command:    command,
 		Args:       args,
+		Env:        env,
 		clients:    make(map[string]chan []byte),
 		scrollback: NewRingBuffer(scrollbackSize),
 		done:       make(chan struct{}),
@@ -85,6 +87,9 @@ func (s *Session) Start() error {
 	s.cmd = exec.Command(s.Command, s.Args...)
 	s.cmd.Dir = s.WorkDir
 	s.cmd.Env = append(os.Environ(), "TERM=xterm-256color")
+	for k, v := range s.Env {
+		s.cmd.Env = append(s.cmd.Env, k+"="+v)
+	}
 
 	var err error
 	s.ptmx, err = pty.Start(s.cmd)

@@ -6,6 +6,7 @@ import (
 	"testing/fstest"
 
 	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/stretchr/testify/require"
@@ -57,14 +58,18 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 
 	projectsDir := t.TempDir()
 	cfg := &config.Config{
-		ProjectsDir: projectsDir,
-		DataDir:     t.TempDir(),
-		Host:        "0.0.0.0",
-		Port:        9800,
+		ProjectsDir:         projectsDir,
+		DataDir:             t.TempDir(),
+		Host:                "0.0.0.0",
+		Port:                9800,
+		OnboardingCompleted: true,
 	}
 	snippetSt, err := store.NewSnippetStore(filepath.Join(storeDir, "snippets.json"))
 	require.NoError(t, err)
 
-	h := New(cfg, st, renderer, nil, snippetSt)
+	notifSt, err := store.NewNotificationStore(filepath.Join(storeDir, "notifications.json"), 200)
+	require.NoError(t, err)
+
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, sse.NewHub())
 	return h, st
 }

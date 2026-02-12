@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -48,8 +49,18 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 	// Get or create PTY session keyed by paneID
 	ptySess, ok := h.ptyManager.GetSession(paneID)
 	if !ok {
+		env := map[string]string{
+			"CLAWIDE_PROJECT_ID": sess.ProjectID,
+			"CLAWIDE_SESSION_ID": sess.ID,
+			"CLAWIDE_PANE_ID":    paneID,
+			"CLAWIDE_API_URL":    fmt.Sprintf("http://localhost:%d", h.cfg.Port),
+		}
+		if sess.FeatureID != "" {
+			env["CLAWIDE_FEATURE_ID"] = sess.FeatureID
+		}
+
 		var err error
-		ptySess, err = h.ptyManager.CreateSession(paneID, sess.WorkDir)
+		ptySess, err = h.ptyManager.CreateSession(paneID, sess.WorkDir, env)
 		if err != nil {
 			log.Printf("Failed to create PTY session for pane %s: %v", paneID, err)
 			http.Error(w, "Failed to create terminal session", http.StatusInternalServerError)

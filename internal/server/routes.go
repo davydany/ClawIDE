@@ -116,6 +116,22 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Delete("/{snippetID}", s.handlers.DeleteSnippet)
 	})
 
+	// Notifications API (global, not project-scoped)
+	r.Route("/api/notifications", func(r chi.Router) {
+		r.Post("/", s.handlers.CreateNotification)
+		r.Get("/", s.handlers.ListNotifications)
+		r.Get("/unread-count", s.handlers.UnreadNotificationCount)
+		r.Get("/stream", s.handlers.NotificationStream)
+		r.Patch("/{notifID}/read", s.handlers.MarkNotificationRead)
+		r.Post("/read-all", s.handlers.MarkAllNotificationsRead)
+		r.Delete("/{notifID}", s.handlers.DeleteNotification)
+	})
+
+	// Claude Code integration API
+	r.Get("/api/claude/detect", s.handlers.DetectClaudeCLI)
+	r.Post("/api/claude/setup-hook", s.handlers.SetupClaudeHook)
+	r.Delete("/api/claude/hook", s.handlers.RemoveClaudeHook)
+
 	// WebSocket endpoints (no project middleware, session ID is in URL)
 	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)

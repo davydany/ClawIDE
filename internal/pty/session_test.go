@@ -57,7 +57,7 @@ func TestRingBufferWriteAndBytes(t *testing.T) {
 }
 
 func TestNewSession(t *testing.T) {
-	sess := NewSession("pane-1", "/home/user", "tmux", []string{"-A", "-s", "test"}, 4096)
+	sess := NewSession("pane-1", "/home/user", "tmux", []string{"-A", "-s", "test"}, 4096, nil)
 
 	assert.Equal(t, "pane-1", sess.ID)
 	assert.Equal(t, "/home/user", sess.WorkDir)
@@ -70,7 +70,7 @@ func TestNewSession(t *testing.T) {
 }
 
 func TestSubscribeAndUnsubscribe(t *testing.T) {
-	sess := NewSession("pane-1", "/home/user", "tmux", []string{}, 4096)
+	sess := NewSession("pane-1", "/home/user", "tmux", []string{}, 4096, nil)
 
 	// Write some data to scrollback first
 	sess.scrollback.Write([]byte("initial data"))
@@ -96,7 +96,7 @@ func TestSubscribeAndUnsubscribe(t *testing.T) {
 }
 
 func TestSubscribeMultipleClients(t *testing.T) {
-	sess := NewSession("pane-1", "/home/user", "tmux", []string{}, 4096)
+	sess := NewSession("pane-1", "/home/user", "tmux", []string{}, 4096, nil)
 
 	ch1, _ := sess.Subscribe("client-1")
 	ch2, _ := sess.Subscribe("client-2")
