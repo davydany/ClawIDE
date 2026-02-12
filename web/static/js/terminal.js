@@ -71,6 +71,79 @@
         term.open(container);
         fitAddon.fit();
 
+        // Clipboard helpers (defined before key handler so they're in scope)
+        function copyToClipboard(text) {
+            // Try async Clipboard API first (requires secure context)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    console.log('Copied via Clipboard API');
+                }).catch(function() {
+                    fallbackCopy(text);
+                });
+                return;
+            }
+            fallbackCopy(text);
+        }
+
+        function fallbackCopy(text) {
+            // Fallback: temporary textarea + execCommand (works on plain HTTP)
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                console.log('Copied via execCommand fallback');
+            } catch (e) {
+                console.error('Copy failed:', e);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // Enable keyboard copy-paste
+        // Cmd+C/V on macOS, Ctrl+Shift+C/V on Linux/Windows
+        term.attachCustomKeyEventHandler(function(ev) {
+            if (ev.type !== 'keydown') return true;
+
+            var key = ev.key.toLowerCase();
+
+            // Detect copy/paste intent:
+            // - Cmd+C/V (metaKey) on macOS
+            // - Ctrl+Shift+C/V on Linux/Windows
+            var isCopyOrPaste = (key === 'c' || key === 'v') &&
+                (ev.metaKey || (ev.ctrlKey && ev.shiftKey));
+
+            if (!isCopyOrPaste) return true;
+
+            if (key === 'c') {
+                var selection = term.getSelection();
+                if (selection) {
+                    ev.preventDefault();
+                    copyToClipboard(selection);
+                }
+                return false;
+            }
+
+            if (key === 'v') {
+                // If Clipboard API is available, read from it directly
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    ev.preventDefault();
+                    navigator.clipboard.readText().then(function(text) {
+                        if (text) sendData(text);
+                    }).catch(function() {
+                        console.warn('Clipboard read denied — use right-click paste or toolbar button');
+                    });
+                    return false;
+                }
+                // No Clipboard API (non-secure context): let the browser handle
+                // Cmd+V natively — xterm will catch the paste event via onData
+                return true;
+            }
+
+            return true;
+        });
+
         // Track focus for modifier toolbar and visual highlighting
         if (term.textarea) {
             term.textarea.addEventListener('focus', function() {
