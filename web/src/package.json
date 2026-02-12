@@ -3,8 +3,9 @@
   "private": true,
   "scripts": {
     "build:xterm": "esbuild xterm-entry.js --bundle --minify --outfile=../static/dist/xterm-bundle.js",
+    "build:xterm-css": "cp node_modules/@xterm/xterm/css/xterm.css ../static/dist/xterm.css",
     "build:codemirror": "esbuild codemirror-entry.js --bundle --minify --outfile=../static/dist/codemirror-bundle.js",
-    "build": "npm run build:xterm && npm run build:codemirror"
+    "build": "npm run build:xterm && npm run build:xterm-css && npm run build:codemirror"
   },
   "dependencies": {
     "@xterm/xterm": "^5.5.0",

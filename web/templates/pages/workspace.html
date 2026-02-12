@@ -493,13 +493,14 @@
 
                 <!-- Files panel -->
                 <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
-                     x-data="{ fileTree: [], currentFile: null, fileContent: '' }">
+                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false }"
+                     x-effect="if (activeTab === 'files' && !loaded) { loaded = true; $nextTick(() => { window._clawIDELoadFileTree && window._clawIDELoadFileTree() }) }">
                     <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
                         <div class="p-2 border-b border-gray-800">
                             <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
                         </div>
                         <div id="file-tree" class="p-1">
-                            <div class="text-gray-500 text-xs p-2">Loading...</div>
+                            <div class="text-gray-500 text-xs p-2">Click Files tab to load...</div>
                         </div>
                         <script>
                         (function() {
@@ -541,7 +542,10 @@
                                     el.querySelector('span').innerHTML = '&#9654;';
                                 }
                             };
-                            loadDir('', document.getElementById('file-tree'), 0);
+                            // Deferred: only load when Files tab is activated
+                            window._clawIDELoadFileTree = function() {
+                                loadDir('', document.getElementById('file-tree'), 0);
+                            };
                         })();
                         </script>
                     </div>
@@ -558,7 +562,9 @@
                 </div>
 
                 <!-- Docker panel -->
-                <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col" x-data="{ services: [] }">
+                <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col"
+                     x-data="{ services: [], loaded: false }"
+                     x-effect="if (activeTab === 'docker' && !loaded) { loaded = true; $nextTick(() => { if (typeof ClawIDEDocker !== 'undefined') ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services')) }) }">
                     <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
                         <h3 class="text-sm font-medium text-white">Docker Compose</h3>
                         <div class="ml-auto flex gap-1">
@@ -567,15 +573,15 @@
                             <button onclick="ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">Refresh</button>
                         </div>
                     </div>
-                    <div id="docker-services" class="flex-1 overflow-y-auto" x-init="if (typeof ClawIDEDocker !== 'undefined') ClawIDEDocker.refresh('{{.Project.ID}}', $el)">
+                    <div id="docker-services" class="flex-1 overflow-y-auto">
                         <div class="text-gray-500 text-sm p-4">Loading services...</div>
                     </div>
                 </div>
 
                 <!-- Ports panel -->
                 <div x-show="activeTab === 'ports'" x-cloak class="h-full overflow-y-auto"
-                     x-data="{ ports: { os_ports: [], compose_services: [] }, expandedSvc: {} }"
-                     x-init="fetch('/projects/{{.Project.ID}}/api/ports').then(r => r.json()).then(d => ports = d).catch(() => {})">
+                     x-data="{ ports: { os_ports: [], compose_services: [] }, expandedSvc: {}, loaded: false }"
+                     x-effect="if (activeTab === 'ports' && !loaded) { loaded = true; fetch('/projects/{{.Project.ID}}/api/ports').then(r => r.json()).then(d => ports = d).catch(() => {}) }">
                     <div class="p-4 space-y-4">
 
                         <!-- Compose Services (first, prominent) -->

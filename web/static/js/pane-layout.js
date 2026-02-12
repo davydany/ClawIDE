@@ -519,23 +519,32 @@
     }
 
     function closePane(projectID, sessionID, paneID) {
-        fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID, {
-            method: 'DELETE',
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.session_closed) {
-                window.location.reload();
-                return;
-            }
-            var container = document.getElementById('session-panes-' + sessionID);
-            if (container) {
-                renderLayout(container, data.layout, sessionID, projectID);
-            }
-        })
-        .catch(function(err) {
-            console.error('Failed to close pane:', err);
-        });
+        // Close the WebSocket for this pane first to free an HTTP/1.1 connection
+        // slot. Without this, the DELETE request stays pending because all 6
+        // browser connections per host are occupied by WebSocket + SSE streams.
+        window.ClawIDETerminal.destroy(paneID);
+
+        // Small delay lets the browser release the TCP socket after the WS
+        // close handshake, ensuring a free slot for the DELETE request.
+        setTimeout(function() {
+            fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID, {
+                method: 'DELETE',
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.session_closed) {
+                    window.location.reload();
+                    return;
+                }
+                var container = document.getElementById('session-panes-' + sessionID);
+                if (container) {
+                    renderLayout(container, data.layout, sessionID, projectID);
+                }
+            })
+            .catch(function(err) {
+                console.error('Failed to close pane:', err);
+            });
+        }, 50);
     }
 
     function persistResize(projectID, sessionID, paneID, ratio) {

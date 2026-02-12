@@ -320,4 +320,12 @@
             dataInterceptors.push(fn);
         }
     };
+
+    // Close all WebSocket connections before page navigation to prevent
+    // HTTP/1.1 connection exhaustion (Chrome allows max 6 per host).
+    // Without this, old connections linger during navigation, blocking the
+    // new page's document request from acquiring a connection slot.
+    window.addEventListener('beforeunload', function() {
+        window.ClawIDETerminal.destroyAll();
+    });
 })();

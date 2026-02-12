@@ -1,8 +1,8 @@
 package docker
 
 import (
-	"bytes"
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/davydany/ClawIDE/internal/model"
 )
@@ -25,7 +26,10 @@ type Service struct {
 // PS runs `docker compose ps --format json` in the given project directory
 // and returns the list of services.
 func PS(projectPath string) ([]Service, error) {
-	cmd := exec.Command("docker", "compose", "ps", "--format", "json")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "ps", "--format", "json")
 	cmd.Dir = projectPath
 
 	out, err := cmd.Output()
