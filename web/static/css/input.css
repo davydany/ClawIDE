@@ -27,6 +27,40 @@
     padding: 4px;
 }
 
+/* Disable browser touch actions on terminal for touch devices */
+@media (hover: none) and (pointer: coarse) {
+    .xterm-container {
+        touch-action: none;
+    }
+}
+
+/* Touch selection indicator */
+.touch-selecting {
+    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline-offset: -2px;
+}
+
+/* Floating copy button after touch text selection */
+.touch-copy-btn {
+    position: fixed;
+    z-index: 9999;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background: #4f46e5;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.touch-copy-btn:active {
+    background: #4338ca;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 6px;

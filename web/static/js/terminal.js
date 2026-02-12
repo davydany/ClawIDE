@@ -255,6 +255,9 @@
 
         terminals[paneID] = termState;
 
+        // Attach touch gesture handling for mobile scrolling and text selection
+        if (window.ClawIDETouchTerminal) window.ClawIDETouchTerminal.attach(termState);
+
         // Auto-set focus to first terminal created (mobile: users tap toolbar before terminal)
         if (focusedPaneID === null) {
             focusedPaneID = paneID;
