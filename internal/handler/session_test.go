@@ -95,6 +95,28 @@ func TestCreateSession(t *testing.T) {
 	})
 }
 
+func TestCreateSession_HTMX(t *testing.T) {
+	t.Run("returns HX-Redirect for HTMX request", func(t *testing.T) {
+		h, st, project := setupSessionTest(t)
+
+		form := url.Values{"name": {"My Session"}}
+		req := httptest.NewRequest(http.MethodPost, "/projects/proj-1/sessions", strings.NewReader(form.Encode()))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("HX-Request", "true")
+		req = withProjectMiddleware(req, st, project.ID)
+		w := httptest.NewRecorder()
+
+		h.CreateSession(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "/projects/"+project.ID+"/", w.Header().Get("HX-Redirect"))
+
+		sessions := st.GetSessions(project.ID)
+		require.Len(t, sessions, 1)
+		assert.Equal(t, "My Session", sessions[0].Name)
+	})
+}
+
 func TestRenameSession(t *testing.T) {
 	t.Run("renames session via HTMX", func(t *testing.T) {
 		h, st, project := setupSessionTest(t)

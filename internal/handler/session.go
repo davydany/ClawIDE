@@ -66,15 +66,8 @@ func (h *Handlers) CreateSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Header.Get("HX-Request") == "true" {
-		// Return the updated session list
-		sessions := h.store.GetSessions(project.ID)
-		data := map[string]any{
-			"Project":  project,
-			"Sessions": sessions,
-		}
-		if err := h.renderer.RenderHTMX(w, r, "workspace", "session-list", data); err != nil {
-			log.Printf("Error rendering session list: %v", err)
-		}
+		w.Header().Set("HX-Redirect", "/projects/"+project.ID+"/")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
