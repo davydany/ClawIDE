@@ -12,10 +12,13 @@ type ComposeConfig struct {
 }
 
 type ComposeService struct {
-	Image       string   `yaml:"image"`
-	Build       any      `yaml:"build"`
-	Ports       []string `yaml:"ports"`
-	Volumes     []string `yaml:"volumes"`
-	Environment any      `yaml:"environment"`
-	DependsOn   any      `yaml:"depends_on"`
+	Image         string   `yaml:"image"`
+	Build         any      `yaml:"build"`
+	Ports         []string `yaml:"ports"`
+	Volumes       []string `yaml:"volumes"`
+	Environment   any      `yaml:"environment"`
+	DependsOn     any      `yaml:"depends_on"`
+	Command       any      `yaml:"command"`
+	ContainerName string   `yaml:"container_name"`
+	Restart       string   `yaml:"restart"`
 }
