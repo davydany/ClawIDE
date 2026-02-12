@@ -23,8 +23,8 @@ Thumbs.db
 # Node (build tools only)
 web/src/node_modules/
 
-# Build output (dist is committed)
-# web/static/dist/
+# Build output (regenerate with: make css && cd web/src && npm run build)
+web/static/dist/
 
 # Config
 .env
