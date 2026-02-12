@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/davydany/ClawIDE/internal/model"
 )
@@ -68,6 +69,22 @@ func (s *Store) UpdateProject(p model.Project) error {
 		}
 	}
 	return fmt.Errorf("project %s not found", p.ID)
+}
+
+func (s *Store) ToggleProjectStar(id string) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, p := range s.state.Projects {
+		if p.ID == id {
+			s.state.Projects[i].Starred = !p.Starred
+			s.state.Projects[i].UpdatedAt = time.Now()
+			if err := s.save(); err != nil {
+				return false, err
+			}
+			return s.state.Projects[i].Starred, nil
+		}
+	}
+	return false, fmt.Errorf("project %s not found", id)
 }
 
 func (s *Store) DeleteProject(id string) error {

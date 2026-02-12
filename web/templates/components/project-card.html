@@ -1,16 +1,17 @@
 {{define "project-card"}}
-<a href="/projects/{{.ID}}/" hx-boost="false"
-   class="group block bg-gray-900 rounded-xl border border-gray-800 p-4 hover:border-gray-700 hover:bg-gray-900/80 transition-all">
-    <div class="flex items-start justify-between">
+<div class="group relative bg-gray-900 rounded-xl border border-gray-800 hover:border-gray-700 hover:bg-gray-900/80 transition-all">
+    <a href="/projects/{{.ID}}/" hx-boost="false"
+       class="block p-4 pr-20">
         <div class="min-w-0">
             <h3 class="text-sm font-medium text-white truncate group-hover:text-indigo-300 transition-colors">{{.Name}}</h3>
             <p class="text-xs text-gray-500 mt-1 truncate font-mono">{{.Path}}</p>
         </div>
-        <div class="flex-shrink-0 ml-3">
-            <svg class="w-5 h-5 text-gray-700 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
-        </div>
+    </a>
+    <div class="absolute right-3 top-3 flex items-center gap-1">
+        {{template "star-button" .}}
+        <svg class="w-5 h-5 text-gray-700 group-hover:text-gray-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
     </div>
-</a>
+</div>
 {{end}}

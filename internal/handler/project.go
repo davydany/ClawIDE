@@ -17,9 +17,18 @@ import (
 
 func (h *Handlers) ListProjects(w http.ResponseWriter, r *http.Request) {
 	projects := h.store.GetProjects()
+	var starredProjects, unstarredProjects []model.Project
+	for _, p := range projects {
+		if p.Starred {
+			starredProjects = append(starredProjects, p)
+		} else {
+			unstarredProjects = append(unstarredProjects, p)
+		}
+	}
 	data := map[string]any{
-		"Title":    "ClawIDE - Projects",
-		"Projects": projects,
+		"Title":           "ClawIDE - Projects",
+		"StarredProjects": starredProjects,
+		"Projects":        unstarredProjects,
 	}
 	if err := h.renderer.RenderHTMX(w, r, "project-list", "project-list", data); err != nil {
 		log.Printf("Error rendering projects: %v", err)
@@ -90,19 +99,47 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		currentBranch, _ = git.CurrentBranch(project.Path)
 	}
 
+	// Collect starred projects for quick-switch panel
+	var starredProjects []model.Project
+	for _, p := range h.store.GetProjects() {
+		if p.Starred {
+			starredProjects = append(starredProjects, p)
+		}
+	}
+
 	data := map[string]any{
-		"Title":         project.Name + " - ClawIDE",
-		"Project":       project,
-		"Sessions":      sessions,
-		"Features":      features,
-		"ActiveTab":     "terminal",
-		"IsGitRepo":     isGitRepo,
-		"CurrentBranch": currentBranch,
-		"StartTour":     !h.cfg.WorkspaceTourCompleted,
+		"Title":           project.Name + " - ClawIDE",
+		"Project":         project,
+		"Sessions":        sessions,
+		"Features":        features,
+		"ActiveTab":       "terminal",
+		"IsGitRepo":       isGitRepo,
+		"CurrentBranch":   currentBranch,
+		"StarredProjects": starredProjects,
+		"StartTour":       !h.cfg.WorkspaceTourCompleted,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {
 		log.Printf("Error rendering workspace: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+func (h *Handlers) ToggleStar(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "id")
+
+	if _, err := h.store.ToggleProjectStar(projectID); err != nil {
+		log.Printf("Error toggling star: %v", err)
+		http.Error(w, "Failed to toggle star", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("HX-Trigger", "projectStarred")
+
+	project, _ := h.store.GetProject(projectID)
+
+	if err := h.renderer.RenderHTMX(w, r, "project-list", "star-button", project); err != nil {
+		log.Printf("Error rendering star button: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }

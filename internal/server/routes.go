@@ -48,6 +48,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 			r.Get("/", s.handlers.ProjectWorkspace)
 			r.Delete("/", s.handlers.DeleteProject)
+			r.Patch("/star", s.handlers.ToggleStar)
 
 			// Sessions
 			r.Get("/sessions/", s.handlers.ListSessions)
