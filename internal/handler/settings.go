@@ -44,6 +44,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"max_sessions":     true,
 		"scrollback_size":  true,
 		"agent_command":    true,
+		"agent_args":       true,
 		"claude_command":   true, // backward compat: maps to agent_command
 		"log_level":        true,
 		"host":             true,
@@ -84,6 +85,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.cfg.MaxSessions = newCfg.MaxSessions
 	h.cfg.ScrollbackSize = newCfg.ScrollbackSize
 	h.cfg.AgentCommand = newCfg.AgentCommand
+	h.cfg.AgentArgs = newCfg.AgentArgs
 	h.cfg.LogLevel = newCfg.LogLevel
 	h.cfg.Host = newCfg.Host
 	h.cfg.Port = newCfg.Port

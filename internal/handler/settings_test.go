@@ -103,6 +103,29 @@ func TestUpdateSettings(t *testing.T) {
 		assert.Equal(t, "aider", h.cfg.AgentCommand)
 	})
 
+	t.Run("agent_args field accepted and persisted", func(t *testing.T) {
+		h := setupSettingsTest(t)
+
+		body := `{"agent_args": "--model opus --verbose"}`
+		req := httptest.NewRequest(http.MethodPut, "/api/settings", strings.NewReader(body))
+		w := httptest.NewRecorder()
+
+		h.UpdateSettings(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		configPath := filepath.Join(h.cfg.DataDir, "config.json")
+		data, err := os.ReadFile(configPath)
+		require.NoError(t, err)
+
+		var saved map[string]any
+		require.NoError(t, json.Unmarshal(data, &saved))
+		assert.Equal(t, "--model opus --verbose", saved["agent_args"])
+
+		// Verify in-memory config was updated
+		assert.Equal(t, "--model opus --verbose", h.cfg.AgentArgs)
+	})
+
 	t.Run("claude_command maps to agent_command", func(t *testing.T) {
 		h := setupSettingsTest(t)
 

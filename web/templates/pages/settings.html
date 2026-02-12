@@ -69,6 +69,7 @@
                             </div>
                             <div x-data="{
                                 agentCmd: '{{.Config.AgentCommand}}',
+                                agentArgs: '{{.Config.AgentArgs}}',
                                 customCmd: '',
                                 saving: false,
                                 saved: false,
@@ -92,7 +93,7 @@
                                     fetch('/api/settings', {
                                         method: 'PUT',
                                         headers: {'Content-Type': 'application/json'},
-                                        body: JSON.stringify({agent_command: cmd})
+                                        body: JSON.stringify({agent_command: cmd, agent_args: self.agentArgs})
                                     }).then(function(r) {
                                         if (r.ok) { self.saved = true; setTimeout(function(){ self.saved = false; }, 2000); }
                                     }).finally(function() { self.saving = false; });
@@ -120,6 +121,12 @@
                                 <div x-show="!isPreset" class="mb-2">
                                     <input type="text" x-model="customCmd"
                                            placeholder="Custom command path..."
+                                           class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
+                                </div>
+                                <div x-show="effectiveCmd !== ''" class="mb-2">
+                                    <label class="block text-sm text-gray-400 mb-1">Additional CLI Arguments</label>
+                                    <input type="text" x-model="agentArgs"
+                                           placeholder="e.g. --model opus --verbose"
                                            class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
                                 </div>
                                 <p class="text-xs text-gray-500">Command auto-launched in new terminal panes. Leave empty for plain shell.</p>

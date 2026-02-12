@@ -16,6 +16,7 @@ type Config struct {
 	MaxSessions    int    `json:"max_sessions"`
 	ScrollbackSize int    `json:"scrollback_size"`
 	AgentCommand   string `json:"agent_command"`
+	AgentArgs      string `json:"agent_args"`
 	LogLevel       string `json:"log_level"`
 	DataDir                string `json:"data_dir"`
 	OnboardingCompleted    bool   `json:"onboarding_completed"`
@@ -122,6 +123,9 @@ func (c *Config) loadEnv() {
 	} else if v := os.Getenv("CLAWIDE_CLAUDE_COMMAND"); v != "" {
 		c.AgentCommand = v
 	}
+	if v := os.Getenv("CLAWIDE_AGENT_ARGS"); v != "" {
+		c.AgentArgs = v
+	}
 	if v := os.Getenv("CLAWIDE_LOG_LEVEL"); v != "" {
 		c.LogLevel = v
 	}
@@ -136,6 +140,7 @@ func (c *Config) loadFlags() {
 	flag.StringVar(&c.ProjectsDir, "projects-dir", c.ProjectsDir, "Projects root directory")
 	flag.IntVar(&c.MaxSessions, "max-sessions", c.MaxSessions, "Maximum concurrent sessions")
 	flag.StringVar(&c.AgentCommand, "agent-command", c.AgentCommand, "AI agent command to auto-launch in new panes")
+	flag.StringVar(&c.AgentArgs, "agent-args", c.AgentArgs, "Additional CLI arguments for the AI agent command")
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
 	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")

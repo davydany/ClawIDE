@@ -78,6 +78,9 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 			paneNode, _ := sess.Layout.FindPane(paneID)
 			if paneNode != nil && paneNode.EffectivePaneType() == model.PaneTypeAgent {
 				agentCmd := h.cfg.AgentCommand
+				if h.cfg.AgentArgs != "" {
+					agentCmd = agentCmd + " " + h.cfg.AgentArgs
+				}
 				go func() {
 					time.Sleep(300 * time.Millisecond)
 					if err := tmux.SendKeys(tmuxName, agentCmd); err != nil {
