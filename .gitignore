@@ -40,3 +40,6 @@ docs-website/public/
 docs-website/resources/
 docs-website/node_modules/
 *.png
+
+# Playwright MCP
+.playwright-mcp/
