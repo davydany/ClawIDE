@@ -158,9 +158,25 @@ func checkClaudeSettingsForHook() bool {
 		return false
 	}
 	for _, hook := range stopList {
-		hookStr, ok := hook.(string)
-		if ok && filepath.Base(hookStr) == "claude-stop-hook.sh" {
-			return true
+		// New format: {"hooks": [{"command": "...", "type": "command"}]}
+		if hookObj, ok := hook.(map[string]any); ok {
+			if innerHooks, ok := hookObj["hooks"].([]any); ok {
+				for _, ih := range innerHooks {
+					if ihMap, ok := ih.(map[string]any); ok {
+						if cmd, ok := ihMap["command"].(string); ok {
+							if filepath.Base(cmd) == "claude-stop-hook.sh" {
+								return true
+							}
+						}
+					}
+				}
+			}
+		}
+		// Legacy format: bare string (for detecting old configs)
+		if hookStr, ok := hook.(string); ok {
+			if filepath.Base(hookStr) == "claude-stop-hook.sh" {
+				return true
+			}
 		}
 	}
 	return false
@@ -203,14 +219,36 @@ func addClaudeHookSetting(scriptPath string) error {
 		stopHooks = []any{}
 	}
 
-	// Check if already present
+	// Check if already present (in new object format)
 	for _, h := range stopHooks {
-		if h == scriptPath {
-			return nil // Already configured
+		if hookObj, ok := h.(map[string]any); ok {
+			if innerHooks, ok := hookObj["hooks"].([]any); ok {
+				for _, ih := range innerHooks {
+					if ihMap, ok := ih.(map[string]any); ok {
+						if cmd, ok := ihMap["command"].(string); ok && cmd == scriptPath {
+							return nil // Already configured
+						}
+					}
+				}
+			}
+		}
+		// Also check legacy string format to avoid duplicates
+		if hStr, ok := h.(string); ok && hStr == scriptPath {
+			return nil
 		}
 	}
 
-	stopHooks = append(stopHooks, scriptPath)
+	// Use the new Claude Code hook format with matchers
+	hookEntry := map[string]any{
+		"hooks": []any{
+			map[string]any{
+				"command": scriptPath,
+				"type":    "command",
+			},
+		},
+	}
+
+	stopHooks = append(stopHooks, hookEntry)
 	hooks["Stop"] = stopHooks
 	settings["hooks"] = hooks
 
@@ -247,11 +285,30 @@ func removeClaudeHookSetting() error {
 		return nil
 	}
 
-	// Filter out our hook
+	// Filter out our hook in both new object format and legacy string format
 	var filtered []any
 	for _, h := range stopHooks {
-		hookStr, ok := h.(string)
-		if ok && filepath.Base(hookStr) == "claude-stop-hook.sh" {
+		// New format: {"hooks": [{"command": "...", "type": "command"}]}
+		if hookObj, ok := h.(map[string]any); ok {
+			if innerHooks, ok := hookObj["hooks"].([]any); ok {
+				isOurs := false
+				for _, ih := range innerHooks {
+					if ihMap, ok := ih.(map[string]any); ok {
+						if cmd, ok := ihMap["command"].(string); ok {
+							if filepath.Base(cmd) == "claude-stop-hook.sh" {
+								isOurs = true
+								break
+							}
+						}
+					}
+				}
+				if isOurs {
+					continue
+				}
+			}
+		}
+		// Legacy format: bare string
+		if hookStr, ok := h.(string); ok && filepath.Base(hookStr) == "claude-stop-hook.sh" {
 			continue
 		}
 		filtered = append(filtered, h)
