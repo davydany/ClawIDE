@@ -22,6 +22,8 @@ function notificationBell() {
             }
 
             this.eventSource = new EventSource('/api/notifications/stream');
+            // Expose for beforeunload cleanup
+            window._clawIDENotificationES = this.eventSource;
 
             this.eventSource.addEventListener('unread-count', (e) => {
                 this.unreadCount = parseInt(e.data, 10) || 0;
@@ -159,10 +161,20 @@ function notificationBell() {
         destroy() {
             if (this.eventSource) {
                 this.eventSource.close();
+                this.eventSource = null;
             }
             if (this.reconnectTimer) {
                 clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
             }
         }
     };
 }
+
+// Close SSE connection before page navigation to free HTTP/1.1 connection slots.
+window.addEventListener('beforeunload', function() {
+    // Find the active EventSource via the Alpine component's shared reference.
+    if (window._clawIDENotificationES) {
+        window._clawIDENotificationES.close();
+    }
+});
