@@ -99,15 +99,24 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		currentBranch, _ = git.CurrentBranch(project.Path)
 	}
 
+	// Collect starred projects for quick-switch panel
+	var starredProjects []model.Project
+	for _, p := range h.store.GetProjects() {
+		if p.Starred {
+			starredProjects = append(starredProjects, p)
+		}
+	}
+
 	data := map[string]any{
-		"Title":         project.Name + " - ClawIDE",
-		"Project":       project,
-		"Sessions":      sessions,
-		"Features":      features,
-		"ActiveTab":     "terminal",
-		"IsGitRepo":     isGitRepo,
-		"CurrentBranch": currentBranch,
-		"StartTour":     !h.cfg.WorkspaceTourCompleted,
+		"Title":           project.Name + " - ClawIDE",
+		"Project":         project,
+		"Sessions":        sessions,
+		"Features":        features,
+		"ActiveTab":       "terminal",
+		"IsGitRepo":       isGitRepo,
+		"CurrentBranch":   currentBranch,
+		"StarredProjects": starredProjects,
+		"StartTour":       !h.cfg.WorkspaceTourCompleted,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {

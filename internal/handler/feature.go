@@ -119,12 +119,21 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	sessions := h.store.GetFeatureSessions(featureID)
 
+	// Collect starred projects for quick-switch panel
+	var starredProjects []model.Project
+	for _, p := range h.store.GetProjects() {
+		if p.Starred {
+			starredProjects = append(starredProjects, p)
+		}
+	}
+
 	data := map[string]any{
-		"Title":     feature.Name + " - " + project.Name + " - ClawIDE",
-		"Project":   project,
-		"Feature":   feature,
-		"Sessions":  sessions,
-		"ActiveTab": "terminal",
+		"Title":           feature.Name + " - " + project.Name + " - ClawIDE",
+		"Project":         project,
+		"Feature":         feature,
+		"Sessions":        sessions,
+		"ActiveTab":       "terminal",
+		"StarredProjects": starredProjects,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "feature-workspace", "feature-workspace", data); err != nil {
