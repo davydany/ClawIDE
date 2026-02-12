@@ -34,3 +34,6 @@ web/src/node_modules/
 
 # Scratchpad
 scratchpad/
+
+# Playwright MCP
+.playwright-mcp/

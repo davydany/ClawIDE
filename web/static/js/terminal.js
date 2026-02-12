@@ -11,6 +11,10 @@
             return terminals[paneID];
         }
 
+        // Suppress DA responses during scrollback replay to prevent
+        // escape sequences like ESC[?1;2c from echoing as visible text.
+        let replayingScrollback = true;
+
         const term = new window.XtermTerminal({
             cursorBlink: true,
             fontSize: 14,
@@ -74,6 +78,7 @@
 
             ws.onopen = function() {
                 console.log(`Terminal pane ${paneID} connected`);
+                replayingScrollback = true;
                 // Send initial size
                 sendResize();
             };
@@ -83,6 +88,12 @@
                     term.write(new Uint8Array(evt.data));
                 } else {
                     term.write(evt.data);
+                }
+                // After the first message (scrollback history), stop suppressing.
+                // Use setTimeout(0) so any synchronous onData calls during
+                // term.write() above are still suppressed.
+                if (replayingScrollback) {
+                    setTimeout(function() { replayingScrollback = false; }, 0);
                 }
             };
 
@@ -111,6 +122,7 @@
 
         // Write to PTY - run data through interceptors first
         term.onData(function(data) {
+            if (replayingScrollback) return;
             var processed = data;
             for (var i = 0; i < dataInterceptors.length; i++) {
                 processed = dataInterceptors[i](processed);
