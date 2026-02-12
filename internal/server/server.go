@@ -11,6 +11,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/handler"
 	"github.com/davydany/ClawIDE/internal/pty"
+	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/davydany/ClawIDE/internal/tmux"
@@ -40,6 +41,13 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load snippet store: %v", err)
 	}
 
+	notificationStore, err := store.NewNotificationStore(cfg.NotificationsFilePath(), cfg.MaxNotifications)
+	if err != nil {
+		log.Fatalf("failed to load notification store: %v", err)
+	}
+
+	sseHub := sse.NewHub()
+
 	// Recover tmux sessions from previous run
 	recoverTmuxSessions(st)
 
@@ -48,7 +56,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, sseHub),
 	}
 
 	router := s.setupRoutes()

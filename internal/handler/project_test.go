@@ -188,7 +188,7 @@ func TestScanProjects(t *testing.T) {
 		require.NoError(t, err)
 
 		cfg := &config.Config{ProjectsDir: projectsDir}
-		h := New(cfg, st, nil, nil, nil)
+		h := New(cfg, st, nil, nil, nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/scan-projects", nil)
 		w := httptest.NewRecorder()
@@ -213,7 +213,7 @@ func TestScanProjects(t *testing.T) {
 		storeDir := t.TempDir()
 		st, _ := store.New(filepath.Join(storeDir, "state.json"))
 		cfg := &config.Config{ProjectsDir: "/nonexistent/path"}
-		h := New(cfg, st, nil, nil, nil)
+		h := New(cfg, st, nil, nil, nil, nil, nil)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/scan-projects", nil)
 		w := httptest.NewRecorder()

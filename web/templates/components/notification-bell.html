@@ -1,0 +1,75 @@
+{{define "notification-bell"}}
+<div x-data="notificationBell()" x-init="init()" class="relative">
+    <!-- Bell button -->
+    <button @click="toggle()" class="relative p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Notifications">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <!-- Unread badge -->
+        <span x-show="unreadCount > 0" x-cloak
+              x-text="unreadCount > 99 ? '99+' : unreadCount"
+              class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+        </span>
+    </button>
+
+    <!-- Dropdown panel -->
+    <div x-show="open" x-cloak @click.away="open = false"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="absolute right-0 top-full mt-2 w-96 max-h-[480px] bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+            <h3 class="text-sm font-semibold text-white">Notifications</h3>
+            <button x-show="unreadCount > 0" @click="markAllRead()" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                Mark all read
+            </button>
+        </div>
+
+        <!-- Notification list -->
+        <div class="flex-1 overflow-y-auto">
+            <template x-if="notifications.length === 0">
+                <div class="flex flex-col items-center justify-center py-8 text-gray-500">
+                    <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <p class="text-xs">No notifications yet</p>
+                </div>
+            </template>
+            <template x-for="n in notifications" :key="n.id">
+                <div @click="navigate(n)"
+                     class="flex items-start gap-3 px-4 py-3 border-b border-gray-800/50 hover:bg-gray-800/50 cursor-pointer transition-colors"
+                     :class="n.read ? 'opacity-60' : ''">
+                    <!-- Level indicator -->
+                    <div class="mt-1 flex-shrink-0">
+                        <span class="block w-2 h-2 rounded-full"
+                              :class="{
+                                  'bg-blue-400': n.level === 'info',
+                                  'bg-green-400': n.level === 'success',
+                                  'bg-yellow-400': n.level === 'warning',
+                                  'bg-red-400': n.level === 'error'
+                              }"></span>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-medium text-white truncate" x-text="n.title"></p>
+                            <span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400" x-text="n.source"></span>
+                        </div>
+                        <p x-show="n.body" class="text-xs text-gray-400 mt-0.5 truncate" x-text="n.body"></p>
+                        <p class="text-[10px] text-gray-600 mt-1" x-text="timeAgo(n.created_at)"></p>
+                    </div>
+                    <!-- Unread dot -->
+                    <div x-show="!n.read" class="mt-2 flex-shrink-0">
+                        <span class="block w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{{end}}

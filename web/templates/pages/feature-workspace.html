@@ -141,6 +141,7 @@
                 <span class="text-white font-medium truncate">{{.Feature.Name}}</span>
             </nav>
             <div class="ml-auto flex items-center gap-2">
+                {{template "notification-bell" .}}
                 <span class="px-2 py-1 text-xs font-mono bg-purple-900/40 text-purple-300 border border-purple-800 rounded">
                     {{.Feature.BranchName}}
                 </span>

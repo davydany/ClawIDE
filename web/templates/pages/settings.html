@@ -39,6 +39,9 @@
                 </svg>
             </button>
             <h1 class="text-sm font-medium text-white">Settings</h1>
+            <div class="ml-auto flex items-center gap-2">
+                {{template "notification-bell" .}}
+            </div>
         </header>
 
         <main class="flex-1 overflow-y-auto">
@@ -87,6 +90,44 @@
                                 Restart Onboarding
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Claude Code Integration -->
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                         x-data="{ detected: false, hookConfigured: false, loading: true, setting: false }"
+                         x-init="fetch('/api/claude/detect').then(r=>r.json()).then(d=>{ detected=d.detected; hookConfigured=d.hook_configured; loading=false; }).catch(()=>{ loading=false; })">
+                        <h3 class="text-sm font-medium text-white mb-4">Claude Code Integration</h3>
+                        <template x-if="loading">
+                            <p class="text-sm text-gray-500">Detecting Claude CLI...</p>
+                        </template>
+                        <template x-if="!loading && !detected">
+                            <div>
+                                <p class="text-sm text-gray-400">Claude CLI not found on this system.</p>
+                                <p class="text-xs text-gray-500 mt-1">Install Claude Code to enable terminal notifications.</p>
+                            </div>
+                        </template>
+                        <template x-if="!loading && detected">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-300">Stop Notifications</p>
+                                    <p class="text-xs text-gray-500 mt-1" x-text="hookConfigured ? 'ClawIDE will notify you when Claude Code finishes a task.' : 'Get notified in ClawIDE when Claude Code finishes.'"></p>
+                                </div>
+                                <template x-if="!hookConfigured">
+                                    <button @click="setting=true; fetch('/api/claude/setup-hook',{method:'POST'}).then(r=>{if(r.ok){hookConfigured=true}else{r.text().then(t=>alert(t))}}).finally(()=>setting=false)"
+                                            :disabled="setting"
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors">
+                                        Enable
+                                    </button>
+                                </template>
+                                <template x-if="hookConfigured">
+                                    <button @click="setting=true; fetch('/api/claude/hook',{method:'DELETE'}).then(()=>{hookConfigured=false}).finally(()=>setting=false)"
+                                            :disabled="setting"
+                                            class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                        Disable
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

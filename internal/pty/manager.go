@@ -26,7 +26,7 @@ func NewManager(maxSessions, scrollbackSize int, claudeCommand string) *Manager 
 }
 
 // CreateSession creates a new PTY session backed by tmux, keyed by paneID.
-func (m *Manager) CreateSession(paneID, workDir string) (*Session, error) {
+func (m *Manager) CreateSession(paneID, workDir string, env map[string]string) (*Session, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -40,7 +40,7 @@ func (m *Manager) CreateSession(paneID, workDir string) (*Session, error) {
 
 	tmuxName := tmux.TmuxName(paneID)
 	cmd, args := tmux.SessionCommand(tmuxName, workDir)
-	sess := NewSession(paneID, workDir, cmd, args, m.scrollbackSize)
+	sess := NewSession(paneID, workDir, cmd, args, m.scrollbackSize, env)
 
 	if err := sess.Start(); err != nil {
 		return nil, fmt.Errorf("starting PTY: %w", err)
