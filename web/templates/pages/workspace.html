@@ -582,44 +582,116 @@
 
                 <!-- Ports panel -->
                 <div x-show="activeTab === 'ports'" x-cloak class="h-full overflow-y-auto"
-                     x-data="{ ports: { os_ports: [], compose_ports: [] }, loaded: false }"
+                     x-data="{ ports: { os_ports: [], compose_services: [] }, expandedSvc: {}, loaded: false }"
                      x-effect="if (activeTab === 'ports' && !loaded) { loaded = true; fetch('/projects/{{.Project.ID}}/api/ports').then(r => r.json()).then(d => ports = d).catch(() => {}) }">
                     <div class="p-4 space-y-4">
-                        <h3 class="text-sm font-medium text-white">Detected Ports</h3>
+
+                        <!-- Compose Services (first, prominent) -->
+                        <template x-if="ports.compose_services && ports.compose_services.length > 0">
+                            <div>
+                                <h3 class="text-sm font-medium text-white mb-3">Compose Services</h3>
+                                <div class="space-y-2">
+                                    <template x-for="svc in ports.compose_services" :key="svc.name">
+                                        <div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+                                            <!-- Service header (always visible) -->
+                                            <button @click="expandedSvc[svc.name] = !expandedSvc[svc.name]"
+                                                    class="w-full flex items-center justify-between p-3 text-left hover:bg-gray-800/50 transition-colors">
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <svg class="w-3 h-3 text-gray-500 transition-transform flex-shrink-0" :class="expandedSvc[svc.name] ? 'rotate-90' : ''" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>
+                                                    <span class="text-sm font-mono text-white font-medium" x-text="svc.name"></span>
+                                                    <span x-show="svc.image" class="text-xs bg-indigo-900/40 text-indigo-300 px-1.5 py-0.5 rounded truncate max-w-[200px]" x-text="svc.image"></span>
+                                                    <span x-show="!svc.image && svc.build" class="text-xs bg-amber-900/40 text-amber-300 px-1.5 py-0.5 rounded truncate max-w-[200px]" x-text="'build: ' + svc.build"></span>
+                                                </div>
+                                                <!-- Port badges (always visible) -->
+                                                <div class="flex items-center gap-1 flex-shrink-0 ml-2" @click.stop>
+                                                    <template x-for="port in svc.ports" :key="port.host_port + port.container_port">
+                                                        <a x-show="port.host_port"
+                                                           :href="'http://localhost:' + port.host_port" target="_blank"
+                                                           class="text-xs font-mono bg-indigo-900/30 text-indigo-300 hover:bg-indigo-800/50 px-2 py-0.5 rounded transition-colors"
+                                                           x-text="':' + port.host_port + '→' + port.container_port"></a>
+                                                    </template>
+                                                </div>
+                                            </button>
+                                            <!-- Expandable detail section -->
+                                            <div x-show="expandedSvc[svc.name]" x-collapse class="border-t border-gray-800 px-3 py-2 space-y-2 text-xs">
+                                                <template x-if="svc.container_name">
+                                                    <div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Container</span><span class="text-gray-300 font-mono" x-text="svc.container_name"></span></div>
+                                                </template>
+                                                <template x-if="svc.command">
+                                                    <div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Command</span><span class="text-gray-300 font-mono break-all" x-text="svc.command"></span></div>
+                                                </template>
+                                                <template x-if="svc.restart">
+                                                    <div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Restart</span><span class="text-gray-300" x-text="svc.restart"></span></div>
+                                                </template>
+                                                <template x-if="svc.environment && svc.environment.length > 0">
+                                                    <div class="flex gap-2">
+                                                        <span class="text-gray-500 w-28 flex-shrink-0">Environment</span>
+                                                        <div class="flex flex-wrap gap-1">
+                                                            <template x-for="env in svc.environment" :key="env">
+                                                                <span class="bg-gray-800 text-gray-400 font-mono px-1.5 py-0.5 rounded" x-text="env"></span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template x-if="svc.volumes && svc.volumes.length > 0">
+                                                    <div class="flex gap-2">
+                                                        <span class="text-gray-500 w-28 flex-shrink-0">Volumes</span>
+                                                        <div class="flex flex-col gap-0.5">
+                                                            <template x-for="vol in svc.volumes" :key="vol">
+                                                                <span class="text-gray-400 font-mono" x-text="vol"></span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template x-if="svc.depends_on && svc.depends_on.length > 0">
+                                                    <div class="flex gap-2">
+                                                        <span class="text-gray-500 w-28 flex-shrink-0">Depends on</span>
+                                                        <div class="flex flex-wrap gap-1">
+                                                            <template x-for="dep in svc.depends_on" :key="dep">
+                                                                <span class="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded" x-text="dep"></span>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- System Ports (second, simple table) -->
                         <template x-if="ports.os_ports && ports.os_ports.length > 0">
                             <div>
                                 <h4 class="text-xs text-gray-500 uppercase mb-2">System Ports</h4>
-                                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                    <template x-for="(p, idx) in ports.os_ports" :key="idx">
-                                        <a :href="'http://localhost:' + p.number" target="_blank"
-                                           class="block bg-gray-900 border border-gray-800 rounded-lg p-3 hover:border-gray-700 transition-colors">
-                                            <div class="flex items-center gap-2">
-                                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                                <span class="text-sm font-mono text-white" x-text="':' + p.number"></span>
-                                            </div>
-                                            <p class="text-xs text-gray-500 mt-1 truncate" x-text="p.process"></p>
-                                        </a>
-                                    </template>
-                                </div>
+                                <table class="w-full text-xs">
+                                    <thead>
+                                        <tr class="text-gray-500 text-left">
+                                            <th class="pb-1 font-medium">Port</th>
+                                            <th class="pb-1 font-medium">Process</th>
+                                            <th class="pb-1 font-medium">PID</th>
+                                            <th class="pb-1 font-medium">Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="(p, idx) in ports.os_ports" :key="idx">
+                                            <tr class="border-t border-gray-800/50">
+                                                <td class="py-1">
+                                                    <a :href="'http://localhost:' + p.number" target="_blank"
+                                                       class="text-indigo-400 hover:text-indigo-300 font-mono" x-text="':' + p.number"></a>
+                                                </td>
+                                                <td class="py-1 text-gray-400 truncate max-w-[120px]" x-text="p.process"></td>
+                                                <td class="py-1 text-gray-500 font-mono" x-text="p.pid"></td>
+                                                <td class="py-1 text-gray-500 font-mono" x-text="p.address"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
                             </div>
                         </template>
-                        <template x-if="ports.compose_ports && ports.compose_ports.length > 0">
-                            <div>
-                                <h4 class="text-xs text-gray-500 uppercase mb-2">Compose Ports</h4>
-                                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                    <template x-for="(p, idx) in ports.compose_ports" :key="idx">
-                                        <a :href="'http://localhost:' + p.host_port" target="_blank"
-                                           class="block bg-gray-900 border border-gray-800 rounded-lg p-3 hover:border-gray-700 transition-colors">
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-sm font-mono text-white" x-text="':' + p.host_port + ' -> :' + p.container_port"></span>
-                                            </div>
-                                            <p class="text-xs text-gray-500 mt-1" x-text="p.service"></p>
-                                        </a>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                        <template x-if="(!ports.os_ports || ports.os_ports.length === 0) && (!ports.compose_ports || ports.compose_ports.length === 0)">
+
+                        <!-- Empty state -->
+                        <template x-if="(!ports.os_ports || ports.os_ports.length === 0) && (!ports.compose_services || ports.compose_services.length === 0)">
                             <div class="text-gray-500 text-sm">No ports detected</div>
                         </template>
                     </div>
