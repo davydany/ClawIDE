@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/davydany/ClawIDE/internal/model"
 )
 
 func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +52,21 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var starredProjects, unstarredProjects []model.Project
+	for _, p := range projects {
+		if p.Starred {
+			starredProjects = append(starredProjects, p)
+		} else {
+			unstarredProjects = append(unstarredProjects, p)
+		}
+	}
+
 	data := map[string]any{
-		"Title":      "ClawIDE - Dashboard",
-		"Projects":   projects,
-		"Discovered": discovered,
-		"StartTour":  r.URL.Query().Get("tour") == "dashboard",
+		"Title":           "ClawIDE - Dashboard",
+		"StarredProjects": starredProjects,
+		"Projects":        unstarredProjects,
+		"Discovered":      discovered,
+		"StartTour":       r.URL.Query().Get("tour") == "dashboard",
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "project-list", "project-list", data); err != nil {
