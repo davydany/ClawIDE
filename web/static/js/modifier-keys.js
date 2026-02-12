@@ -222,16 +222,15 @@
             window.ClawIDETerminal.addDataInterceptor(interceptor);
         }
 
-        // Prevent focus loss on all toolbar buttons
+        // Prevent focus loss on all toolbar buttons.
+        // pointerdown preventDefault() suppresses the mousedown default action
+        // (which causes focus change) while still allowing click events to fire.
+        // NOTE: Do NOT add touchstart preventDefault() here — it suppresses
+        // click events on mobile browsers (Chrome, Safari 15+), making buttons
+        // unresponsive.
         toolbar.addEventListener('pointerdown', function(e) {
             e.preventDefault();
         });
-        toolbar.addEventListener('touchstart', function(e) {
-            // Only prevent default on the toolbar buttons, not passthrough
-            if (e.target.closest('button')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
 
         // Modifier buttons
         var modBtns = toolbar.querySelectorAll('[data-modifier]');
