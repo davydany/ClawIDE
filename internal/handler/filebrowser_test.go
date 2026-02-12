@@ -125,7 +125,7 @@ func setupFileBrowserTest(t *testing.T) (*Handlers, string) {
 	require.NoError(t, err)
 
 	cfg := &config.Config{}
-	h := New(cfg, st, nil, nil, nil, nil, nil)
+	h := New(cfg, st, nil, nil, nil, nil, nil, nil)
 
 	// Create test files
 	require.NoError(t, os.WriteFile(filepath.Join(projectDir, "README.md"), []byte("# Test"), 0644))

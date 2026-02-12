@@ -1,5 +1,5 @@
 // ClawIDE Snippets Manager
-// Floating drawer UI for global code snippets with CRUD, search, and terminal insert.
+// Sidebar-based snippets with CRUD, search, and terminal insert.
 (function() {
     'use strict';
 
@@ -9,11 +9,9 @@
     var editingID = null;
 
     // DOM references (populated in init)
-    var drawer, overlay, list, searchInput, form, nameInput, contentInput, formTitle, cancelBtn;
+    var list, searchInput, form, nameInput, contentInput, formTitle, cancelBtn;
 
     function init() {
-        drawer = document.getElementById('snippet-drawer');
-        overlay = document.getElementById('snippet-overlay');
         list = document.getElementById('snippet-list');
         searchInput = document.getElementById('snippet-search');
         form = document.getElementById('snippet-form');
@@ -22,18 +20,7 @@
         formTitle = document.getElementById('snippet-form-title');
         cancelBtn = document.getElementById('snippet-cancel');
 
-        if (!drawer) return;
-
-        // Toggle button
-        var toggleBtn = document.getElementById('snippet-toggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', toggle);
-        }
-
-        // Overlay close
-        if (overlay) {
-            overlay.addEventListener('click', close);
-        }
+        if (!list) return;
 
         // Search with debounce
         if (searchInput) {
@@ -62,26 +49,6 @@
         loadSnippets('');
     }
 
-    function toggle() {
-        if (drawer.classList.contains('open')) {
-            close();
-        } else {
-            open();
-        }
-    }
-
-    function open() {
-        drawer.classList.add('open');
-        if (overlay) overlay.classList.add('open');
-        loadSnippets(searchInput ? searchInput.value.trim() : '');
-    }
-
-    function close() {
-        drawer.classList.remove('open');
-        if (overlay) overlay.classList.remove('open');
-        resetForm();
-    }
-
     function loadSnippets(query) {
         var url = API_BASE;
         if (query) {
@@ -102,7 +69,7 @@
         if (!list) return;
 
         if (snippets.length === 0) {
-            list.innerHTML = '<div class="text-gray-500 text-sm p-3 text-center">No snippets yet</div>';
+            list.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">No snippets yet</div>';
             return;
         }
 
@@ -252,8 +219,6 @@
 
     // Expose for external use
     window.ClawIDESnippets = {
-        open: open,
-        close: close,
-        toggle: toggle
+        reload: loadSnippets
     };
 })();

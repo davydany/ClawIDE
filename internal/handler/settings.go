@@ -40,13 +40,15 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	// Merge updates (only allow safe fields)
 	allowedFields := map[string]bool{
-		"projects_dir":    true,
-		"max_sessions":    true,
-		"scrollback_size": true,
-		"claude_command":  true,
-		"log_level":       true,
-		"host":            true,
-		"port":            true,
+		"projects_dir":     true,
+		"max_sessions":     true,
+		"scrollback_size":  true,
+		"claude_command":   true,
+		"log_level":        true,
+		"host":             true,
+		"port":             true,
+		"sidebar_position": true,
+		"sidebar_width":    true,
 	}
 
 	for k, v := range updates {
@@ -67,9 +69,18 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Reload into current config
+	// Reload into current config (fix: actually update in-memory config)
 	newCfg := config.DefaultConfig()
 	json.Unmarshal(out, newCfg)
+	h.cfg.SidebarPosition = newCfg.SidebarPosition
+	h.cfg.SidebarWidth = newCfg.SidebarWidth
+	h.cfg.ProjectsDir = newCfg.ProjectsDir
+	h.cfg.MaxSessions = newCfg.MaxSessions
+	h.cfg.ScrollbackSize = newCfg.ScrollbackSize
+	h.cfg.ClaudeCommand = newCfg.ClaudeCommand
+	h.cfg.LogLevel = newCfg.LogLevel
+	h.cfg.Host = newCfg.Host
+	h.cfg.Port = newCfg.Port
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

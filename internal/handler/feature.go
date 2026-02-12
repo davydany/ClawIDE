@@ -127,13 +127,20 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	features := h.store.GetFeatures(project.ID)
+
 	data := map[string]any{
 		"Title":           feature.Name + " - " + project.Name + " - ClawIDE",
 		"Project":         project,
 		"Feature":         feature,
+		"Features":        features,
 		"Sessions":        sessions,
 		"ActiveTab":       "terminal",
 		"StarredProjects": starredProjects,
+		"ActiveFeatureID": featureID,
+		"IsGitRepo":       true,
+		"SidebarPosition": h.cfg.SidebarPosition,
+		"SidebarWidth":    h.cfg.SidebarWidth,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "feature-workspace", "feature-workspace", data); err != nil {

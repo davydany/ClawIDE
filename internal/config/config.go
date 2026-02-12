@@ -22,6 +22,8 @@ type Config struct {
 	WorkspaceTourCompleted bool   `json:"workspace_tour_completed"`
 	ClaudeHookConfigured   bool   `json:"claude_hook_configured"`
 	MaxNotifications       int    `json:"max_notifications"`
+	SidebarPosition        string `json:"sidebar_position"`
+	SidebarWidth           int    `json:"sidebar_width"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -38,6 +40,8 @@ func DefaultConfig() *Config {
 		LogLevel:         "info",
 		DataDir:          filepath.Join(home, ".clawide"),
 		MaxNotifications: 200,
+		SidebarPosition:  "left",
+		SidebarWidth:     288,
 	}
 }
 
@@ -135,6 +139,10 @@ func (c *Config) SnippetsFilePath() string {
 
 func (c *Config) NotificationsFilePath() string {
 	return filepath.Join(c.DataDir, "notifications.json")
+}
+
+func (c *Config) NotesFilePath() string {
+	return filepath.Join(c.DataDir, "notes.json")
 }
 
 func (c *Config) HooksDir() string {

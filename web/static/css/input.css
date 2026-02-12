@@ -301,38 +301,26 @@
     padding: 4px 6px;
 }
 
-/* Snippet drawer */
-.snippet-overlay {
-    @apply fixed inset-0 bg-black/50 z-40;
-    display: none;
-    pointer-events: none;
+/* Sidebar resize handle */
+.sidebar-resize-handle {
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    transition: background-color 0.15s;
 }
 
-.snippet-overlay.open {
-    display: block;
-    pointer-events: auto;
+.sidebar-resize-handle:hover {
+    background: rgba(99, 102, 241, 0.5);
 }
 
-.snippet-drawer {
-    @apply fixed top-0 right-0 h-full bg-gray-900 border-l border-gray-800 z-50 flex flex-col;
-    width: 320px;
-    transform: translateX(100%);
-    transition: transform 0.2s ease-out;
+/* Sidebar section header */
+.sidebar-section-header {
+    transition: color 0.15s;
 }
 
-.snippet-drawer.open {
-    transform: translateX(0);
-}
-
-@media (max-width: 640px) {
-    .snippet-drawer {
-        width: 100%;
-    }
-}
-
-/* Snippet list items */
+/* Snippet list items (sidebar version) */
 .snippet-item {
-    @apply px-4 py-2 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
 }
 
 .snippet-item-header {
@@ -340,15 +328,15 @@
 }
 
 .snippet-item-name {
-    @apply text-sm text-white font-medium truncate;
+    @apply text-xs text-white font-medium truncate;
 }
 
 .snippet-item-actions {
-    @apply flex items-center gap-1 flex-shrink-0;
+    @apply flex items-center gap-0.5 flex-shrink-0;
 }
 
 .snippet-item-actions button {
-    @apply p-1 rounded text-gray-500 hover:text-white transition-colors;
+    @apply p-0.5 rounded text-gray-500 hover:text-white transition-colors;
 }
 
 .snippet-btn-insert:hover {
@@ -360,7 +348,40 @@
 }
 
 .snippet-item-preview {
-    @apply text-xs text-gray-500 mt-1 font-mono truncate;
+    @apply text-[10px] text-gray-500 mt-0.5 font-mono truncate;
+}
+
+/* Note items */
+.note-item {
+    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+}
+
+/* Note markdown preview */
+.note-markdown-preview {
+    line-height: 1.5;
+}
+
+.note-markdown-preview code {
+    @apply bg-gray-700 px-1 rounded;
+    font-size: 0.65rem;
+}
+
+.note-markdown-preview a {
+    @apply text-indigo-400;
+}
+
+.note-markdown-preview a:hover {
+    text-decoration: underline;
+}
+
+/* Feature tab active indicator */
+.feature-tab-active {
+    position: relative;
+}
+
+/* Starred projects panel utility classes */
+.starred-panel-dot {
+    @apply w-2 h-2 rounded-full flex-shrink-0;
 }
 
 /* Dialog backdrop */

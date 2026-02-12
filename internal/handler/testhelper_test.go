@@ -70,6 +70,9 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	notifSt, err := store.NewNotificationStore(filepath.Join(storeDir, "notifications.json"), 200)
 	require.NoError(t, err)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, sse.NewHub())
+	noteSt, err := store.NewNoteStore(filepath.Join(storeDir, "notes.json"))
+	require.NoError(t, err)
+
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, sse.NewHub())
 	return h, st
 }

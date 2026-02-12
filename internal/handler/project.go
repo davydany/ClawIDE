@@ -88,6 +88,50 @@ func (h *Handlers) CreateProject(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+func (h *Handlers) UpdateProjectColor(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "id")
+
+	project, ok := h.store.GetProject(projectID)
+	if !ok {
+		http.Error(w, "project not found", http.StatusNotFound)
+		return
+	}
+
+	var body struct {
+		Color string `json:"color"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validate hex color format if non-empty
+	if body.Color != "" {
+		if len(body.Color) != 7 || body.Color[0] != '#' {
+			http.Error(w, "color must be a hex value like #ff0000 or empty to clear", http.StatusBadRequest)
+			return
+		}
+		for _, c := range body.Color[1:] {
+			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+				http.Error(w, "color must be a valid hex value", http.StatusBadRequest)
+				return
+			}
+		}
+	}
+
+	project.Color = body.Color
+	project.UpdatedAt = time.Now()
+
+	if err := h.store.UpdateProject(project); err != nil {
+		log.Printf("Error updating project color: %v", err)
+		http.Error(w, "failed to update color", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(project)
+}
+
 func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
 	sessions := h.store.GetSessions(project.ID)
@@ -117,6 +161,9 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"CurrentBranch":   currentBranch,
 		"StarredProjects": starredProjects,
 		"StartTour":       !h.cfg.WorkspaceTourCompleted,
+		"ActiveFeatureID": "",
+		"SidebarPosition": h.cfg.SidebarPosition,
+		"SidebarWidth":    h.cfg.SidebarWidth,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {

@@ -49,6 +49,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/", s.handlers.ProjectWorkspace)
 			r.Delete("/", s.handlers.DeleteProject)
 			r.Patch("/star", s.handlers.ToggleStar)
+			r.Patch("/color", s.handlers.UpdateProjectColor)
 
 			// Sessions
 			r.Get("/sessions/", s.handlers.ListSessions)
@@ -115,6 +116,14 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Post("/", s.handlers.CreateSnippet)
 		r.Put("/{snippetID}", s.handlers.UpdateSnippet)
 		r.Delete("/{snippetID}", s.handlers.DeleteSnippet)
+	})
+
+	// Notes API (global + project-scoped via query param)
+	r.Route("/api/notes", func(r chi.Router) {
+		r.Get("/", s.handlers.ListNotes)
+		r.Post("/", s.handlers.CreateNote)
+		r.Put("/{noteID}", s.handlers.UpdateNote)
+		r.Delete("/{noteID}", s.handlers.DeleteNote)
 	})
 
 	// Notifications API (global, not project-scoped)

@@ -14,16 +14,18 @@
 {{end}}
 
 {{define "body"}}
-<div class="flex h-full" x-data="{ sidebarOpen: false }">
+<div class="flex h-full {{if eq .SidebarPosition "right"}}flex-row-reverse{{end}}" x-data="{ sidebarOpen: false }">
     <!-- Mobile sidebar overlay -->
     <div x-show="sidebarOpen" x-cloak
          class="fixed inset-0 z-40 bg-black/50 lg:hidden"
          @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
-           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
+    <aside id="app-sidebar"
+           class="fixed inset-y-0 {{if eq .SidebarPosition "right"}}right-0{{else}}left-0{{end}} z-50 bg-gray-900 {{if eq .SidebarPosition "right"}}border-l{{else}}border-r{{end}} border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col"
+           style="width: {{.SidebarWidth}}px"
+           :class="sidebarOpen ? 'translate-x-0' : '{{if eq .SidebarPosition "right"}}translate-x-full{{else}}-translate-x-full{{end}}'">
+        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800 flex-shrink-0">
             <a href="/" hx-boost="false" class="flex items-center gap-2 text-lg font-semibold text-white">
                 <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -36,7 +38,7 @@
                 </svg>
             </button>
         </div>
-        <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100%-3.5rem)]">
+        <nav class="flex-1 overflow-y-auto p-3 space-y-1">
             <a href="/" hx-boost="false" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -44,77 +46,127 @@
                 All Projects
             </a>
 
-            <div class="mt-4">
-                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Sessions</h3>
-                <div id="session-sidebar" class="mt-2 space-y-1">
-                    {{range .Sessions}}
-                    <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 cursor-pointer">
-                        <span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
-                        <span class="truncate">{{.Name}}</span>
-                    </div>
-                    {{end}}
-                </div>
-
-                <button data-tour="new-session"
-                        hx-post="/projects/{{.Project.ID}}/sessions/"
-                        hx-vals='{"name": ""}'
-                        hx-swap="none"
-                        class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    New Session
+            <!-- Sessions section -->
+            <div class="mt-4" x-data="{ sessionsOpen: true }">
+                <button @click="sessionsOpen = !sessionsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Sessions
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="sessionsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
+                <div x-show="sessionsOpen" x-collapse>
+                    <div id="session-sidebar" class="mt-1 space-y-1">
+                        {{range .Sessions}}
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
+                            <span class="truncate">{{.Name}}</span>
+                        </div>
+                        {{end}}
+                    </div>
+
+                    <button data-tour="new-session"
+                            hx-post="/projects/{{.Project.ID}}/sessions/"
+                            hx-vals='{"name": ""}'
+                            hx-swap="none"
+                            class="mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        New Session
+                    </button>
+                </div>
             </div>
 
-            {{if .IsGitRepo}}
-            <div class="mt-4" x-data="{ showNewFeature: false, featureName: '', featureBase: '' }">
-                <h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Features</h3>
-                <div class="mt-2 space-y-1">
-                    {{range .Features}}
-                    <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/"
-                       class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 cursor-pointer">
-                        <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
-                        <span class="truncate">{{.Name}}</span>
-                    </a>
-                    {{end}}
-                </div>
-                <button @click="showNewFeature = true"
-                        class="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    New Feature
+            <!-- Snippets section (moved from floating drawer) -->
+            <div class="mt-4" x-data="{ snippetsOpen: false }">
+                <button @click="snippetsOpen = !snippetsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Snippets
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="snippetsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
-                <!-- New Feature Modal -->
-                <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
-                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
-                        <form method="POST" action="/projects/{{.Project.ID}}/features/">
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
-                                    <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
-                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
-                                    <input type="text" name="base_branch" x-model="featureBase" placeholder="Leave empty for current branch"
-                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                </div>
-                            </div>
-                            <div class="flex justify-end gap-2 mt-4">
-                                <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
-                                <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                <div x-show="snippetsOpen" x-collapse>
+                    <!-- Snippet search -->
+                    <div class="mt-1 px-1">
+                        <input id="snippet-search" type="text" placeholder="Search snippets..."
+                               class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- Snippet create/edit form -->
+                    <div class="px-1 py-2">
+                        <h4 id="snippet-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Snippet</h4>
+                        <form id="snippet-form" hx-boost="false" class="space-y-1.5">
+                            <input id="snippet-name" type="text" placeholder="Snippet name" required
+                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                            <textarea id="snippet-content" placeholder="Snippet content..." rows="2"
+                                      class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
+                            <div class="flex items-center gap-2">
+                                <button type="submit"
+                                        class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
+                                    Save
+                                </button>
+                                <button type="button" id="snippet-cancel" style="display:none"
+                                        class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                    Cancel
+                                </button>
                             </div>
                         </form>
                     </div>
+
+                    <!-- Snippet list -->
+                    <div id="snippet-list" class="max-h-64 overflow-y-auto"></div>
                 </div>
             </div>
-            {{end}}
 
+            <!-- Notes section -->
+            <div class="mt-4" x-data="{ notesOpen: false }">
+                <button @click="notesOpen = !notesOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Notes
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="notesOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="notesOpen" x-collapse>
+                    <div id="notes-container" data-project-id="{{.Project.ID}}">
+                        <!-- Notes tab toggle -->
+                        <div class="flex items-center gap-1 mt-1 px-1">
+                            <button id="notes-tab-project" class="flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300" onclick="ClawIDENotes.setScope('project')">Project</button>
+                            <button id="notes-tab-global" class="flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800" onclick="ClawIDENotes.setScope('global')">Global</button>
+                        </div>
+
+                        <!-- Notes search -->
+                        <div class="mt-1.5 px-1">
+                            <input id="notes-search" type="text" placeholder="Search notes..."
+                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                        </div>
+
+                        <!-- Notes create/edit form -->
+                        <div class="px-1 py-2">
+                            <h4 id="notes-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Note</h4>
+                            <form id="notes-form" class="space-y-1.5">
+                                <input id="notes-title" type="text" placeholder="Note title" required
+                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                <textarea id="notes-content" placeholder="Note content (markdown)..." rows="3"
+                                          class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
+                                <div id="notes-preview" class="hidden note-markdown-preview px-2 py-1.5 text-xs text-gray-300 bg-gray-800/50 rounded border border-gray-700 max-h-32 overflow-y-auto"></div>
+                                <div class="flex items-center gap-2">
+                                    <button type="submit"
+                                            class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
+                                        Save
+                                    </button>
+                                    <button type="button" id="notes-preview-toggle"
+                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                        Preview
+                                    </button>
+                                    <button type="button" id="notes-cancel" style="display:none"
+                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Notes list -->
+                        <div id="notes-list" class="max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings link -->
             <div class="mt-4 border-t border-gray-800 pt-4">
                 <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,6 +177,11 @@
                 </a>
             </div>
         </nav>
+
+        <!-- Sidebar resize handle -->
+        <div id="sidebar-resize-handle"
+             class="sidebar-resize-handle absolute top-0 bottom-0 {{if eq .SidebarPosition "right"}}left-0{{else}}right-0{{end}} hidden lg:block"
+             data-position="{{.SidebarPosition}}"></div>
     </aside>
 
     <!-- Main content -->
@@ -164,7 +221,6 @@
                                    class="w-full px-2 py-1.5 text-xs bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                         </div>
                         <div class="max-h-64 overflow-y-auto">
-                            <!-- Local branches -->
                             <div class="px-2 py-1.5">
                                 <h4 class="text-[10px] font-semibold text-gray-500 uppercase px-1 mb-1">Local</h4>
                                 <template x-for="b in branches.filter(b => !b.is_remote && b.name.toLowerCase().includes(filter.toLowerCase()))" :key="b.name">
@@ -177,7 +233,6 @@
                                     </button>
                                 </template>
                             </div>
-                            <!-- Remote branches -->
                             <div class="px-2 py-1.5 border-t border-gray-800">
                                 <h4 class="text-[10px] font-semibold text-gray-500 uppercase px-1 mb-1">Remote</h4>
                                 <template x-for="b in branches.filter(b => b.is_remote && b.name.toLowerCase().includes(filter.toLowerCase()))" :key="b.name">
@@ -188,7 +243,6 @@
                                 </template>
                             </div>
                         </div>
-                        <!-- Create new branch -->
                         <div class="p-2 border-t border-gray-800">
                             <template x-if="!creating">
                                 <button @click="creating = true" class="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs text-indigo-400 hover:bg-gray-800 rounded transition-colors">
@@ -219,12 +273,6 @@
                     </div>
                 </div>
                 {{end}}
-                <button id="snippet-toggle" class="flex items-center gap-1.5 p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Snippets">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 18l2-2-2-2"/><path d="M8 18l-2-2 2-2"/><path d="M11.5 12h1"/>
-                    </svg>
-                    <span class="text-xs font-medium">Snippets</span>
-                </button>
             </div>
         </header>
 
@@ -237,11 +285,110 @@
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
                 {{range .StarredProjects}}
-                <a href="/projects/{{.ID}}/" hx-boost="false"
-                   class="flex-shrink-0 px-2.5 py-0.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap {{if eq .ID $.Project.ID}}bg-indigo-600/30 text-indigo-300 border border-indigo-500/40{{else}}text-gray-400 hover:text-white hover:bg-gray-800 border border-transparent{{end}}">
-                    {{.Name}}
-                </a>
+                <div class="relative flex-shrink-0" x-data="{ colorOpen: false }">
+                    <a href="/projects/{{.ID}}/" hx-boost="false"
+                       @contextmenu.prevent="colorOpen = true"
+                       class="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap {{if eq .ID $.Project.ID}}bg-indigo-600/30 text-indigo-300 border border-indigo-500/40{{else}}text-gray-400 hover:text-white hover:bg-gray-800 border border-transparent{{end}}">
+                        {{if .Color}}<span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: {{.Color}}"></span>{{end}}
+                        {{.Name}}
+                    </a>
+                    <!-- Color picker dropdown -->
+                    <div x-show="colorOpen" x-cloak @click.away="colorOpen = false"
+                         class="absolute left-0 top-full mt-1 w-40 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 p-2">
+                        <p class="text-[10px] text-gray-500 uppercase mb-1.5">Project Color</p>
+                        <div class="grid grid-cols-6 gap-1">
+                            {{$pid := .ID}}
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#ef4444'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-red-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#f97316'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-orange-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#eab308'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-yellow-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#22c55e'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-green-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#3b82f6'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-blue-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#a855f7'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-purple-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#ec4899'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-pink-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#14b8a6'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-teal-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#6366f1'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-indigo-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#64748b'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-slate-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:'#78716c'})}).then(()=>location.reload())" class="w-5 h-5 rounded-full bg-stone-500 hover:ring-2 ring-white/50"></button>
+                            <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:''})}).then(()=>location.reload())" class="w-5 h-5 rounded-full border border-gray-600 hover:ring-2 ring-white/50 flex items-center justify-center" title="Clear color">
+                                <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 {{end}}
+            </div>
+            {{end}}
+
+            {{if .IsGitRepo}}
+            <!-- Feature tab row -->
+            <div class="hidden lg:flex items-center gap-1 px-4 py-0 border-b border-gray-800 bg-gray-900/30 overflow-x-auto"
+                 x-data="{ showNewFeature: false, featureName: '', featureBase: '', featureMenu: '' }">
+                <!-- Main workspace tab -->
+                <a href="/projects/{{.Project.ID}}/" hx-boost="false"
+                   class="feature-tab-active flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ActiveFeatureID ""}}text-white border-indigo-400{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Main
+                </a>
+
+                <!-- Feature tabs -->
+                {{range .Features}}
+                <div class="relative flex items-center">
+                    <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/" hx-boost="false"
+                       class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ID $.ActiveFeatureID}}text-white border-purple-400{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
+                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        {{.Name}}
+                    </a>
+                    <button @click.stop="featureMenu = featureMenu === '{{.ID}}' ? '' : '{{.ID}}'"
+                            class="p-1 text-gray-500 hover:text-white rounded transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                    </button>
+                    <!-- Feature dropdown menu -->
+                    <div x-show="featureMenu === '{{.ID}}'" x-cloak @click.away="featureMenu = ''"
+                         class="absolute left-0 top-full mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
+                        <button @click="if(confirm('Merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Merge to Main
+                        </button>
+                        <button @click="if(confirm('Delete feature {{.Name}}? This cannot be undone.')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{$.Project.ID}}/'}) }; featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Delete Feature
+                        </button>
+                    </div>
+                </div>
+                {{end}}
+
+                <!-- New feature button -->
+                <button @click="showNewFeature = true"
+                        class="flex items-center gap-1 px-2 py-2 text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </button>
+
+                <!-- New Feature Modal -->
+                <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
+                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
+                        <form method="POST" action="/projects/{{.Project.ID}}/features/">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
+                                    <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
+                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
+                                    <input type="text" name="base_branch" x-model="featureBase" placeholder="Leave empty for current branch"
+                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-2 mt-4">
+                                <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                                <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
             {{end}}
 
@@ -327,50 +474,26 @@
 
                     <!-- Virtual modifier keys toolbar (touch devices only) -->
                     <div id="modifier-toolbar" class="modifier-toolbar" role="toolbar" aria-label="Terminal modifier keys">
-                        <!-- Modifier keys (toggle/lock) -->
                         <button data-modifier="ctrl" aria-pressed="false">Ctrl</button>
                         <button data-modifier="alt" aria-pressed="false">Alt</button>
                         <button data-modifier="meta" aria-pressed="false">Cmd</button>
-
                         <div class="modifier-separator"></div>
-
-                        <!-- Direct send keys -->
                         <button data-key="tab">Tab</button>
                         <button data-key="esc">Esc</button>
-
                         <div class="modifier-separator"></div>
-
-                        <!-- Arrow keys -->
-                        <button data-key="left" aria-label="Left arrow">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                        </button>
-                        <button data-key="down" aria-label="Down arrow">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                        </button>
-                        <button data-key="up" aria-label="Up arrow">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-                        </button>
-                        <button data-key="right" aria-label="Right arrow">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </button>
-
+                        <button data-key="left" aria-label="Left arrow"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+                        <button data-key="down" aria-label="Down arrow"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+                        <button data-key="up" aria-label="Up arrow"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+                        <button data-key="right" aria-label="Right arrow"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
                         <div class="modifier-separator"></div>
-
-                        <!-- Clipboard -->
-                        <button data-action="copy" aria-label="Copy">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                        </button>
-                        <button data-action="paste" aria-label="Paste">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-                        </button>
+                        <button data-action="copy" aria-label="Copy"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                        <button data-action="paste" aria-label="Paste"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></button>
                     </div>
                 </div>
 
                 <!-- Files panel -->
                 <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
                      x-data="{ fileTree: [], currentFile: null, fileContent: '' }">
-
-                    <!-- File tree sidebar -->
                     <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
                         <div class="p-2 border-b border-gray-800">
                             <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
@@ -422,11 +545,7 @@
                         })();
                         </script>
                     </div>
-
-                    <!-- Editor area -->
-                    <div id="editor-pane-root" class="flex-1 flex min-w-0"
-                         data-project-id="{{.Project.ID}}">
-                        <!-- Empty state shown when no file is open -->
+                    <div id="editor-pane-root" class="flex-1 flex min-w-0" data-project-id="{{.Project.ID}}">
                         <div id="editor-empty-state" class="flex items-center justify-center flex-1 text-gray-500">
                             <div class="text-center">
                                 <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -439,27 +558,16 @@
                 </div>
 
                 <!-- Docker panel -->
-                <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col"
-                     x-data="{ services: [] }">
+                <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col" x-data="{ services: [] }">
                     <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
                         <h3 class="text-sm font-medium text-white">Docker Compose</h3>
                         <div class="ml-auto flex gap-1">
-                            <button onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')"
-                                    class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors">
-                                Up
-                            </button>
-                            <button onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')"
-                                    class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors">
-                                Down
-                            </button>
-                            <button onclick="ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))"
-                                    class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                Refresh
-                            </button>
+                            <button onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors">Up</button>
+                            <button onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors">Down</button>
+                            <button onclick="ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">Refresh</button>
                         </div>
                     </div>
-                    <div id="docker-services" class="flex-1 overflow-y-auto"
-                         x-init="if (typeof ClawIDEDocker !== 'undefined') ClawIDEDocker.refresh('{{.Project.ID}}', $el)">
+                    <div id="docker-services" class="flex-1 overflow-y-auto" x-init="if (typeof ClawIDEDocker !== 'undefined') ClawIDEDocker.refresh('{{.Project.ID}}', $el)">
                         <div class="text-gray-500 text-sm p-4">Loading services...</div>
                     </div>
                 </div>
@@ -468,10 +576,8 @@
                 <div x-show="activeTab === 'ports'" x-cloak class="h-full overflow-y-auto"
                      x-data="{ ports: { os_ports: [], compose_ports: [] } }"
                      x-init="fetch('/projects/{{.Project.ID}}/api/ports').then(r => r.json()).then(d => ports = d).catch(() => {})">
-
                     <div class="p-4 space-y-4">
                         <h3 class="text-sm font-medium text-white">Detected Ports</h3>
-
                         <template x-if="ports.os_ports && ports.os_ports.length > 0">
                             <div>
                                 <h4 class="text-xs text-gray-500 uppercase mb-2">System Ports</h4>
@@ -489,7 +595,6 @@
                                 </div>
                             </div>
                         </template>
-
                         <template x-if="ports.compose_ports && ports.compose_ports.length > 0">
                             <div>
                                 <h4 class="text-xs text-gray-500 uppercase mb-2">Compose Ports</h4>
@@ -506,7 +611,6 @@
                                 </div>
                             </div>
                         </template>
-
                         <template x-if="(!ports.os_ports || ports.os_ports.length === 0) && (!ports.compose_ports || ports.compose_ports.length === 0)">
                             <div class="text-gray-500 text-sm">No ports detected</div>
                         </template>
@@ -517,103 +621,34 @@
 
         <!-- Mobile bottom tab bar -->
         <div class="lg:hidden flex items-center justify-around border-t border-gray-800 bg-gray-900 safe-bottom">
-            <button @click="activeTab = 'terminal'"
-                    :class="activeTab === 'terminal' ? 'text-indigo-400' : 'text-gray-500'"
-                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
+            <button @click="activeTab = 'terminal'" :class="activeTab === 'terminal' ? 'text-indigo-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span class="text-[10px]">Terminal</span>
             </button>
-            <button @click="activeTab = 'files'"
-                    :class="activeTab === 'files' ? 'text-indigo-400' : 'text-gray-500'"
-                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                </svg>
+            <button @click="activeTab = 'files'" :class="activeTab === 'files' ? 'text-indigo-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
                 <span class="text-[10px]">Files</span>
             </button>
-            <button @click="activeTab = 'docker'"
-                    :class="activeTab === 'docker' ? 'text-indigo-400' : 'text-gray-500'"
-                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
-                </svg>
+            <button @click="activeTab = 'docker'" :class="activeTab === 'docker' ? 'text-indigo-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg>
                 <span class="text-[10px]">Docker</span>
             </button>
-            <button @click="activeTab = 'ports'"
-                    :class="activeTab === 'ports' ? 'text-indigo-400' : 'text-gray-500'"
-                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
-                </svg>
+            <button @click="activeTab = 'ports'" :class="activeTab === 'ports' ? 'text-indigo-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/></svg>
                 <span class="text-[10px]">Ports</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Snippet drawer overlay -->
-<div id="snippet-overlay" class="snippet-overlay"></div>
-
-<!-- Snippet floating drawer -->
-<div id="snippet-drawer" class="snippet-drawer">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-        <h2 class="text-sm font-semibold text-white">Snippets</h2>
-        <button onclick="ClawIDESnippets.close()" class="text-gray-400 hover:text-white p-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-    </div>
-
-    <!-- Search -->
-    <div class="px-4 py-2 border-b border-gray-800">
-        <input id="snippet-search" type="text" placeholder="Search snippets..."
-               class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-    </div>
-
-    <!-- Create/Edit form -->
-    <div class="px-4 py-3 border-b border-gray-800">
-        <h3 id="snippet-form-title" class="text-xs font-semibold text-gray-400 uppercase mb-2">New Snippet</h3>
-        <form id="snippet-form" hx-boost="false" class="space-y-2">
-            <input id="snippet-name" type="text" placeholder="Snippet name" required
-                   class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-            <textarea id="snippet-content" placeholder="Snippet content..." rows="3"
-                      class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
-            <div class="flex items-center gap-2">
-                <button type="submit"
-                        class="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                    Save
-                </button>
-                <button type="button" id="snippet-cancel" style="display:none"
-                        class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                    Cancel
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Snippet list -->
-    <div id="snippet-list" class="flex-1 overflow-y-auto"></div>
-</div>
-
 <script>
 function initSessionPanes(sessionID) {
     var container = document.getElementById('session-panes-' + sessionID);
     if (!container) return;
-
     var layoutStr = container.getAttribute('data-layout');
     var projectID = container.getAttribute('data-project-id');
-
     if (!layoutStr) return;
-
-    // Check if already rendered (has child elements with pane terminals)
-    if (container.children.length > 0) {
-        // Already rendered — just refit existing terminals
-        return;
-    }
-
+    if (container.children.length > 0) return;
     try {
         var layout = JSON.parse(layoutStr);
         window.ClawIDEPaneLayout.render(container, layout, sessionID, projectID);
@@ -628,20 +663,14 @@ function renameSession(projectID, sessionID, newName) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'HX-Request': 'true' },
         body: 'name=' + encodeURIComponent(newName),
-    }).catch(function(err) {
-        console.error('Failed to rename session:', err);
-    });
+    }).catch(function(err) { console.error('Failed to rename session:', err); });
 }
 
 function deleteSession(projectID, sessionID) {
     fetch('/projects/' + projectID + '/sessions/' + sessionID, {
         method: 'DELETE',
         headers: { 'HX-Request': 'true' },
-    }).then(function() {
-        window.location.reload();
-    }).catch(function(err) {
-        console.error('Failed to delete session:', err);
-    });
+    }).then(function() { window.location.reload(); }).catch(function(err) { console.error('Failed to delete session:', err); });
 }
 </script>
 

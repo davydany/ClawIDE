@@ -15,10 +15,11 @@ type Handlers struct {
 	ptyManager        *ptyPkg.Manager
 	snippetStore      *store.SnippetStore
 	notificationStore *store.NotificationStore
+	noteStore         *store.NoteStore
 	sseHub            *sse.Hub
 }
 
-func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, hub *sse.Hub) *Handlers {
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, hub *sse.Hub) *Handlers {
 	return &Handlers{
 		cfg:               cfg,
 		store:             st,
@@ -26,6 +27,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		ptyManager:        ptyMgr,
 		snippetStore:      snippetSt,
 		notificationStore: notifSt,
+		noteStore:         noteSt,
 		sseHub:            hub,
 	}
 }

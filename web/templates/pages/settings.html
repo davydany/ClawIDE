@@ -78,6 +78,38 @@
                         </div>
                     </div>
 
+                    <!-- Sidebar settings -->
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                         x-data="{ position: '{{.Config.SidebarPosition}}', saving: false }">
+                        <h3 class="text-sm font-medium text-white mb-4">Sidebar</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">Position</label>
+                                <div class="flex items-center gap-2">
+                                    <button @click="if(position !== 'left') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'left'})}).then(r=>{if(r.ok){position='left'}}).finally(()=>saving=false) }"
+                                            :disabled="saving"
+                                            :class="position === 'left' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
+                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
+                                        </svg>
+                                        Left
+                                    </button>
+                                    <button @click="if(position !== 'right') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'right'})}).then(r=>{if(r.ok){position='right'}}).finally(()=>saving=false) }"
+                                            :disabled="saving"
+                                            :class="position === 'right' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
+                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M12 12h8M4 18h16"/>
+                                        </svg>
+                                        Right
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Changes apply on next workspace load.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
                         <h3 class="text-sm font-medium text-white mb-4">Onboarding</h3>
                         <div class="flex items-center justify-between">
