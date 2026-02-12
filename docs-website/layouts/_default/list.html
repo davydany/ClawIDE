@@ -1,0 +1,32 @@
+{{ define "main" }}
+  {{ partial "breadcrumbs.html" . }}
+
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">{{ .Title }}</h1>
+    {{ with .Description }}
+      <p class="mt-2 text-lg text-gray-600 dark:text-gray-400">{{ . }}</p>
+    {{ end }}
+  </div>
+
+  {{ if .Content }}
+    <div class="prose prose-gray dark:prose-invert max-w-none mb-8">
+      {{ .Content }}
+    </div>
+  {{ end }}
+
+  {{ $pages := .Pages }}
+  {{ if $pages }}
+    <div class="grid gap-4">
+      {{ range $pages }}
+        <a href="{{ .RelPermalink }}" class="group block p-4 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-claw-300 dark:hover:border-claw-700 hover:shadow-sm transition-all">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-claw-600 dark:group-hover:text-claw-400 transition-colors">
+            {{ .Title }}
+          </h2>
+          {{ with .Description }}
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ . }}</p>
+          {{ end }}
+        </a>
+      {{ end }}
+    </div>
+  {{ end }}
+{{ end }}

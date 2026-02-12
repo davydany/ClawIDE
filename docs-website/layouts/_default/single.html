@@ -1,0 +1,8 @@
+{{ define "main" }}
+  {{ partial "breadcrumbs.html" . }}
+
+  <article class="prose prose-gray dark:prose-invert prose-headings:font-semibold prose-a:text-claw-600 dark:prose-a:text-claw-400 prose-code:before:content-none prose-code:after:content-none prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:rounded prose-code:px-1.5 prose-code:py-0.5 prose-code:text-sm max-w-none">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+  </article>
+{{ end }}

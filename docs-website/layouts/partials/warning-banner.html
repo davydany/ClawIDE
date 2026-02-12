@@ -1,0 +1,6 @@
+{{ with site.Params.warningText }}
+<div class="sticky top-0 z-50 bg-amber-500 text-amber-950 text-center text-sm font-medium py-1.5 px-4">
+  <span class="mr-1">{{ site.Params.mascot }}</span>
+  {{ . }}
+</div>
+{{ end }}

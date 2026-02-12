@@ -34,3 +34,9 @@ web/src/node_modules/
 
 # Scratchpad
 scratchpad/
+
+# Documentation site
+docs-website/public/
+docs-website/resources/
+docs-website/node_modules/
+*.png

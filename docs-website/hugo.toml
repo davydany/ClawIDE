@@ -1,0 +1,59 @@
+baseURL = 'https://clawide.vercel.app/'
+languageCode = 'en-us'
+title = 'ClawIDE'
+enableRobotsTXT = true
+
+[build]
+  [build.buildStats]
+    enable = true
+  [[build.cachebusters]]
+    source = 'assets/notwatching/hugo_stats\.json'
+    target = 'css'
+  [[build.cachebusters]]
+    source = '(postcss|tailwind)\.config\.js'
+    target = 'css'
+
+[module]
+  [[module.mounts]]
+    source = 'assets'
+    target = 'assets'
+  [[module.mounts]]
+    disableWatch = true
+    source = 'hugo_stats.json'
+    target = 'assets/notwatching/hugo_stats.json'
+
+[markup]
+  [markup.highlight]
+    style = 'dracula'
+    lineNos = false
+    noClasses = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 4
+    ordered = false
+
+[menu]
+  [[menu.main]]
+    name = 'Docs'
+    url = '/getting-started/'
+    weight = 10
+  [[menu.main]]
+    name = 'Features'
+    url = '/features/'
+    weight = 20
+  [[menu.main]]
+    name = 'Reference'
+    url = '/reference/'
+    weight = 30
+  [[menu.main]]
+    name = 'GitHub'
+    url = 'https://github.com/davydany/ClawIDE'
+    weight = 40
+    [menu.main.params]
+      external = true
+
+[params]
+  mascot = '🦀'
+  warningText = 'ClawIDE is not production ready. Use at your own risk.'
+  githubRepo = 'https://github.com/davydany/ClawIDE'
+  description = 'A web-based IDE for managing multiple Claude Code sessions across projects.'

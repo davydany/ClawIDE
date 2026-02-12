@@ -1,0 +1,69 @@
+{{ $nav := site.Data.nav }}
+{{ $currentURL := .RelPermalink }}
+
+<aside id="sidebar" class="hidden lg:block w-64 shrink-0 overflow-y-auto h-[calc(100vh-7rem)] sticky top-[7rem] pb-8">
+  <nav class="px-4 pt-4" aria-label="Sidebar navigation">
+    {{ range $sIdx, $section := $nav.sections }}
+      {{ if $section.items }}
+        {{/* Section with collapsible items */}}
+        {{ $sectionActive := false }}
+        {{ range $section.items }}
+          {{ if eq $currentURL .url }}{{ $sectionActive = true }}{{ end }}
+        {{ end }}
+
+        <div class="mb-4">
+          <button
+            type="button"
+            class="sidebar-section-toggle flex items-center justify-between w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            aria-expanded="{{ if $sectionActive }}true{{ else }}true{{ end }}"
+            data-section="{{ $sIdx }}"
+          >
+            <span>{{ $section.title }}</span>
+            <svg class="sidebar-chevron w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+
+          <ul class="sidebar-items mt-1 space-y-0.5" data-section="{{ $sIdx }}">
+            {{ range $section.items }}
+              <li>
+                <a
+                  href="{{ .url | relURL }}"
+                  class="sidebar-link block px-3 py-1.5 text-sm rounded-md border-l-2 border-transparent text-gray-600 hover:text-claw-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-claw-400 dark:hover:bg-gray-800/50 transition-colors{{ if eq $currentURL .url }} active{{ end }}"
+                >
+                  {{ .title }}
+                </a>
+              </li>
+            {{ end }}
+          </ul>
+        </div>
+      {{ else if $section.url }}
+        {{/* Top-level link (e.g., Changelog) */}}
+        <div class="mb-4">
+          <a
+            href="{{ $section.url | relURL }}"
+            class="sidebar-link block px-3 py-2 text-xs font-semibold uppercase tracking-wider border-l-2 border-transparent text-gray-500 hover:text-claw-600 dark:text-gray-400 dark:hover:text-claw-400 transition-colors{{ if eq $currentURL $section.url }} active{{ end }}"
+          >
+            {{ $section.title }}
+          </a>
+        </div>
+      {{ end }}
+    {{ end }}
+  </nav>
+</aside>
+
+<script>
+  (function() {
+    document.querySelectorAll('.sidebar-section-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var section = btn.getAttribute('data-section');
+        var items = document.querySelector('.sidebar-items[data-section="' + section + '"]');
+        var expanded = btn.getAttribute('aria-expanded') === 'true';
+
+        btn.setAttribute('aria-expanded', String(!expanded));
+        items.style.display = expanded ? 'none' : '';
+        btn.querySelector('.sidebar-chevron').style.transform = expanded ? 'rotate(-90deg)' : '';
+      });
+    });
+  })();
+</script>

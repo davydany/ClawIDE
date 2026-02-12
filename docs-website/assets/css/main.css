@@ -1,0 +1,78 @@
+@import "tailwindcss";
+@source "hugo_stats.json";
+@custom-variant dark (&:where(.dark, .dark *));
+@plugin "@tailwindcss/typography";
+
+/* ClawIDE custom red color palette */
+@theme {
+  --color-claw-50: #fef2f2;
+  --color-claw-100: #fee2e2;
+  --color-claw-200: #fecaca;
+  --color-claw-300: #fca5a5;
+  --color-claw-400: #f87171;
+  --color-claw-500: #ef4444;
+  --color-claw-600: #dc2626;
+  --color-claw-700: #b91c1c;
+  --color-claw-800: #991b1b;
+  --color-claw-900: #7f1d1d;
+  --color-claw-950: #450a0a;
+}
+
+/* Smooth transitions for dark mode */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+/* Sidebar active state */
+.sidebar-link.active {
+  color: var(--color-claw-600);
+  font-weight: 600;
+  border-left-color: var(--color-claw-600);
+}
+
+.dark .sidebar-link.active {
+  color: var(--color-claw-400);
+  border-left-color: var(--color-claw-400);
+}
+
+/* Code block styling */
+.prose pre {
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .prose pre {
+  border-color: #374151;
+}
+
+/* Screenshot shortcode styling */
+.screenshot-container {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.dark .screenshot-container {
+  border-color: #374151;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+}

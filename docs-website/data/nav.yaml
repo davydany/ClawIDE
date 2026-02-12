@@ -1,0 +1,43 @@
+sections:
+  - title: Getting Started
+    items:
+      - title: Quick Start
+        url: /getting-started/quick-start/
+      - title: Installation
+        url: /getting-started/installation/
+  - title: Features
+    items:
+      - title: Dashboard
+        url: /features/dashboard/
+      - title: Terminal Sessions
+        url: /features/terminal-sessions/
+      - title: File Editor
+        url: /features/file-editor/
+      - title: Docker Integration
+        url: /features/docker-integration/
+      - title: Git Worktrees
+        url: /features/git-worktrees/
+      - title: Port Detection
+        url: /features/port-detection/
+      - title: Settings
+        url: /features/settings/
+      - title: Code Snippets
+        url: /features/code-snippets/
+      - title: Onboarding
+        url: /features/onboarding/
+  - title: Reference
+    items:
+      - title: Architecture
+        url: /reference/architecture/
+      - title: Configuration
+        url: /reference/configuration/
+      - title: API Reference
+        url: /reference/api/
+  - title: Development
+    items:
+      - title: Local Setup
+        url: /development/setup/
+      - title: Contributing
+        url: /development/contributing/
+  - title: Changelog
+    url: /changelog/

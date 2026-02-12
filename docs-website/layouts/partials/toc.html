@@ -1,0 +1,10 @@
+{{ if .TableOfContents }}
+<aside class="hidden xl:block w-56 shrink-0 overflow-y-auto h-[calc(100vh-7rem)] sticky top-[7rem] pb-8">
+  <div class="px-4 pt-4">
+    <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">On this page</h4>
+    <div class="toc text-sm text-gray-600 dark:text-gray-400 space-y-1 [&_ul]:ml-3 [&_ul]:mt-1 [&_ul]:space-y-1 [&_a]:block [&_a]:py-0.5 [&_a:hover]:text-claw-600 [&_a:hover]:dark:text-claw-400 [&_a]:transition-colors">
+      {{ .TableOfContents }}
+    </div>
+  </div>
+</aside>
+{{ end }}

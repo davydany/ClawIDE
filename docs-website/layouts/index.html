@@ -1,0 +1,81 @@
+{{ define "main" }}
+  {{/* Hero Section */}}
+  <div class="py-16 text-center">
+    <div class="text-7xl mb-6">{{ site.Params.mascot }}</div>
+    <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+      {{ site.Title }}
+    </h1>
+    <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
+      {{ site.Params.description }}
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a href="{{ "getting-started/quick-start/" | relURL }}" class="inline-flex items-center px-6 py-3 rounded-lg bg-claw-600 hover:bg-claw-700 text-white font-medium transition-colors shadow-sm">
+        Get Started
+        <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </a>
+      <a href="{{ site.Params.githubRepo }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium transition-colors">
+        <svg class="mr-2 w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+
+  {{/* Features Grid */}}
+  <div class="py-12 border-t border-gray-200 dark:border-gray-800">
+    <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">Features</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {{ $features := slice
+        (dict "icon" "terminal" "title" "Terminal Sessions" "desc" "Manage multiple Claude Code sessions across projects simultaneously.")
+        (dict "icon" "layout" "title" "Dashboard" "desc" "Clean web interface for monitoring and controlling all your sessions.")
+        (dict "icon" "file" "title" "File Editor" "desc" "Built-in code editor with syntax highlighting and live editing.")
+        (dict "icon" "box" "title" "Docker Integration" "desc" "Seamless Docker container management and monitoring.")
+        (dict "icon" "git" "title" "Git Worktrees" "desc" "Work on multiple branches simultaneously with git worktree support.")
+        (dict "icon" "zap" "title" "Port Detection" "desc" "Automatic port detection and forwarding for running services.")
+      }}
+      {{ range $features }}
+        <div class="p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-claw-300 dark:hover:border-claw-700 hover:shadow-md transition-all">
+          <div class="w-10 h-10 rounded-lg bg-claw-50 dark:bg-claw-950 flex items-center justify-center mb-4">
+            {{ if eq .icon "terminal" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+            {{ else if eq .icon "layout" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" /></svg>
+            {{ else if eq .icon "file" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+            {{ else if eq .icon "box" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+            {{ else if eq .icon "git" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg>
+            {{ else if eq .icon "zap" }}
+              <svg class="w-5 h-5 text-claw-600 dark:text-claw-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+            {{ end }}
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{{ .title }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ .desc }}</p>
+        </div>
+      {{ end }}
+    </div>
+  </div>
+
+  {{/* Quick Start */}}
+  <div class="py-12 border-t border-gray-200 dark:border-gray-800">
+    <h2 class="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">Quick Start</h2>
+    <p class="text-center text-gray-600 dark:text-gray-400 mb-8">Get up and running in seconds</p>
+    <div class="max-w-2xl mx-auto bg-gray-900 dark:bg-gray-800 rounded-xl p-6 text-sm font-['JetBrains_Mono',monospace]">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+      </div>
+      <code class="text-gray-300">
+        <span class="text-green-400">$</span> git clone {{ site.Params.githubRepo }}<br>
+        <span class="text-green-400">$</span> cd ClawIDE<br>
+        <span class="text-green-400">$</span> make up<br>
+        <span class="text-gray-500"># Open http://localhost:8000</span>
+      </code>
+    </div>
+  </div>
+{{ end }}

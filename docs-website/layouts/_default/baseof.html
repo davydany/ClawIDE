@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="{{ site.LanguageCode }}" class="scroll-smooth">
+<head>
+  {{ partial "head.html" . }}
+</head>
+<body class="min-h-screen flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-['Inter',sans-serif]">
+
+  {{/* Warning banner */}}
+  {{ partial "warning-banner.html" . }}
+
+  {{/* Navigation */}}
+  {{ partial "nav.html" . }}
+
+  {{/* Main layout */}}
+  <div class="flex-1 max-w-8xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+    <div class="flex gap-8">
+
+      {{/* Left sidebar */}}
+      {{ partial "sidebar.html" . }}
+
+      {{/* Main content */}}
+      <main class="flex-1 min-w-0 py-8">
+        {{ block "main" . }}{{ end }}
+      </main>
+
+      {{/* Right ToC */}}
+      {{ partial "toc.html" . }}
+
+    </div>
+  </div>
+
+  {{/* Footer */}}
+  {{ partial "footer.html" . }}
+
+</body>
+</html>

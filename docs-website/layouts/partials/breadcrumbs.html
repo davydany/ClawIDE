@@ -1,0 +1,39 @@
+{{ if not .IsHome }}
+<nav aria-label="Breadcrumb" class="mb-6">
+  <ol class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+    <li>
+      <a href="{{ "/" | relURL }}" class="hover:text-claw-600 dark:hover:text-claw-400 transition-colors">Home</a>
+    </li>
+
+    {{/* Collect ancestors up to max 3 levels (Home + 2 ancestors + current) */}}
+    {{ $ancestors := slice }}
+    {{ range .Ancestors.Reverse }}
+      {{ if not .IsHome }}
+        {{ $ancestors = $ancestors | append . }}
+      {{ end }}
+    {{ end }}
+
+    {{/* Limit to last 2 ancestors to keep breadcrumbs at max 3 levels */}}
+    {{ $max := 2 }}
+    {{ if gt (len $ancestors) $max }}
+      {{ $ancestors = last $max $ancestors }}
+    {{ end }}
+
+    {{ range $ancestors }}
+      <li class="flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+        <a href="{{ .RelPermalink }}" class="hover:text-claw-600 dark:hover:text-claw-400 transition-colors">{{ .Title }}</a>
+      </li>
+    {{ end }}
+
+    <li class="flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+      <span class="font-medium text-gray-900 dark:text-gray-100">{{ .Title }}</span>
+    </li>
+  </ol>
+</nav>
+{{ end }}

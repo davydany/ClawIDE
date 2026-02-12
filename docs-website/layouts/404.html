@@ -1,0 +1,14 @@
+{{ define "main" }}
+<div class="flex flex-col items-center justify-center py-24 text-center">
+  <div class="text-9xl mb-6">{{ site.Params.mascot }}</div>
+  <h1 class="text-6xl font-bold text-gray-900 dark:text-gray-100 mb-4">404</h1>
+  <p class="text-xl text-gray-600 dark:text-gray-400 mb-2">Page not found</p>
+  <p class="text-gray-500 dark:text-gray-500 mb-8">The crab couldn't find what you're looking for.</p>
+  <a href="{{ "/" | relURL }}" class="inline-flex items-center px-6 py-3 rounded-lg bg-claw-600 hover:bg-claw-700 text-white font-medium transition-colors shadow-sm">
+    <svg class="mr-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+    </svg>
+    Back to Home
+  </a>
+</div>
+{{ end }}

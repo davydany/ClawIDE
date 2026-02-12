@@ -1,0 +1,73 @@
+<nav class="sticky top-7 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-800">
+  <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+
+      {{/* Brand */}}
+      <a href="{{ "/" | relURL }}" class="flex items-center gap-2 text-xl font-bold text-claw-600 dark:text-claw-400 hover:text-claw-700 dark:hover:text-claw-300 transition-colors">
+        <span class="text-2xl">{{ site.Params.mascot }}</span>
+        <span>{{ site.Title }}</span>
+      </a>
+
+      {{/* Desktop menu */}}
+      <div class="hidden md:flex items-center gap-6">
+        {{ range site.Menus.main }}
+          <a
+            href="{{ .URL }}"
+            class="text-sm font-medium text-gray-600 hover:text-claw-600 dark:text-gray-300 dark:hover:text-claw-400 transition-colors{{ if $.IsMenuCurrent "main" . }} text-claw-600 dark:text-claw-400{{ end }}"
+            {{ with .Params.external }}target="_blank" rel="noopener noreferrer"{{ end }}
+          >
+            {{ .Name }}
+          </a>
+        {{ end }}
+
+        {{/* Dark mode toggle */}}
+        {{ partial "dark-mode-toggle.html" . }}
+      </div>
+
+      {{/* Mobile hamburger */}}
+      <button
+        id="mobile-menu-btn"
+        type="button"
+        class="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800 transition-colors"
+        aria-label="Open menu"
+        aria-expanded="false"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {{/* Mobile menu panel */}}
+  <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <div class="px-4 py-3 space-y-2">
+      {{ range site.Menus.main }}
+        <a
+          href="{{ .URL }}"
+          class="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:text-claw-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-claw-400 dark:hover:bg-gray-800 transition-colors"
+          {{ with .Params.external }}target="_blank" rel="noopener noreferrer"{{ end }}
+        >
+          {{ .Name }}
+        </a>
+      {{ end }}
+      <div class="px-3 py-2">
+        {{ partial "dark-mode-toggle.html" . }}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  (function() {
+    var btn = document.getElementById('mobile-menu-btn');
+    var menu = document.getElementById('mobile-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', function() {
+      var expanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', String(!expanded));
+      menu.classList.toggle('hidden');
+    });
+  })();
+</script>

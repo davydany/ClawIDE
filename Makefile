@@ -97,3 +97,21 @@ version:
 # Format code
 fmt:
 	go fmt ./...
+
+# ---- Documentation Site ----
+.PHONY: docs docs-dev docs-deps docs-screenshots docs-clean
+
+docs:
+	cd docs-website && hugo --minify --gc
+
+docs-dev:
+	cd docs-website && hugo server --buildDrafts --navigateToChanged
+
+docs-deps:
+	cd docs-website && npm install
+
+docs-screenshots:
+	cd docs-website && node scripts/capture-screenshots.js
+
+docs-clean:
+	rm -rf docs-website/public docs-website/resources
