@@ -97,6 +97,7 @@ HOOK_JSON=$(cat)
 PROJECT_ID="${CLAWIDE_PROJECT_ID:-}"
 SESSION_ID="${CLAWIDE_SESSION_ID:-}"
 FEATURE_ID="${CLAWIDE_FEATURE_ID:-}"
+PANE_ID="${CLAWIDE_PANE_ID:-}"
 API_URL="${CLAWIDE_API_URL:-http://localhost:%d}"
 
 # Extract stop reason from hook JSON (if jq is available)
@@ -120,6 +121,7 @@ curl -s -X POST "${API_URL}/api/notifications" \
         \"project_id\": \"${PROJECT_ID}\",
         \"session_id\": \"${SESSION_ID}\",
         \"feature_id\": \"${FEATURE_ID}\",
+        \"pane_id\": \"${PANE_ID}\",
         \"cwd\": \"$(pwd)\"
     }" &>/dev/null &
 

@@ -29,8 +29,20 @@
                     window.ClawIDETerminal.create(sessionID, paneID, paneContainer);
                 }
             });
-            // Ensure a pane is focused after render (mobile: toolbar needs a target)
-            if (!window.ClawIDETerminal.getFocusedPaneID() && paneIDs.length > 0) {
+
+            // Check for ?pane= query param to deep-link to a specific pane
+            var urlParams = new URLSearchParams(window.location.search);
+            var targetPane = urlParams.get('pane');
+            if (targetPane && paneIDs.indexOf(targetPane) !== -1) {
+                // Small delay to let terminals initialize
+                setTimeout(function() {
+                    window.ClawIDETerminal.focusPane(targetPane);
+                }, 200);
+                // Clean the URL param without triggering a navigation
+                var cleanURL = window.location.pathname + window.location.hash;
+                window.history.replaceState(null, '', cleanURL);
+            } else if (paneIDs.length > 0) {
+                // Ensure a pane is focused after render (mobile: toolbar needs a target)
                 window.ClawIDETerminal.setFocusedPaneID(paneIDs[0]);
             }
         });

@@ -21,6 +21,7 @@ type createNotificationRequest struct {
 	ProjectID      string `json:"project_id"`
 	SessionID      string `json:"session_id"`
 	FeatureID      string `json:"feature_id"`
+	PaneID         string `json:"pane_id"`
 	CWD            string `json:"cwd"`
 	IdempotencyKey string `json:"idempotency_key"`
 }
@@ -58,6 +59,7 @@ func (h *Handlers) CreateNotification(w http.ResponseWriter, r *http.Request) {
 		ProjectID:      req.ProjectID,
 		SessionID:      req.SessionID,
 		FeatureID:      req.FeatureID,
+		PaneID:         req.PaneID,
 		CWD:            req.CWD,
 		IdempotencyKey: req.IdempotencyKey,
 		Read:           false,

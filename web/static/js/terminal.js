@@ -6,6 +6,24 @@
     let focusedPaneID = null;
     const dataInterceptors = [];
 
+    function updateFocusedPane(paneID) {
+        // Remove highlight from previous pane
+        if (focusedPaneID && focusedPaneID !== paneID) {
+            var prevContainer = document.getElementById('pane-' + focusedPaneID);
+            if (prevContainer) {
+                var prevLeaf = prevContainer.closest('.pane-leaf');
+                if (prevLeaf) prevLeaf.classList.remove('focused');
+            }
+        }
+        focusedPaneID = paneID;
+        // Add highlight to new pane
+        var container = document.getElementById('pane-' + paneID);
+        if (container) {
+            var leaf = container.closest('.pane-leaf');
+            if (leaf) leaf.classList.add('focused');
+        }
+    }
+
     function createTerminal(sessionID, paneID, container) {
         if (terminals[paneID]) {
             return terminals[paneID];
@@ -53,10 +71,10 @@
         term.open(container);
         fitAddon.fit();
 
-        // Track focus for modifier toolbar
+        // Track focus for modifier toolbar and visual highlighting
         if (term.textarea) {
             term.textarea.addEventListener('focus', function() {
-                focusedPaneID = paneID;
+                updateFocusedPane(paneID);
             });
         }
 
@@ -191,7 +209,19 @@
         },
         setFocusedPaneID: function(paneID) {
             if (terminals[paneID]) {
-                focusedPaneID = paneID;
+                updateFocusedPane(paneID);
+            }
+        },
+        focusPane: function(paneID) {
+            var ts = terminals[paneID];
+            if (ts) {
+                updateFocusedPane(paneID);
+                ts.term.focus();
+                // Scroll the pane into view if needed
+                var container = document.getElementById('pane-' + paneID);
+                if (container) {
+                    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             }
         },
         getAllPaneIDs: function() {

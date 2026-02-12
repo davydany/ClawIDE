@@ -11,6 +11,7 @@ type Notification struct {
 	ProjectID      string    `json:"project_id,omitempty"`
 	SessionID      string    `json:"session_id,omitempty"`
 	FeatureID      string    `json:"feature_id,omitempty"`
+	PaneID         string    `json:"pane_id,omitempty"`
 	CWD            string    `json:"cwd,omitempty"`
 	IdempotencyKey string    `json:"idempotency_key,omitempty"`
 	Read           bool      `json:"read"`

@@ -102,11 +102,25 @@ function notificationBell() {
             }
             this.open = false;
 
-            // Navigate to project/feature workspace
+            // Build target URL with optional pane query param for deep-linking
+            var url = '';
             if (n.feature_id && n.project_id) {
-                window.location.href = '/projects/' + n.project_id + '/features/' + n.feature_id + '/';
+                url = '/projects/' + n.project_id + '/features/' + n.feature_id + '/';
             } else if (n.project_id) {
-                window.location.href = '/projects/' + n.project_id + '/';
+                url = '/projects/' + n.project_id + '/';
+            }
+
+            if (!url) return;
+
+            if (n.pane_id) {
+                url += '?pane=' + encodeURIComponent(n.pane_id);
+            }
+
+            // If already on the same workspace page, focus the pane directly
+            if (n.pane_id && window.location.pathname === url.split('?')[0]) {
+                window.ClawIDETerminal.focusPane(n.pane_id);
+            } else {
+                window.location.href = url;
             }
         },
 
