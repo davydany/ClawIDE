@@ -23,6 +23,9 @@ func (s *Server) setupRoutes() *chi.Mux {
 	staticFS, _ := fs.Sub(web.StaticFS, "static")
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
+	// Version
+	r.Get("/api/version", s.handlers.Version)
+
 	// Dashboard
 	r.Get("/", s.handlers.Dashboard)
 

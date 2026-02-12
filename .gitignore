@@ -29,5 +29,8 @@ web/src/node_modules/
 # Config
 .env
 
+# Release artifacts
+/dist/
+
 # Scratchpad
 scratchpad/

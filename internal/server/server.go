@@ -14,6 +14,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/davydany/ClawIDE/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/version"
 )
 
 type Server struct {
@@ -107,7 +108,7 @@ func recoverTmuxSessions(st *store.Store) {
 }
 
 func (s *Server) Start() error {
-	log.Printf("Starting ClawIDE on http://%s", s.cfg.Addr())
+	log.Printf("Starting %s on http://%s", version.String(), s.cfg.Addr())
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server error: %w", err)
 	}
