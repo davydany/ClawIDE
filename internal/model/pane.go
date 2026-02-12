@@ -2,6 +2,12 @@ package model
 
 import "github.com/google/uuid"
 
+// PaneType constants for distinguishing agent vs shell panes.
+const (
+	PaneTypeAgent = "agent"
+	PaneTypeShell = "shell"
+)
+
 // PaneNode represents a node in the binary tree of pane splits.
 // A node is either a Leaf (single terminal pane) or a Split (two children).
 type PaneNode struct {
@@ -9,6 +15,7 @@ type PaneNode struct {
 	PaneID    string    `json:"pane_id,omitempty"`    // leaf only
 	TmuxName  string    `json:"tmux_name,omitempty"`  // leaf only: "clawide-{PaneID}"
 	Name      string    `json:"name,omitempty"`        // leaf only: user-assigned display name
+	PaneType  string    `json:"pane_type,omitempty"`   // leaf only: "agent" or "shell"
 	Direction string    `json:"direction,omitempty"`   // split only: "horizontal" or "vertical"
 	Ratio     float64   `json:"ratio,omitempty"`       // split only: 0.1-0.9
 	First     *PaneNode `json:"first,omitempty"`       // split only
@@ -27,6 +34,30 @@ func NewLeafPane(paneID string) *PaneNode {
 // NewLeafPaneWithID creates a new leaf pane with an auto-generated UUID.
 func NewLeafPaneWithID() *PaneNode {
 	return NewLeafPane(uuid.New().String())
+}
+
+// NewAgentPane creates a new leaf pane node that will auto-launch the configured agent command.
+func NewAgentPane(paneID string) *PaneNode {
+	return &PaneNode{
+		Type:     "leaf",
+		PaneID:   paneID,
+		TmuxName: "clawide-" + paneID,
+		PaneType: PaneTypeAgent,
+	}
+}
+
+// NewAgentPaneWithID creates a new agent pane with an auto-generated UUID.
+func NewAgentPaneWithID() *PaneNode {
+	return NewAgentPane(uuid.New().String())
+}
+
+// EffectivePaneType returns the pane type, defaulting to PaneTypeShell for
+// backward compatibility with existing state.json entries that lack a pane_type.
+func (n *PaneNode) EffectivePaneType() string {
+	if n.PaneType == "" {
+		return PaneTypeShell
+	}
+	return n.PaneType
 }
 
 // FindPane searches the tree for a pane by ID.
@@ -93,6 +124,7 @@ func (n *PaneNode) Clone() *PaneNode {
 		PaneID:    n.PaneID,
 		TmuxName:  n.TmuxName,
 		Name:      n.Name,
+		PaneType:  n.PaneType,
 		Direction: n.Direction,
 		Ratio:     n.Ratio,
 	}

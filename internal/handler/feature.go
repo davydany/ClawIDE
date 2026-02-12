@@ -94,7 +94,7 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		FeatureID: featureID,
 		Name:      "Session " + time.Now().Format("15:04"),
 		WorkDir:   worktreePath,
-		Layout:    model.NewLeafPane(paneID),
+		Layout:    model.NewAgentPane(paneID),
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -225,7 +225,7 @@ func (h *Handlers) CreateFeatureSession(w http.ResponseWriter, r *http.Request) 
 		FeatureID: featureID,
 		Name:      name,
 		WorkDir:   feature.WorktreePath,
-		Layout:    model.NewLeafPane(paneID),
+		Layout:    model.NewAgentPane(paneID),
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

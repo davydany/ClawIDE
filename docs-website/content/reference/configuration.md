@@ -21,7 +21,7 @@ When the same setting is defined in multiple sources, the highest-precedence sou
 | Projects Dir | `--projects-dir` | `CLAWIDE_PROJECTS_DIR` | `~/projects` | Root directory where projects are located |
 | Max Sessions | `--max-sessions` | `CLAWIDE_MAX_SESSIONS` | `10` | Maximum number of concurrent terminal sessions |
 | Scrollback Size | — | `CLAWIDE_SCROLLBACK_SIZE` | `65536` | Terminal scrollback buffer size in bytes |
-| Claude Command | `--claude-command` | `CLAWIDE_CLAUDE_COMMAND` | `claude` | Name or path of the Claude CLI binary |
+| Agent Command | `--agent-command` | `CLAWIDE_AGENT_COMMAND` | `claude` | AI agent command auto-launched in new panes (e.g. `claude`, `codex`, `aider`). Set to empty string for plain shell. Backward compat: `CLAWIDE_CLAUDE_COMMAND` is also accepted. |
 | Log Level | `--log-level` | `CLAWIDE_LOG_LEVEL` | `info` | Logging verbosity: `debug`, `info`, `warn`, `error` |
 | Data Dir | `--data-dir` | `CLAWIDE_DATA_DIR` | `~/.clawide` | Directory for state file, config, and PID file |
 | Restart | `--restart` | — | `false` | Kill any running ClawIDE instance before starting |
@@ -39,7 +39,7 @@ The config file is located at `~/.clawide/config.json`. ClawIDE reads this file 
   "projects_dir": "~/projects",
   "max_sessions": 10,
   "scrollback_size": 65536,
-  "claude_command": "claude",
+  "agent_command": "claude",
   "log_level": "info",
   "data_dir": "~/.clawide"
 }
@@ -94,8 +94,8 @@ ClawIDE listens on port **3000** because CLI flags have the highest precedence.
 # Specify a custom data directory
 ./clawide --data-dir /tmp/clawide-dev
 
-# Use a different Claude binary
-./clawide --claude-command /usr/local/bin/claude-beta
+# Use a different AI agent
+./clawide --agent-command aider
 ```
 
 ## Environment Variable Usage

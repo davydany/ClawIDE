@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/davydany/ClawIDE/internal/model"
+	"github.com/davydany/ClawIDE/internal/tmux"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -49,6 +52,9 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 	// Get or create PTY session keyed by paneID
 	ptySess, ok := h.ptyManager.GetSession(paneID)
 	if !ok {
+		tmuxName := "clawide-" + paneID
+		isNewSession := !tmux.HasSession(tmuxName)
+
 		env := map[string]string{
 			"CLAWIDE_PROJECT_ID": sess.ProjectID,
 			"CLAWIDE_SESSION_ID": sess.ID,
@@ -65,6 +71,20 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to create PTY session for pane %s: %v", paneID, err)
 			http.Error(w, "Failed to create terminal session", http.StatusInternalServerError)
 			return
+		}
+
+		// Auto-launch the agent command for new agent panes.
+		if isNewSession && h.cfg.AgentCommand != "" {
+			paneNode, _ := sess.Layout.FindPane(paneID)
+			if paneNode != nil && paneNode.EffectivePaneType() == model.PaneTypeAgent {
+				agentCmd := h.cfg.AgentCommand
+				go func() {
+					time.Sleep(300 * time.Millisecond)
+					if err := tmux.SendKeys(tmuxName, agentCmd); err != nil {
+						log.Printf("Failed to send agent command to %s: %v", tmuxName, err)
+					}
+				}()
+			}
 		}
 	}
 

@@ -20,7 +20,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, filepath.Join(home, "projects"), cfg.ProjectsDir)
 	assert.Equal(t, 10, cfg.MaxSessions)
 	assert.Equal(t, 65536, cfg.ScrollbackSize)
-	assert.Equal(t, "claude", cfg.ClaudeCommand)
+	assert.Equal(t, "claude", cfg.AgentCommand)
 	assert.Equal(t, "info", cfg.LogLevel)
 	assert.Equal(t, filepath.Join(home, ".clawide"), cfg.DataDir)
 	assert.False(t, cfg.Restart)
@@ -104,6 +104,43 @@ func TestLoadFile(t *testing.T) {
 		assert.True(t, os.IsNotExist(err))
 	})
 
+	t.Run("backward compat claude_command in config file", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgData := map[string]any{
+			"claude_command": "claude-beta",
+		}
+		data, err := json.Marshal(cfgData)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.json"), data, 0644))
+
+		cfg := DefaultConfig()
+		cfg.DataDir = dir
+		// Clear the default so we can test fallback
+		cfg.AgentCommand = ""
+		err = cfg.loadFile()
+
+		require.NoError(t, err)
+		assert.Equal(t, "claude-beta", cfg.AgentCommand)
+	})
+
+	t.Run("agent_command takes precedence over claude_command in config file", func(t *testing.T) {
+		dir := t.TempDir()
+		cfgData := map[string]any{
+			"agent_command":  "aider",
+			"claude_command": "claude-beta",
+		}
+		data, err := json.Marshal(cfgData)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.json"), data, 0644))
+
+		cfg := DefaultConfig()
+		cfg.DataDir = dir
+		err = cfg.loadFile()
+
+		require.NoError(t, err)
+		assert.Equal(t, "aider", cfg.AgentCommand)
+	})
+
 	t.Run("invalid JSON", func(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "config.json"), []byte("{bad json"), 0644))
@@ -129,7 +166,7 @@ func TestLoadEnv(t *testing.T) {
 		{"projects_dir", "CLAWIDE_PROJECTS_DIR", "/custom/projects", func(c *Config) any { return c.ProjectsDir }, "/custom/projects"},
 		{"max_sessions", "CLAWIDE_MAX_SESSIONS", "20", func(c *Config) any { return c.MaxSessions }, 20},
 		{"scrollback_size", "CLAWIDE_SCROLLBACK_SIZE", "131072", func(c *Config) any { return c.ScrollbackSize }, 131072},
-		{"claude_command", "CLAWIDE_CLAUDE_COMMAND", "claude-dev", func(c *Config) any { return c.ClaudeCommand }, "claude-dev"},
+		{"agent_command", "CLAWIDE_AGENT_COMMAND", "aider", func(c *Config) any { return c.AgentCommand }, "aider"},
 		{"log_level", "CLAWIDE_LOG_LEVEL", "debug", func(c *Config) any { return c.LogLevel }, "debug"},
 		{"data_dir", "CLAWIDE_DATA_DIR", "/custom/data", func(c *Config) any { return c.DataDir }, "/custom/data"},
 	}
@@ -142,6 +179,21 @@ func TestLoadEnv(t *testing.T) {
 			assert.Equal(t, tt.want, tt.field(cfg))
 		})
 	}
+
+	t.Run("backward compat CLAWIDE_CLAUDE_COMMAND", func(t *testing.T) {
+		cfg := DefaultConfig()
+		t.Setenv("CLAWIDE_CLAUDE_COMMAND", "claude-dev")
+		cfg.loadEnv()
+		assert.Equal(t, "claude-dev", cfg.AgentCommand)
+	})
+
+	t.Run("CLAWIDE_AGENT_COMMAND takes precedence over CLAWIDE_CLAUDE_COMMAND", func(t *testing.T) {
+		cfg := DefaultConfig()
+		t.Setenv("CLAWIDE_AGENT_COMMAND", "aider")
+		t.Setenv("CLAWIDE_CLAUDE_COMMAND", "claude-dev")
+		cfg.loadEnv()
+		assert.Equal(t, "aider", cfg.AgentCommand)
+	})
 
 	t.Run("invalid int env vars ignored", func(t *testing.T) {
 		cfg := DefaultConfig()

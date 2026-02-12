@@ -12,7 +12,7 @@ func TestNewManager(t *testing.T) {
 	assert.NotNil(t, m.sessions)
 	assert.Equal(t, 10, m.maxSessions)
 	assert.Equal(t, 65536, m.scrollbackSize)
-	assert.Equal(t, "claude", m.claudeCommand)
+	assert.Equal(t, "claude", m.agentCommand)
 }
 
 func TestSessionCount(t *testing.T) {

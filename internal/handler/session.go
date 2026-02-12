@@ -54,7 +54,7 @@ func (h *Handlers) CreateSession(w http.ResponseWriter, r *http.Request) {
 		Name:      name,
 		Branch:    branch,
 		WorkDir:   workDir,
-		Layout:    model.NewLeafPane(paneID),
+		Layout:    model.NewAgentPane(paneID),
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

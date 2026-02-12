@@ -55,6 +55,11 @@ func SessionCommand(name, workDir string) (string, []string) {
 	return "tmux", []string{"new-session", "-A", "-s", name, "-c", workDir}
 }
 
+// SendKeys sends keystrokes to a tmux session. The keys are followed by Enter.
+func SendKeys(sessionName, keys string) error {
+	return exec.Command("tmux", "send-keys", "-t", sessionName, keys, "Enter").Run()
+}
+
 // TmuxName returns the tmux session name for a given pane ID.
 func TmuxName(paneID string) string {
 	return prefix + paneID

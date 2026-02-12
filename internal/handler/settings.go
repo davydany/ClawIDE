@@ -43,7 +43,8 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"projects_dir":     true,
 		"max_sessions":     true,
 		"scrollback_size":  true,
-		"claude_command":   true,
+		"agent_command":    true,
+		"claude_command":   true, // backward compat: maps to agent_command
 		"log_level":        true,
 		"host":             true,
 		"port":             true,
@@ -53,7 +54,12 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	for k, v := range updates {
 		if allowedFields[k] {
-			existing[k] = v
+			// Map old claude_command key to agent_command
+			if k == "claude_command" {
+				existing["agent_command"] = v
+			} else {
+				existing[k] = v
+			}
 		}
 	}
 
@@ -77,7 +83,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.cfg.ProjectsDir = newCfg.ProjectsDir
 	h.cfg.MaxSessions = newCfg.MaxSessions
 	h.cfg.ScrollbackSize = newCfg.ScrollbackSize
-	h.cfg.ClaudeCommand = newCfg.ClaudeCommand
+	h.cfg.AgentCommand = newCfg.AgentCommand
 	h.cfg.LogLevel = newCfg.LogLevel
 	h.cfg.Host = newCfg.Host
 	h.cfg.Port = newCfg.Port

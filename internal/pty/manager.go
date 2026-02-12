@@ -13,16 +13,21 @@ type Manager struct {
 	sessions       map[string]*Session // keyed by paneID
 	maxSessions    int
 	scrollbackSize int
-	claudeCommand  string
+	agentCommand   string
 }
 
-func NewManager(maxSessions, scrollbackSize int, claudeCommand string) *Manager {
+func NewManager(maxSessions, scrollbackSize int, agentCommand string) *Manager {
 	return &Manager{
 		sessions:       make(map[string]*Session),
 		maxSessions:    maxSessions,
 		scrollbackSize: scrollbackSize,
-		claudeCommand:  claudeCommand,
+		agentCommand:   agentCommand,
 	}
+}
+
+// AgentCommand returns the configured agent command.
+func (m *Manager) AgentCommand() string {
+	return m.agentCommand
 }
 
 // CreateSession creates a new PTY session backed by tmux, keyed by paneID.

@@ -67,9 +67,62 @@
                                 <label class="block text-sm text-gray-400 mb-1">Max Sessions</label>
                                 <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.MaxSessions}}</p>
                             </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Claude Command</label>
-                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.ClaudeCommand}}</p>
+                            <div x-data="{
+                                agentCmd: '{{.Config.AgentCommand}}',
+                                customCmd: '',
+                                saving: false,
+                                saved: false,
+                                init() {
+                                    var presets = ['claude', 'codex', 'aider', ''];
+                                    if (presets.indexOf(this.agentCmd) === -1) {
+                                        this.customCmd = this.agentCmd;
+                                    }
+                                },
+                                get isPreset() {
+                                    return ['claude', 'codex', 'aider', ''].indexOf(this.agentCmd) !== -1;
+                                },
+                                get effectiveCmd() {
+                                    return this.isPreset ? this.agentCmd : this.customCmd;
+                                },
+                                save() {
+                                    var self = this;
+                                    self.saving = true;
+                                    self.saved = false;
+                                    var cmd = self.isPreset ? self.agentCmd : self.customCmd;
+                                    fetch('/api/settings', {
+                                        method: 'PUT',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({agent_command: cmd})
+                                    }).then(function(r) {
+                                        if (r.ok) { self.saved = true; setTimeout(function(){ self.saved = false; }, 2000); }
+                                    }).finally(function() { self.saving = false; });
+                                }
+                            }">
+                                <label class="block text-sm text-gray-400 mb-1">AI Agent Command</label>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <select x-model="agentCmd"
+                                            class="bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                        <option value="claude">Claude Code (claude)</option>
+                                        <option value="codex">OpenAI Codex (codex)</option>
+                                        <option value="aider">Aider (aider)</option>
+                                        <option value="">Shell only (no agent)</option>
+                                        <template x-if="!isPreset">
+                                            <option :value="customCmd" x-text="'Custom: ' + customCmd" selected></option>
+                                        </template>
+                                    </select>
+                                    <button @click="save()" :disabled="saving"
+                                            class="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors">
+                                        <span x-show="!saving && !saved">Save</span>
+                                        <span x-show="saving">Saving...</span>
+                                        <span x-show="saved" class="text-green-300">Saved</span>
+                                    </button>
+                                </div>
+                                <div x-show="!isPreset" class="mb-2">
+                                    <input type="text" x-model="customCmd"
+                                           placeholder="Custom command path..."
+                                           class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
+                                </div>
+                                <p class="text-xs text-gray-500">Command auto-launched in new terminal panes. Leave empty for plain shell.</p>
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">Listen Address</label>

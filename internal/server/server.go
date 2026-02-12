@@ -34,7 +34,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 	}
 	log.Println("tmux check passed")
 
-	ptyMgr := pty.NewManager(cfg.MaxSessions, cfg.ScrollbackSize, cfg.ClaudeCommand)
+	ptyMgr := pty.NewManager(cfg.MaxSessions, cfg.ScrollbackSize, cfg.AgentCommand)
 
 	snippetStore, err := store.NewSnippetStore(cfg.SnippetsFilePath())
 	if err != nil {

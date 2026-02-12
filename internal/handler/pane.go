@@ -48,8 +48,22 @@ func (h *Handlers) SplitPane(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	paneType := r.FormValue("pane_type")
+	if paneType == "" {
+		paneType = model.PaneTypeAgent
+	}
+	if paneType != model.PaneTypeAgent && paneType != model.PaneTypeShell {
+		http.Error(w, "pane_type must be 'agent' or 'shell'", http.StatusBadRequest)
+		return
+	}
+
 	newPaneID := uuid.New().String()
-	newLeaf := model.NewLeafPane(newPaneID)
+	var newLeaf *model.PaneNode
+	if paneType == model.PaneTypeAgent {
+		newLeaf = model.NewAgentPane(newPaneID)
+	} else {
+		newLeaf = model.NewLeafPane(newPaneID)
+	}
 
 	// Create a split node containing the original pane and the new pane
 	splitNode := &model.PaneNode{

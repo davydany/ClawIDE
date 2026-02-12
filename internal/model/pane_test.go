@@ -31,6 +31,48 @@ func TestNewLeafPaneWithID(t *testing.T) {
 	assert.NotEqual(t, p.PaneID, p2.PaneID)
 }
 
+func TestNewAgentPane(t *testing.T) {
+	p := NewAgentPane("abc-123")
+
+	assert.Equal(t, "leaf", p.Type)
+	assert.Equal(t, "abc-123", p.PaneID)
+	assert.Equal(t, "clawide-abc-123", p.TmuxName)
+	assert.Equal(t, PaneTypeAgent, p.PaneType)
+	assert.Nil(t, p.First)
+	assert.Nil(t, p.Second)
+}
+
+func TestNewAgentPaneWithID(t *testing.T) {
+	p := NewAgentPaneWithID()
+
+	assert.Equal(t, "leaf", p.Type)
+	assert.NotEmpty(t, p.PaneID)
+	assert.Equal(t, "clawide-"+p.PaneID, p.TmuxName)
+	assert.Equal(t, PaneTypeAgent, p.PaneType)
+
+	p2 := NewAgentPaneWithID()
+	assert.NotEqual(t, p.PaneID, p2.PaneID)
+}
+
+func TestEffectivePaneType(t *testing.T) {
+	tests := []struct {
+		name     string
+		paneType string
+		want     string
+	}{
+		{"empty defaults to shell", "", PaneTypeShell},
+		{"agent stays agent", PaneTypeAgent, PaneTypeAgent},
+		{"shell stays shell", PaneTypeShell, PaneTypeShell},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &PaneNode{Type: "leaf", PaneID: "test", PaneType: tt.paneType}
+			assert.Equal(t, tt.want, p.EffectivePaneType())
+		})
+	}
+}
+
 func TestFindPane(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -174,7 +216,7 @@ func TestClone(t *testing.T) {
 		Type:      "split",
 		Direction: "horizontal",
 		Ratio:     0.5,
-		First:     NewLeafPane("a"),
+		First:     NewAgentPane("a"),
 		Second:    NewLeafPane("b"),
 	}
 
@@ -186,6 +228,10 @@ func TestClone(t *testing.T) {
 	assert.Equal(t, original.Ratio, clone.Ratio)
 	assert.Equal(t, original.First.PaneID, clone.First.PaneID)
 	assert.Equal(t, original.Second.PaneID, clone.Second.PaneID)
+
+	// PaneType preserved
+	assert.Equal(t, PaneTypeAgent, clone.First.PaneType)
+	assert.Empty(t, clone.Second.PaneType)
 
 	// Original unaffected by clone mutation
 	clone.First.PaneID = "mutated"
@@ -206,12 +252,14 @@ func TestCloneWithName(t *testing.T) {
 			PaneID:   "a",
 			TmuxName: "clawide-a",
 			Name:     "Server",
+			PaneType: PaneTypeAgent,
 		},
 		Second: &PaneNode{
 			Type:     "leaf",
 			PaneID:   "b",
 			TmuxName: "clawide-b",
 			Name:     "Client",
+			PaneType: PaneTypeShell,
 		},
 	}
 
@@ -219,6 +267,8 @@ func TestCloneWithName(t *testing.T) {
 
 	assert.Equal(t, "Server", clone.First.Name)
 	assert.Equal(t, "Client", clone.Second.Name)
+	assert.Equal(t, PaneTypeAgent, clone.First.PaneType)
+	assert.Equal(t, PaneTypeShell, clone.Second.PaneType)
 
 	// Mutation independence
 	clone.First.Name = "Mutated"

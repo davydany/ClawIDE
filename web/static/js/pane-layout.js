@@ -135,6 +135,51 @@
 
             toolbar.appendChild(toolbarLeft);
 
+            var toolbarRight = document.createElement('div');
+            toolbarRight.className = 'flex items-center gap-1';
+
+            // Kebab menu (3-dot)
+            var kebabWrap = document.createElement('div');
+            kebabWrap.className = 'relative';
+            var kebabBtn = document.createElement('button');
+            kebabBtn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
+            kebabBtn.innerHTML = '<svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>';
+            kebabBtn.title = 'More options';
+            var kebabMenu = document.createElement('div');
+            kebabMenu.className = 'absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-50 min-w-[160px] hidden';
+
+            var menuItemAgent = document.createElement('button');
+            menuItemAgent.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemAgent.textContent = 'New Agent Pane';
+            menuItemAgent.onclick = function() {
+                kebabMenu.classList.add('hidden');
+                splitPane(projectID, sessionID, node.pane_id, 'horizontal', 'agent');
+            };
+            kebabMenu.appendChild(menuItemAgent);
+
+            var menuItemShell = document.createElement('button');
+            menuItemShell.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemShell.textContent = 'New Shell Pane';
+            menuItemShell.onclick = function() {
+                kebabMenu.classList.add('hidden');
+                splitPane(projectID, sessionID, node.pane_id, 'horizontal', 'shell');
+            };
+            kebabMenu.appendChild(menuItemShell);
+
+            kebabBtn.onclick = function(e) {
+                e.stopPropagation();
+                kebabMenu.classList.toggle('hidden');
+            };
+
+            // Close menu on outside click
+            document.addEventListener('click', function() {
+                kebabMenu.classList.add('hidden');
+            });
+
+            kebabWrap.appendChild(kebabBtn);
+            kebabWrap.appendChild(kebabMenu);
+            toolbarRight.appendChild(kebabWrap);
+
             // Close button
             var closeBtn = document.createElement('button');
             closeBtn.className = 'text-gray-500 hover:text-red-400 px-1 transition-colors';
@@ -143,7 +188,8 @@
             closeBtn.onclick = function() {
                 closePane(projectID, sessionID, node.pane_id);
             };
-            toolbar.appendChild(closeBtn);
+            toolbarRight.appendChild(closeBtn);
+            toolbar.appendChild(toolbarRight);
 
             leafEl.appendChild(toolbar);
 
@@ -500,11 +546,15 @@
 
     // --- API functions ---
 
-    function splitPane(projectID, sessionID, paneID, direction) {
+    function splitPane(projectID, sessionID, paneID, direction, paneType) {
+        var body = 'direction=' + encodeURIComponent(direction);
+        if (paneType) {
+            body += '&pane_type=' + encodeURIComponent(paneType);
+        }
         fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID + '/split', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'direction=' + encodeURIComponent(direction),
+            body: body,
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {

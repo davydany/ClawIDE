@@ -15,7 +15,7 @@ type Config struct {
 	ProjectsDir    string `json:"projects_dir"`
 	MaxSessions    int    `json:"max_sessions"`
 	ScrollbackSize int    `json:"scrollback_size"`
-	ClaudeCommand  string `json:"claude_command"`
+	AgentCommand   string `json:"agent_command"`
 	LogLevel       string `json:"log_level"`
 	DataDir                string `json:"data_dir"`
 	OnboardingCompleted    bool   `json:"onboarding_completed"`
@@ -36,7 +36,7 @@ func DefaultConfig() *Config {
 		ProjectsDir:    filepath.Join(home, "projects"),
 		MaxSessions:    10,
 		ScrollbackSize: 65536,
-		ClaudeCommand:  "claude",
+		AgentCommand:   "claude",
 		LogLevel:         "info",
 		DataDir:          filepath.Join(home, ".clawide"),
 		MaxNotifications: 200,
@@ -76,7 +76,23 @@ func (c *Config) loadFile() error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, c)
+	if err := json.Unmarshal(data, c); err != nil {
+		return err
+	}
+
+	// Backward compat: fall back to claude_command if agent_command is absent.
+	if c.AgentCommand == "" {
+		var raw map[string]json.RawMessage
+		if json.Unmarshal(data, &raw) == nil {
+			if val, ok := raw["claude_command"]; ok {
+				var cmd string
+				if json.Unmarshal(val, &cmd) == nil {
+					c.AgentCommand = cmd
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Config) loadEnv() {
@@ -101,8 +117,10 @@ func (c *Config) loadEnv() {
 			c.ScrollbackSize = n
 		}
 	}
-	if v := os.Getenv("CLAWIDE_CLAUDE_COMMAND"); v != "" {
-		c.ClaudeCommand = v
+	if v := os.Getenv("CLAWIDE_AGENT_COMMAND"); v != "" {
+		c.AgentCommand = v
+	} else if v := os.Getenv("CLAWIDE_CLAUDE_COMMAND"); v != "" {
+		c.AgentCommand = v
 	}
 	if v := os.Getenv("CLAWIDE_LOG_LEVEL"); v != "" {
 		c.LogLevel = v
@@ -117,7 +135,7 @@ func (c *Config) loadFlags() {
 	flag.IntVar(&c.Port, "port", c.Port, "Listen port")
 	flag.StringVar(&c.ProjectsDir, "projects-dir", c.ProjectsDir, "Projects root directory")
 	flag.IntVar(&c.MaxSessions, "max-sessions", c.MaxSessions, "Maximum concurrent sessions")
-	flag.StringVar(&c.ClaudeCommand, "claude-command", c.ClaudeCommand, "Claude CLI command")
+	flag.StringVar(&c.AgentCommand, "agent-command", c.AgentCommand, "AI agent command to auto-launch in new panes")
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
 	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")

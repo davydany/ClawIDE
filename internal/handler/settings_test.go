@@ -80,6 +80,49 @@ func TestUpdateSettings(t *testing.T) {
 		assert.False(t, hasSecret, "disallowed field should not be persisted")
 	})
 
+	t.Run("agent_command field accepted and persisted", func(t *testing.T) {
+		h := setupSettingsTest(t)
+
+		body := `{"agent_command": "aider"}`
+		req := httptest.NewRequest(http.MethodPut, "/api/settings", strings.NewReader(body))
+		w := httptest.NewRecorder()
+
+		h.UpdateSettings(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		configPath := filepath.Join(h.cfg.DataDir, "config.json")
+		data, err := os.ReadFile(configPath)
+		require.NoError(t, err)
+
+		var saved map[string]any
+		require.NoError(t, json.Unmarshal(data, &saved))
+		assert.Equal(t, "aider", saved["agent_command"])
+
+		// Verify in-memory config was updated
+		assert.Equal(t, "aider", h.cfg.AgentCommand)
+	})
+
+	t.Run("claude_command maps to agent_command", func(t *testing.T) {
+		h := setupSettingsTest(t)
+
+		body := `{"claude_command": "claude-beta"}`
+		req := httptest.NewRequest(http.MethodPut, "/api/settings", strings.NewReader(body))
+		w := httptest.NewRecorder()
+
+		h.UpdateSettings(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		configPath := filepath.Join(h.cfg.DataDir, "config.json")
+		data, err := os.ReadFile(configPath)
+		require.NoError(t, err)
+
+		var saved map[string]any
+		require.NoError(t, json.Unmarshal(data, &saved))
+		assert.Equal(t, "claude-beta", saved["agent_command"])
+	})
+
 	t.Run("invalid JSON", func(t *testing.T) {
 		h := setupSettingsTest(t)
 
