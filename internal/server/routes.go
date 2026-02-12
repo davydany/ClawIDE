@@ -127,6 +127,15 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Delete("/{noteID}", s.handlers.DeleteNote)
 	})
 
+	// Bookmarks API (project-scoped via query param)
+	r.Route("/api/bookmarks", func(r chi.Router) {
+		r.Get("/", s.handlers.ListBookmarks)
+		r.Post("/", s.handlers.CreateBookmark)
+		r.Put("/{bookmarkID}", s.handlers.UpdateBookmark)
+		r.Delete("/{bookmarkID}", s.handlers.DeleteBookmark)
+		r.Patch("/{bookmarkID}/star", s.handlers.ToggleBookmarkStar)
+	})
+
 	// Notifications API (global, not project-scoped)
 	r.Route("/api/notifications", func(r chi.Router) {
 		r.Post("/", s.handlers.CreateNotification)

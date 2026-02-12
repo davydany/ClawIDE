@@ -163,6 +163,10 @@ func (c *Config) NotesFilePath() string {
 	return filepath.Join(c.DataDir, "notes.json")
 }
 
+func (c *Config) BookmarksFilePath() string {
+	return filepath.Join(c.DataDir, "bookmarks.json")
+}
+
 func (c *Config) HooksDir() string {
 	return filepath.Join(c.DataDir, "hooks")
 }

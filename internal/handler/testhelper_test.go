@@ -73,6 +73,9 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	noteSt, err := store.NewNoteStore(filepath.Join(storeDir, "notes.json"))
 	require.NoError(t, err)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, sse.NewHub())
+	bookmarkSt, err := store.NewBookmarkStore(filepath.Join(storeDir, "bookmarks.json"))
+	require.NoError(t, err)
+
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, sse.NewHub())
 	return h, st
 }

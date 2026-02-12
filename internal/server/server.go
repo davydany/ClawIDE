@@ -51,6 +51,11 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load note store: %v", err)
 	}
 
+	bookmarkStore, err := store.NewBookmarkStore(cfg.BookmarksFilePath())
+	if err != nil {
+		log.Fatalf("failed to load bookmark store: %v", err)
+	}
+
 	sseHub := sse.NewHub()
 
 	// Recover tmux sessions from previous run
@@ -61,7 +66,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, sseHub),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, sseHub),
 	}
 
 	router := s.setupRoutes()

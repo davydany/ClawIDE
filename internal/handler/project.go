@@ -151,19 +151,33 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Build starred bookmark views for tab bar
+	starredBookmarks := h.bookmarkStore.GetStarredByProject(project.ID)
+	var starredBookmarkViews []StarredBookmarkView
+	for _, bm := range starredBookmarks {
+		starredBookmarkViews = append(starredBookmarkViews, StarredBookmarkView{
+			ID:         bm.ID,
+			Name:       bm.Name,
+			URL:        bm.URL,
+			Emoji:      bm.Emoji,
+			FaviconURL: bookmarkFaviconURL(bm.URL),
+		})
+	}
+
 	data := map[string]any{
-		"Title":           project.Name + " - ClawIDE",
-		"Project":         project,
-		"Sessions":        sessions,
-		"Features":        features,
-		"ActiveTab":       "terminal",
-		"IsGitRepo":       isGitRepo,
-		"CurrentBranch":   currentBranch,
-		"StarredProjects": starredProjects,
-		"StartTour":       !h.cfg.WorkspaceTourCompleted,
-		"ActiveFeatureID": "",
-		"SidebarPosition": h.cfg.SidebarPosition,
-		"SidebarWidth":    h.cfg.SidebarWidth,
+		"Title":             project.Name + " - ClawIDE",
+		"Project":           project,
+		"Sessions":          sessions,
+		"Features":          features,
+		"ActiveTab":         "terminal",
+		"IsGitRepo":         isGitRepo,
+		"CurrentBranch":     currentBranch,
+		"StarredProjects":   starredProjects,
+		"StarredBookmarks":  starredBookmarkViews,
+		"StartTour":         !h.cfg.WorkspaceTourCompleted,
+		"ActiveFeatureID":   "",
+		"SidebarPosition":   h.cfg.SidebarPosition,
+		"SidebarWidth":      h.cfg.SidebarWidth,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {
