@@ -412,6 +412,11 @@
     @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
 }
 
+/* Bookmark items */
+.bookmark-item {
+    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+}
+
 /* Note markdown preview */
 .note-markdown-preview {
     line-height: 1.5;
