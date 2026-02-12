@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/davydany/ClawIDE/internal/model"
@@ -101,4 +102,174 @@ func parsePortString(service, raw string) PortMapping {
 	}
 
 	return pm
+}
+
+// ComposeServiceDetail is a JSON-friendly normalized representation of a
+// Docker Compose service with all fields as clean types.
+type ComposeServiceDetail struct {
+	Name          string       `json:"name"`
+	Image         string       `json:"image,omitempty"`
+	Build         string       `json:"build,omitempty"`
+	Ports         []PortDetail `json:"ports"`
+	Volumes       []string     `json:"volumes"`
+	Environment   []string     `json:"environment"`
+	DependsOn     []string     `json:"depends_on"`
+	Command       string       `json:"command,omitempty"`
+	ContainerName string       `json:"container_name,omitempty"`
+	Restart       string       `json:"restart,omitempty"`
+}
+
+// PortDetail represents a single port binding with host, container, and protocol.
+type PortDetail struct {
+	HostPort      string `json:"host_port"`
+	ContainerPort string `json:"container_port"`
+	Protocol      string `json:"protocol"`
+}
+
+// ExtractServiceDetails converts a parsed ComposeConfig into a sorted slice
+// of ComposeServiceDetail with all fields normalized to clean types.
+func ExtractServiceDetails(cfg *model.ComposeConfig) []ComposeServiceDetail {
+	if cfg == nil {
+		return nil
+	}
+
+	details := make([]ComposeServiceDetail, 0, len(cfg.Services))
+	for name, svc := range cfg.Services {
+		d := ComposeServiceDetail{
+			Name:          name,
+			Image:         svc.Image,
+			Build:         normalizeBuild(svc.Build),
+			Volumes:       svc.Volumes,
+			Environment:   normalizeEnvironment(svc.Environment),
+			DependsOn:     normalizeDependsOn(svc.DependsOn),
+			Command:       normalizeCommand(svc.Command),
+			ContainerName: svc.ContainerName,
+			Restart:       svc.Restart,
+		}
+
+		// Normalize ports
+		d.Ports = make([]PortDetail, 0, len(svc.Ports))
+		for _, portStr := range svc.Ports {
+			pm := parsePortString(name, portStr)
+			d.Ports = append(d.Ports, PortDetail{
+				HostPort:      pm.HostPort,
+				ContainerPort: pm.ContainerPort,
+				Protocol:      pm.Protocol,
+			})
+		}
+
+		// Ensure nil slices become empty slices for clean JSON
+		if d.Volumes == nil {
+			d.Volumes = []string{}
+		}
+		if d.Environment == nil {
+			d.Environment = []string{}
+		}
+		if d.DependsOn == nil {
+			d.DependsOn = []string{}
+		}
+
+		details = append(details, d)
+	}
+
+	sort.Slice(details, func(i, j int) bool {
+		return details[i].Name < details[j].Name
+	})
+
+	return details
+}
+
+// normalizeBuild converts the YAML build field (nil, string, or map) to a
+// single string. Maps with "context" and optional "dockerfile" are joined.
+func normalizeBuild(v any) string {
+	if v == nil {
+		return ""
+	}
+	switch b := v.(type) {
+	case string:
+		return b
+	case map[string]any:
+		ctx, _ := b["context"].(string)
+		df, _ := b["dockerfile"].(string)
+		if df != "" {
+			return ctx + "/" + df
+		}
+		return ctx
+	}
+	return ""
+}
+
+// normalizeEnvironment converts the YAML environment field (nil, string list,
+// or key-value map) to a sorted []string of "KEY=VALUE" entries.
+func normalizeEnvironment(v any) []string {
+	if v == nil {
+		return nil
+	}
+	switch e := v.(type) {
+	case []any:
+		out := make([]string, 0, len(e))
+		for _, item := range e {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		sort.Strings(out)
+		return out
+	case map[string]any:
+		out := make([]string, 0, len(e))
+		for k, val := range e {
+			out = append(out, fmt.Sprintf("%s=%v", k, val))
+		}
+		sort.Strings(out)
+		return out
+	}
+	return nil
+}
+
+// normalizeDependsOn converts the YAML depends_on field (nil, string list,
+// or map with conditions) to a sorted []string of service names.
+func normalizeDependsOn(v any) []string {
+	if v == nil {
+		return nil
+	}
+	switch d := v.(type) {
+	case []any:
+		out := make([]string, 0, len(d))
+		for _, item := range d {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		sort.Strings(out)
+		return out
+	case map[string]any:
+		out := make([]string, 0, len(d))
+		for k := range d {
+			out = append(out, k)
+		}
+		sort.Strings(out)
+		return out
+	}
+	return nil
+}
+
+// normalizeCommand converts the YAML command field (nil, string, or string
+// list) to a single string.
+func normalizeCommand(v any) string {
+	if v == nil {
+		return ""
+	}
+	switch c := v.(type) {
+	case string:
+		return c
+	case []any:
+		parts := make([]string, 0, len(c))
+		for _, item := range c {
+			if s, ok := item.(string); ok {
+				parts = append(parts, s)
+			}
+		}
+		return strings.Join(parts, " ")
+	}
+	return ""
 }

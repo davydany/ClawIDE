@@ -257,12 +257,14 @@
                         {{.Name}}
                     </a>
                     <button @click.stop="featureMenu = featureMenu === '{{.ID}}' ? '' : '{{.ID}}'"
-                            class="p-1 text-gray-500 hover:text-white rounded transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                            class="p-1 text-gray-400 hover:text-white rounded transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
                     </button>
                     <!-- Feature dropdown menu -->
                     <div x-show="featureMenu === '{{.ID}}'" x-cloak @click.away="featureMenu = ''"
-                         class="absolute left-0 top-full mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
+                         class="fixed mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1"
+                         x-ref="menu{{.ID}}"
+                         :style="{ top: $el.parentElement.getBoundingClientRect().bottom + 'px', left: $el.parentElement.getBoundingClientRect().left + 'px' }">
                         <button @click="if(confirm('Merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
