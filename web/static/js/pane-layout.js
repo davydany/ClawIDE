@@ -1,11 +1,23 @@
 // ClawIDE Pane Layout Manager
 // Renders PaneNode trees into split terminal panes with resize handles.
+// On phone screens (<768px), renders a carousel view showing one pane at a time.
 (function() {
     'use strict';
 
     var activeLayouts = {}; // keyed by sessionID
 
-    // Render the pane layout tree into the given container
+    // --- Phone detection ---
+    var phoneQuery = window.matchMedia('(max-width: 767px)');
+
+    function isPhoneLayout() {
+        return phoneQuery.matches;
+    }
+
+    // Carousel state per session: { currentIndex, paneNodes, container, projectID }
+    var carouselState = {};
+
+    // --- Render entry point ---
+
     function renderLayout(container, layoutJSON, sessionID, projectID) {
         // Destroy existing terminals for this session
         if (activeLayouts[sessionID]) {
@@ -15,38 +27,81 @@
         }
 
         container.innerHTML = '';
+
+        // Store layout JSON on container for re-render on resize boundary crossing
+        container.dataset.layout = JSON.stringify(layoutJSON);
+        container.dataset.sessionId = sessionID;
+        container.dataset.projectId = projectID;
+
         var paneIDs = [];
 
-        buildNode(container, layoutJSON, sessionID, projectID, paneIDs);
+        if (isPhoneLayout()) {
+            buildCarousel(container, layoutJSON, sessionID, projectID, paneIDs);
+        } else {
+            buildNode(container, layoutJSON, sessionID, projectID, paneIDs);
+        }
 
         activeLayouts[sessionID] = paneIDs;
 
-        // Initialize terminals for each leaf pane after DOM is ready
-        requestAnimationFrame(function() {
-            paneIDs.forEach(function(paneID) {
-                var paneContainer = document.getElementById('pane-' + paneID);
-                if (paneContainer) {
-                    window.ClawIDETerminal.create(sessionID, paneID, paneContainer);
-                }
+        if (isPhoneLayout()) {
+            // In carousel, only init the visible pane (lazy init)
+            var cs = carouselState[sessionID];
+            if (cs && cs.paneNodes.length > 0) {
+                var visibleNode = cs.paneNodes[cs.currentIndex];
+                requestAnimationFrame(function() {
+                    initPaneTerminal(sessionID, visibleNode.pane_id);
+                    handleDeepLink(paneIDs, sessionID);
+                });
+            }
+        } else {
+            // Desktop: init all terminals
+            requestAnimationFrame(function() {
+                paneIDs.forEach(function(paneID) {
+                    initPaneTerminal(sessionID, paneID);
+                });
+                handleDeepLink(paneIDs, sessionID);
             });
+        }
+    }
 
-            // Check for ?pane= query param to deep-link to a specific pane
-            var urlParams = new URLSearchParams(window.location.search);
-            var targetPane = urlParams.get('pane');
-            if (targetPane && paneIDs.indexOf(targetPane) !== -1) {
-                // Small delay to let terminals initialize
+    // Initialize a terminal in its container if not already created
+    function initPaneTerminal(sessionID, paneID) {
+        var paneContainer = document.getElementById('pane-' + paneID);
+        if (paneContainer && !paneContainer.dataset.initialized) {
+            window.ClawIDETerminal.create(sessionID, paneID, paneContainer);
+            paneContainer.dataset.initialized = 'true';
+        }
+    }
+
+    // Handle ?pane= deep-link query param
+    function handleDeepLink(paneIDs, sessionID) {
+        var urlParams = new URLSearchParams(window.location.search);
+        var targetPane = urlParams.get('pane');
+        if (targetPane && paneIDs.indexOf(targetPane) !== -1) {
+            if (isPhoneLayout()) {
+                // Navigate carousel to the target pane
+                var cs = carouselState[sessionID];
+                if (cs) {
+                    for (var i = 0; i < cs.paneNodes.length; i++) {
+                        if (cs.paneNodes[i].pane_id === targetPane) {
+                            navigateCarousel(sessionID, i);
+                            break;
+                        }
+                    }
+                }
+            } else {
                 setTimeout(function() {
                     window.ClawIDETerminal.focusPane(targetPane);
                 }, 200);
-                // Clean the URL param without triggering a navigation
-                var cleanURL = window.location.pathname + window.location.hash;
-                window.history.replaceState(null, '', cleanURL);
-            } else if (paneIDs.length > 0) {
-                // Ensure a pane is focused after render (mobile: toolbar needs a target)
-                window.ClawIDETerminal.setFocusedPaneID(paneIDs[0]);
             }
-        });
+            var cleanURL = window.location.pathname + window.location.hash;
+            window.history.replaceState(null, '', cleanURL);
+        } else if (paneIDs.length > 0) {
+            window.ClawIDETerminal.setFocusedPaneID(paneIDs[0]);
+        }
     }
+
+    // --- Desktop: buildNode (original split layout) ---
 
     function buildNode(parent, node, sessionID, projectID, paneIDs) {
         if (!node) return;
@@ -73,6 +128,10 @@
                 splitPane(projectID, sessionID, node.pane_id, 'vertical');
             });
             toolbarLeft.appendChild(splitV);
+
+            // Pane name (editable on double-click)
+            var nameSpan = createPaneName(node, projectID, sessionID);
+            toolbarLeft.appendChild(nameSpan);
 
             toolbar.appendChild(toolbarLeft);
 
@@ -127,6 +186,213 @@
             parent.appendChild(splitEl);
         }
     }
+
+    // --- Pane naming ---
+
+    function createPaneName(node, projectID, sessionID) {
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'pane-name';
+        nameSpan.textContent = node.name || 'Terminal';
+        nameSpan.title = 'Double-click to rename';
+
+        nameSpan.addEventListener('dblclick', function() {
+            nameSpan.contentEditable = 'true';
+            nameSpan.focus();
+            // Select all text
+            var range = document.createRange();
+            range.selectNodeContents(nameSpan);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        });
+
+        function commitName() {
+            nameSpan.contentEditable = 'false';
+            var newName = nameSpan.textContent.trim();
+            if (newName === 'Terminal') newName = '';
+            node.name = newName;
+            nameSpan.textContent = newName || 'Terminal';
+            renamePane(projectID, sessionID, node.pane_id, newName);
+        }
+
+        nameSpan.addEventListener('blur', commitName);
+        nameSpan.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                nameSpan.blur();
+            }
+            if (e.key === 'Escape') {
+                nameSpan.textContent = node.name || 'Terminal';
+                nameSpan.contentEditable = 'false';
+            }
+        });
+
+        return nameSpan;
+    }
+
+    // --- Carousel mode (phone <768px) ---
+
+    function collectLeavesOrdered(node) {
+        if (!node) return [];
+        if (node.type === 'leaf') return [node];
+        var leaves = [];
+        if (node.first) leaves = leaves.concat(collectLeavesOrdered(node.first));
+        if (node.second) leaves = leaves.concat(collectLeavesOrdered(node.second));
+        return leaves;
+    }
+
+    function buildCarousel(container, layoutJSON, sessionID, projectID, paneIDs) {
+        var leaves = collectLeavesOrdered(layoutJSON);
+        if (leaves.length === 0) return;
+
+        // Collect pane IDs
+        leaves.forEach(function(leaf) { paneIDs.push(leaf.pane_id); });
+
+        // Determine starting index (try to preserve from previous state)
+        var prevState = carouselState[sessionID];
+        var startIndex = 0;
+        if (prevState && prevState.currentIndex < leaves.length) {
+            startIndex = prevState.currentIndex;
+        }
+
+        // Build carousel wrapper
+        var wrapper = document.createElement('div');
+        wrapper.className = 'carousel-wrapper flex flex-col flex-1 min-h-0';
+
+        // --- Header ---
+        var header = document.createElement('div');
+        header.className = 'carousel-header';
+
+        // Prev button
+        var prevBtn = document.createElement('button');
+        prevBtn.className = 'carousel-nav-btn';
+        prevBtn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>';
+        prevBtn.setAttribute('aria-label', 'Previous pane');
+        prevBtn.onclick = function() { navigateCarousel(sessionID, carouselState[sessionID].currentIndex - 1); };
+        header.appendChild(prevBtn);
+
+        // Center: pane name + indicator
+        var center = document.createElement('div');
+        center.className = 'flex-1 flex items-center justify-center gap-2 min-w-0';
+
+        var nameSpan = createPaneName(leaves[startIndex], projectID, sessionID);
+        nameSpan.className = 'carousel-pane-name';
+        center.appendChild(nameSpan);
+
+        var indicator = document.createElement('span');
+        indicator.className = 'text-xs text-gray-500 flex-shrink-0';
+        indicator.textContent = (startIndex + 1) + '/' + leaves.length;
+        center.appendChild(indicator);
+
+        header.appendChild(center);
+
+        // Next button
+        var nextBtn = document.createElement('button');
+        nextBtn.className = 'carousel-nav-btn';
+        nextBtn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+        nextBtn.setAttribute('aria-label', 'Next pane');
+        nextBtn.onclick = function() { navigateCarousel(sessionID, carouselState[sessionID].currentIndex + 1); };
+        header.appendChild(nextBtn);
+
+        // Close button
+        var closeBtn = document.createElement('button');
+        closeBtn.className = 'carousel-nav-btn text-gray-500 hover:text-red-400';
+        closeBtn.innerHTML = '&#x2715;';
+        closeBtn.title = 'Close pane';
+        closeBtn.onclick = function() {
+            var cs = carouselState[sessionID];
+            if (cs) {
+                closePane(projectID, sessionID, cs.paneNodes[cs.currentIndex].pane_id);
+            }
+        };
+        header.appendChild(closeBtn);
+
+        wrapper.appendChild(header);
+
+        // --- Slides ---
+        var slidesContainer = document.createElement('div');
+        slidesContainer.className = 'carousel-slides flex-1 min-h-0 relative';
+
+        var slides = [];
+        leaves.forEach(function(leaf, idx) {
+            var slide = document.createElement('div');
+            slide.className = 'absolute inset-0 flex flex-col';
+            slide.style.display = idx === startIndex ? 'flex' : 'none';
+
+            var xtermContainer = document.createElement('div');
+            xtermContainer.id = 'pane-' + leaf.pane_id;
+            xtermContainer.className = 'xterm-container flex-1';
+            slide.appendChild(xtermContainer);
+
+            slidesContainer.appendChild(slide);
+            slides.push(slide);
+        });
+
+        wrapper.appendChild(slidesContainer);
+        container.appendChild(wrapper);
+
+        // Update arrow visibility
+        if (leaves.length <= 1) {
+            prevBtn.style.visibility = 'hidden';
+            nextBtn.style.visibility = 'hidden';
+        } else {
+            prevBtn.style.visibility = startIndex === 0 ? 'hidden' : 'visible';
+            nextBtn.style.visibility = startIndex === leaves.length - 1 ? 'hidden' : 'visible';
+        }
+
+        // Store carousel state
+        carouselState[sessionID] = {
+            currentIndex: startIndex,
+            paneNodes: leaves,
+            slides: slides,
+            nameSpan: nameSpan,
+            indicator: indicator,
+            prevBtn: prevBtn,
+            nextBtn: nextBtn,
+            container: container,
+            projectID: projectID,
+        };
+    }
+
+    function navigateCarousel(sessionID, newIndex) {
+        var cs = carouselState[sessionID];
+        if (!cs) return;
+
+        // Clamp index
+        newIndex = Math.max(0, Math.min(newIndex, cs.paneNodes.length - 1));
+        if (newIndex === cs.currentIndex) return;
+
+        var oldIndex = cs.currentIndex;
+        cs.currentIndex = newIndex;
+
+        // Hide old slide, show new slide
+        cs.slides[oldIndex].style.display = 'none';
+        cs.slides[newIndex].style.display = 'flex';
+
+        // Update header
+        var node = cs.paneNodes[newIndex];
+        var newNameSpan = createPaneName(node, cs.projectID, sessionID);
+        newNameSpan.className = 'carousel-pane-name';
+        cs.nameSpan.parentNode.replaceChild(newNameSpan, cs.nameSpan);
+        cs.nameSpan = newNameSpan;
+
+        cs.indicator.textContent = (newIndex + 1) + '/' + cs.paneNodes.length;
+
+        // Update arrow visibility
+        cs.prevBtn.style.visibility = newIndex === 0 ? 'hidden' : 'visible';
+        cs.nextBtn.style.visibility = newIndex === cs.paneNodes.length - 1 ? 'hidden' : 'visible';
+
+        // Lazy-init terminal if not yet created
+        initPaneTerminal(sessionID, node.pane_id);
+
+        // Focus terminal and fit
+        requestAnimationFrame(function() {
+            window.ClawIDETerminal.focusPane(node.pane_id);
+            window.ClawIDETerminal.setFocusedPaneID(node.pane_id);
+        });
+    }
+
+    // --- Desktop helpers ---
 
     function createToolbarButton(label, direction, onclick) {
         var btn = document.createElement('button');
@@ -212,7 +478,28 @@
         });
     }
 
-    // API: split a pane
+    // --- Phone/desktop transition on resize ---
+
+    phoneQuery.addEventListener('change', function() {
+        // Re-render all visible session layouts when crossing the 768px boundary
+        var containers = document.querySelectorAll('[data-layout]');
+        containers.forEach(function(container) {
+            var layoutJSON = container.dataset.layout;
+            var sessionID = container.dataset.sessionId;
+            var projectID = container.dataset.projectId;
+            if (layoutJSON && sessionID && projectID) {
+                try {
+                    var layout = JSON.parse(layoutJSON);
+                    renderLayout(container, layout, sessionID, projectID);
+                } catch (e) {
+                    console.error('Failed to re-render layout on resize:', e);
+                }
+            }
+        });
+    });
+
+    // --- API functions ---
+
     function splitPane(projectID, sessionID, paneID, direction) {
         fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID + '/split', {
             method: 'POST',
@@ -221,7 +508,6 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            // Re-render the layout with the updated tree
             var container = document.getElementById('session-panes-' + sessionID);
             if (container) {
                 renderLayout(container, data.layout, sessionID, projectID);
@@ -232,7 +518,6 @@
         });
     }
 
-    // API: close a pane
     function closePane(projectID, sessionID, paneID) {
         fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID, {
             method: 'DELETE',
@@ -240,11 +525,9 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
             if (data.session_closed) {
-                // Session was deleted — reload to update tab bar
                 window.location.reload();
                 return;
             }
-            // Re-render the layout with the updated tree
             var container = document.getElementById('session-panes-' + sessionID);
             if (container) {
                 renderLayout(container, data.layout, sessionID, projectID);
@@ -255,7 +538,6 @@
         });
     }
 
-    // API: persist resize ratio
     function persistResize(projectID, sessionID, paneID, ratio) {
         fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID + '/resize', {
             method: 'PATCH',
@@ -267,10 +549,25 @@
         });
     }
 
-    // Expose to global scope
+    function renamePane(projectID, sessionID, paneID, name) {
+        fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID + '/rename', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'name=' + encodeURIComponent(name),
+        })
+        .catch(function(err) {
+            console.error('Failed to rename pane:', err);
+        });
+    }
+
+    // --- Expose to global scope ---
     window.ClawIDEPaneLayout = {
         render: renderLayout,
         splitPane: splitPane,
         closePane: closePane,
+        renamePane: renamePane,
+        isPhoneLayout: isPhoneLayout,
+        navigateCarousel: navigateCarousel,
+        getCarouselState: function() { return carouselState; },
     };
 })();

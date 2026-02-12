@@ -196,6 +196,35 @@ func TestClone(t *testing.T) {
 	assert.Nil(t, nilNode.Clone())
 }
 
+func TestCloneWithName(t *testing.T) {
+	original := &PaneNode{
+		Type:      "split",
+		Direction: "horizontal",
+		Ratio:     0.5,
+		First: &PaneNode{
+			Type:     "leaf",
+			PaneID:   "a",
+			TmuxName: "clawide-a",
+			Name:     "Server",
+		},
+		Second: &PaneNode{
+			Type:     "leaf",
+			PaneID:   "b",
+			TmuxName: "clawide-b",
+			Name:     "Client",
+		},
+	}
+
+	clone := original.Clone()
+
+	assert.Equal(t, "Server", clone.First.Name)
+	assert.Equal(t, "Client", clone.Second.Name)
+
+	// Mutation independence
+	clone.First.Name = "Mutated"
+	assert.Equal(t, "Server", original.First.Name)
+}
+
 func TestReplaceChild(t *testing.T) {
 	t.Run("replace first", func(t *testing.T) {
 		first := NewLeafPane("old")

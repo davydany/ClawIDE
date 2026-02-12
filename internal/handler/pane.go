@@ -174,6 +174,42 @@ func replaceNodeInTree(root, old, replacement *model.PaneNode) {
 	replaceNodeInTree(root.Second, old, replacement)
 }
 
+func (h *Handlers) RenamePane(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sid")
+	paneID := chi.URLParam(r, "pid")
+
+	sess, ok := h.store.GetSession(sessionID)
+	if !ok {
+		http.Error(w, "session not found", http.StatusNotFound)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	name := r.FormValue("name")
+
+	target, _ := sess.Layout.FindPane(paneID)
+	if target == nil {
+		http.Error(w, "pane not found", http.StatusNotFound)
+		return
+	}
+
+	target.Name = name
+	sess.UpdatedAt = time.Now()
+
+	if err := h.store.UpdateSession(sess); err != nil {
+		log.Printf("Error renaming pane: %v", err)
+		http.Error(w, "failed to save layout", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"ok":true}`))
+}
+
 func (h *Handlers) ResizePane(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sid")
 	paneID := chi.URLParam(r, "pid")
