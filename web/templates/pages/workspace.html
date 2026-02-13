@@ -360,7 +360,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}' }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -376,6 +376,43 @@
             <div class="ml-auto flex items-center gap-2">
                 {{template "notification-bell" .}}
                 {{if .IsGitRepo}}
+                <!-- Mobile feature actions menu -->
+                <div class="lg:hidden relative" x-data="{ mobileMenu: false }">
+                    <button @click="mobileMenu = !mobileMenu"
+                            class="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                    </button>
+                    <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
+                         class="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+                        <!-- Feature navigation -->
+                        <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase">Features</div>
+                        <a href="/projects/{{.Project.ID}}/" hx-boost="false"
+                           class="flex items-center gap-2 px-3 py-2 text-xs transition-colors {{if eq .ActiveFeatureID ""}}text-indigo-400 bg-gray-800/50{{else}}text-gray-300 hover:bg-gray-800{{end}}">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                            Main
+                        </a>
+                        {{range .Features}}
+                        <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/" hx-boost="false"
+                           class="flex items-center gap-2 px-3 py-2 text-xs transition-colors {{if eq .ID $.ActiveFeatureID}}text-purple-400 bg-gray-800/50{{else}}text-gray-300 hover:bg-gray-800{{end}}">
+                            <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            {{.Name}}
+                        </a>
+                        {{end}}
+                        <div class="border-t border-gray-800 my-1"></div>
+                        <!-- New Feature -->
+                        <button @click="showNewFeature = true; mobileMenu = false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-indigo-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            New Feature
+                        </button>
+                        <!-- Pull Latest from Main -->
+                        <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); mobileMenu = false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest from Main'"></span>
+                        </button>
+                    </div>
+                </div>
                 <!-- Branch indicator -->
                 <div class="relative" x-data="{ branchOpen: false, branches: [], filter: '', creating: false, newBranch: '', baseBranch: '' }">
                     <button @click="branchOpen = !branchOpen; if(branchOpen) { fetch('/projects/{{.Project.ID}}/api/branches').then(r=>r.json()).then(d=>branches=d.branches||[]) }"
@@ -497,7 +534,7 @@
             {{if .IsGitRepo}}
             <!-- Feature tab row -->
             <div class="hidden lg:flex items-center gap-1 px-4 py-0 border-b border-gray-800 bg-gray-900/30 overflow-x-auto"
-                 x-data="{ showNewFeature: false, featureName: '', featureBase: '', featureMenu: '' }">
+                 x-data="{ featureMenu: '' }">
                 <!-- Main workspace tab -->
                 <a href="/projects/{{.Project.ID}}/" hx-boost="false"
                    class="feature-tab-active flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ActiveFeatureID ""}}text-white border-indigo-400{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
@@ -542,9 +579,17 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </button>
 
-                <!-- New Feature Modal -->
-                <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
-                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
+                <!-- Pull Latest from Main (desktop) -->
+                <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)})"
+                        class="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-gray-800 rounded transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest'"></span>
+                </button>
+            </div>
+
+            <!-- New Feature Modal (accessible from both mobile and desktop) -->
+            <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
+                <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
                         <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
                         <form method="POST" action="/projects/{{.Project.ID}}/features/">
                             <div class="space-y-3">
@@ -563,8 +608,7 @@
                                 <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
                                 <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
                             </div>
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
             {{end}}

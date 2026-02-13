@@ -92,6 +92,28 @@ func (h *Handlers) FeatureGitCommit(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "committed"})
 }
 
+// FeaturePullMain fetches origin and merges the remote main branch into
+// the feature's worktree.
+// POST /projects/{id}/features/{fid}/api/pull-main
+func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
+	featureID := chi.URLParam(r, "fid")
+
+	feature, ok := h.store.GetFeature(featureID)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+
+	if err := git.PullMain(feature.WorktreePath); err != nil {
+		log.Printf("Error pulling main in feature %s: %v", feature.WorktreePath, err)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "pulled"})
+}
+
 // FeatureMerge merges the feature branch into the main branch, then
 // cleans up the feature (worktree, sessions, branch, store record).
 // POST /projects/{id}/features/{fid}/api/merge

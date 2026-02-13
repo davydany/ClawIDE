@@ -324,7 +324,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}' }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -341,9 +341,38 @@
             </nav>
             <div class="ml-auto flex items-center gap-2">
                 {{template "notification-bell" .}}
-                <span class="px-2 py-1 text-xs font-mono bg-purple-900/40 text-purple-300 border border-purple-800 rounded">
+                <span class="hidden sm:inline px-2 py-1 text-xs font-mono bg-purple-900/40 text-purple-300 border border-purple-800 rounded">
                     {{.Feature.BranchName}}
                 </span>
+                <!-- Mobile feature actions menu -->
+                <div class="lg:hidden relative" x-data="{ mobileMenu: false }">
+                    <button @click="mobileMenu = !mobileMenu"
+                            class="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                    </button>
+                    <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
+                         class="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+                        <!-- Merge to Main -->
+                        <button @click="if(confirm('Merge {{.Feature.BranchName}} into the main branch?')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; mobileMenu=false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-green-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Merge to Main
+                        </button>
+                        <!-- Delete Feature -->
+                        <button @click="if(confirm('Delete feature {{.Feature.Name}}? This cannot be undone.')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{.Project.ID}}/'}) }; mobileMenu=false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Delete Feature
+                        </button>
+                        <div class="border-t border-gray-800 my-1"></div>
+                        <!-- Pull Latest from Main -->
+                        <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); mobileMenu = false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest from Main'"></span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -392,7 +421,7 @@
 
             <!-- Feature tab row -->
             <div class="hidden lg:flex items-center gap-1 px-4 py-0 border-b border-gray-800 bg-gray-900/30 overflow-x-auto"
-                 x-data="{ showNewFeature: false, featureName: '', featureBase: '', featureMenu: '' }">
+                 x-data="{ featureMenu: '' }">
                 <!-- Main workspace tab -->
                 <a href="/projects/{{.Project.ID}}/" hx-boost="false"
                    class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors text-gray-400 border-transparent hover:text-gray-200">
@@ -417,6 +446,11 @@
                          class="fixed mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1"
                          x-ref="menu{{.ID}}"
                          :style="{ top: $el.parentElement.getBoundingClientRect().bottom + 'px', left: $el.parentElement.getBoundingClientRect().left + 'px' }">
+                        <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Pull Latest from Main
+                        </button>
                         <button @click="if(confirm('Merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -436,30 +470,30 @@
                         class="flex items-center gap-1 px-2 py-2 text-xs text-gray-500 hover:text-gray-300 transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </button>
+            </div>
 
-                <!-- New Feature Modal -->
-                <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
-                    <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-96 p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
-                        <form method="POST" action="/projects/{{.Project.ID}}/features/">
-                            <div class="space-y-3">
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
-                                    <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
-                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
-                                    <input type="text" name="base_branch" x-model="featureBase" placeholder="Leave empty for current branch"
-                                           class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                </div>
+            <!-- New Feature Modal (accessible from both mobile and desktop) -->
+            <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
+                <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
+                    <form method="POST" action="/projects/{{.Project.ID}}/features/">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
+                                <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
+                                       class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                             </div>
-                            <div class="flex justify-end gap-2 mt-4">
-                                <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
-                                <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
+                                <input type="text" name="base_branch" x-model="featureBase" placeholder="Leave empty for current branch"
+                                       class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
+                            <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

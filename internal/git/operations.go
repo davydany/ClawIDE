@@ -104,6 +104,33 @@ func Merge(repoPath, branch string) error {
 	return nil
 }
 
+// Fetch runs `git fetch <remote>` in the given repo.
+func Fetch(repoPath, remote string) error {
+	cmd := exec.Command("git", "fetch", remote)
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git fetch %s: %s: %w", remote, strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
+// PullMain fetches origin and merges the remote main branch into the
+// currently checked-out branch. If a conflict occurs, the merge is
+// aborted and an error is returned.
+func PullMain(repoPath string) error {
+	mainBranch, err := DetectMainBranch(repoPath)
+	if err != nil {
+		return fmt.Errorf("detect main branch: %w", err)
+	}
+	if err := Fetch(repoPath, "origin"); err != nil {
+		return err
+	}
+	if err := Merge(repoPath, "origin/"+mainBranch); err != nil {
+		return err
+	}
+	return nil
+}
+
 // DeleteBranch safely deletes a local branch. Uses -d (not -D) so git
 // will refuse if the branch has unmerged commits.
 func DeleteBranch(repoPath, branch string) error {

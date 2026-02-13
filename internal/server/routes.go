@@ -88,6 +88,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/branches", s.handlers.ListBranches)
 			r.Post("/api/checkout", s.handlers.CheckoutBranch)
 			r.Post("/api/branches", s.handlers.CreateBranch)
+			r.Post("/api/pull-main", s.handlers.PullMain)
 
 			// Port detection
 			r.Get("/api/ports", s.handlers.DetectPorts)
@@ -110,6 +111,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Get("/api/status", s.handlers.FeatureGitStatus)
 				r.Post("/api/commit", s.handlers.FeatureGitCommit)
 				r.Post("/api/merge", s.handlers.FeatureMerge)
+				r.Post("/api/pull-main", s.handlers.FeaturePullMain)
 			})
 		})
 	})
