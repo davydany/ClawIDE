@@ -26,6 +26,9 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// Version
 	r.Get("/api/version", s.handlers.Version)
 
+	// System stats
+	r.Get("/api/system/stats", s.handlers.SystemStats)
+
 	// Dashboard
 	r.Get("/", s.handlers.Dashboard)
 

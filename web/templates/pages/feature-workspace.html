@@ -223,6 +223,100 @@
             </div>
         </nav>
 
+        <!-- System Stats Box -->
+        <div class="flex-shrink-0 border-t border-gray-800 p-3 text-xs text-gray-400"
+             x-data="{
+                stats: null,
+                loading: true,
+                async poll() {
+                    try {
+                        const r = await fetch('/api/system/stats');
+                        this.stats = await r.json();
+                    } catch(e) { console.error('stats poll:', e); }
+                    this.loading = false;
+                }
+             }"
+             x-init="await poll(); setInterval(() => poll(), 10000)">
+
+            <template x-if="loading">
+                <div class="text-center text-gray-500 py-2">Loading stats...</div>
+            </template>
+            <template x-if="!loading && stats">
+                <div class="space-y-3">
+                    <!-- Network Interfaces -->
+                    <div>
+                        <div class="font-medium text-gray-300 mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.858 15.355-5.858 21.213 0"/></svg>
+                            Network
+                        </div>
+                        <template x-if="stats.network.length === 0">
+                            <div class="text-gray-500 pl-4">No interfaces</div>
+                        </template>
+                        <template x-for="iface in stats.network" :key="iface.name">
+                            <div class="flex items-center gap-1.5 pl-4 py-0.5 truncate">
+                                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                      :class="iface.status === 'up' ? 'bg-green-400' : 'bg-red-400'"></span>
+                                <span class="text-gray-300 font-mono" x-text="iface.name"></span>
+                                <span class="text-gray-500 truncate" x-text="iface.ipv4"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- CPU Cores -->
+                    <div>
+                        <div class="font-medium text-gray-300 mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                            CPU
+                        </div>
+                        <div :class="stats.cpu.length > 8 ? 'grid grid-cols-2 gap-x-2' : ''">
+                            <template x-for="core in stats.cpu" :key="core.core">
+                                <div class="flex items-center gap-1.5 pl-4 py-0.5">
+                                    <span class="w-4 text-gray-500 text-right" x-text="core.core"></span>
+                                    <div class="flex-1 bg-gray-800 rounded-full h-[3px]">
+                                        <div class="h-full rounded-full transition-all duration-500"
+                                             :class="core.usage_percent > 80 ? 'bg-red-400' : core.usage_percent > 50 ? 'bg-yellow-400' : 'bg-indigo-400'"
+                                             :style="'width:' + core.usage_percent + '%'"></div>
+                                    </div>
+                                    <span class="w-8 text-right tabular-nums" x-text="Math.round(core.usage_percent) + '%'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Memory -->
+                    <div>
+                        <div class="font-medium text-gray-300 mb-1 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            Memory
+                        </div>
+                        <div class="pl-4">
+                            <div class="flex items-center gap-1.5">
+                                <div class="flex-1 bg-gray-800 rounded-full h-[3px]">
+                                    <div class="h-full rounded-full transition-all duration-500"
+                                         :class="stats.memory.usage_percent > 80 ? 'bg-red-400' : stats.memory.usage_percent > 50 ? 'bg-yellow-400' : 'bg-indigo-400'"
+                                         :style="'width:' + stats.memory.usage_percent + '%'"></div>
+                                </div>
+                                <span class="w-8 text-right tabular-nums" x-text="Math.round(stats.memory.usage_percent) + '%'"></span>
+                            </div>
+                            <div class="text-gray-500 mt-0.5" x-text="formatBytes(stats.memory.used_bytes) + ' / ' + formatBytes(stats.memory.total_bytes)"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tmux + Projects row -->
+                    <div class="flex items-center justify-between pt-1 border-t border-gray-800">
+                        <div class="flex items-center gap-1" title="ClawIDE tmux sessions">
+                            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span x-text="stats.tmux_sessions"></span> tmux
+                        </div>
+                        <div class="flex items-center gap-1" title="Projects (starred / total)">
+                            <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            <span x-text="stats.projects.starred + ' / ' + stats.projects.total"></span> projects
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
         <!-- Sidebar resize handle -->
         <div id="sidebar-resize-handle"
              class="sidebar-resize-handle absolute top-0 bottom-0 {{if eq .SidebarPosition "right"}}left-0{{else}}right-0{{end}} hidden lg:block"
