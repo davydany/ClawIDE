@@ -15,6 +15,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/davydany/ClawIDE/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/updater"
 	"github.com/davydany/ClawIDE/internal/version"
 )
 
@@ -25,6 +26,7 @@ type Server struct {
 	ptyManager *pty.Manager
 	handlers   *handler.Handlers
 	http       *http.Server
+	updater    *updater.Updater
 }
 
 func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
@@ -66,12 +68,15 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 	// Recover tmux sessions from previous run
 	recoverTmuxSessions(st)
 
+	upd := updater.New(cfg, notificationStore, sseHub)
+
 	s := &Server{
 		cfg:        cfg,
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, sseHub),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, sseHub, upd),
+		updater:    upd,
 	}
 
 	router := s.setupRoutes()
@@ -83,6 +88,8 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		WriteTimeout: 15 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+
+	upd.Start()
 
 	return s
 }
@@ -140,6 +147,7 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
+	s.updater.Stop()
 	s.ptyManager.CloseAll()
 	return s.http.Shutdown(ctx)
 }

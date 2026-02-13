@@ -184,6 +184,151 @@
                         </div>
                     </div>
 
+                    <!-- Software Update -->
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                         x-data="{
+                            checking: false,
+                            installing: false,
+                            state: null,
+                            error: '',
+                            pollTimer: null,
+                            init() {
+                                fetch('/api/update/status').then(function(r){ return r.json(); }).then(function(d){
+                                    this.state = d;
+                                }.bind(this)).catch(function(){});
+                            },
+                            checkNow() {
+                                var self = this;
+                                self.checking = true;
+                                self.error = '';
+                                fetch('/api/update/check').then(function(r){ return r.json(); }).then(function(d){
+                                    self.state = d;
+                                    if (d.error) { self.error = d.error; }
+                                }).catch(function(e){
+                                    self.error = 'Failed to check for updates.';
+                                }).finally(function(){ self.checking = false; });
+                            },
+                            applyUpdate() {
+                                var self = this;
+                                if (!confirm('Update to ' + self.state.latest_version + '? ClawIDE will restart automatically.')) return;
+                                self.installing = true;
+                                self.error = '';
+                                fetch('/api/update/apply', {method:'POST'}).then(function(r){
+                                    if (r.status === 202) {
+                                        self.startPolling();
+                                    } else {
+                                        return r.json().then(function(d){ self.error = d.message || 'Update failed.'; self.installing = false; });
+                                    }
+                                }).catch(function(){
+                                    self.error = 'Failed to start update.';
+                                    self.installing = false;
+                                });
+                            },
+                            startPolling() {
+                                var self = this;
+                                var attempts = 0;
+                                self.pollTimer = setInterval(function(){
+                                    attempts++;
+                                    if (attempts > 60) {
+                                        clearInterval(self.pollTimer);
+                                        self.error = 'Restart timed out. Please refresh manually.';
+                                        self.installing = false;
+                                        return;
+                                    }
+                                    fetch('/api/version').then(function(r){
+                                        if (r.ok) {
+                                            clearInterval(self.pollTimer);
+                                            window.location.reload();
+                                        }
+                                    }).catch(function(){});
+                                }, 1000);
+                            }
+                         }">
+                        <h3 class="text-sm font-medium text-white mb-4">Software Update</h3>
+                        <div class="space-y-3">
+                            <!-- Current version -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-300">Current Version</p>
+                                    <p class="text-xs text-gray-500 font-mono mt-0.5">{{.Version}}</p>
+                                </div>
+                                <template x-if="state && state.is_dev">
+                                    <span class="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Dev build - updates disabled</span>
+                                </template>
+                                <template x-if="!state || !state.is_dev">
+                                    <button @click="checkNow()" :disabled="checking || installing"
+                                            class="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                        <span x-show="!checking">Check for Updates</span>
+                                        <span x-show="checking" class="flex items-center gap-1.5">
+                                            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Checking...
+                                        </span>
+                                    </button>
+                                </template>
+                            </div>
+
+                            <!-- Update available banner -->
+                            <template x-if="state && state.update_available && !installing">
+                                <div class="bg-indigo-900/30 border border-indigo-700/50 rounded-lg p-4">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-indigo-300">
+                                                ClawIDE <span x-text="state.latest_version"></span> is available
+                                            </p>
+                                            <p class="text-xs text-gray-400 mt-1">
+                                                Download size: <span x-text="(state.asset_size / 1024 / 1024).toFixed(1) + ' MB'"></span>
+                                            </p>
+                                            <a :href="state.release_url" target="_blank" rel="noopener"
+                                               class="text-xs text-indigo-400 hover:text-indigo-300 mt-1 inline-block">
+                                                View release notes
+                                            </a>
+                                        </div>
+                                        <button @click="applyUpdate()"
+                                                class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors whitespace-nowrap ml-4">
+                                            Update Now
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Installing progress -->
+                            <template x-if="installing">
+                                <div class="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
+                                    <div class="flex items-center gap-3">
+                                        <svg class="animate-spin h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                        <div>
+                                            <p class="text-sm font-medium text-yellow-300">Installing update...</p>
+                                            <p class="text-xs text-gray-400 mt-0.5">ClawIDE will restart automatically. This page will reload when ready.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Up to date message -->
+                            <template x-if="state && !state.is_dev && !state.update_available && state.latest_version && !error">
+                                <p class="text-xs text-green-400">ClawIDE is up to date.</p>
+                            </template>
+
+                            <!-- Last check time -->
+                            <template x-if="state && state.last_check && !state.is_dev">
+                                <p class="text-xs text-gray-500">
+                                    Last checked: <span x-text="new Date(state.last_check).toLocaleString()"></span>
+                                </p>
+                            </template>
+
+                            <!-- Error -->
+                            <template x-if="error">
+                                <p class="text-xs text-red-400" x-text="error"></p>
+                            </template>
+                        </div>
+                    </div>
+
                     <!-- Claude Code Integration -->
                     <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
                          x-data="{ detected: false, hookConfigured: false, loading: true, setting: false }"

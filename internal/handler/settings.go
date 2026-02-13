@@ -8,12 +8,14 @@ import (
 	"path/filepath"
 
 	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/version"
 )
 
 func (h *Handlers) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
-		"Title":  "Settings - ClawIDE",
-		"Config": h.cfg,
+		"Title":   "Settings - ClawIDE",
+		"Config":  h.cfg,
+		"Version": version.Version,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "settings", "settings", data); err != nil {
@@ -50,7 +52,8 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"host":             true,
 		"port":             true,
 		"sidebar_position": true,
-		"sidebar_width":    true,
+		"sidebar_width":      true,
+		"auto_update_check":  true,
 	}
 
 	for k, v := range updates {
@@ -89,6 +92,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.cfg.LogLevel = newCfg.LogLevel
 	h.cfg.Host = newCfg.Host
 	h.cfg.Port = newCfg.Port
+	h.cfg.AutoUpdateCheck = newCfg.AutoUpdateCheck
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

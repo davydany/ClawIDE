@@ -6,6 +6,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
+	"github.com/davydany/ClawIDE/internal/updater"
 )
 
 type Handlers struct {
@@ -19,9 +20,10 @@ type Handlers struct {
 	bookmarkStore     *store.BookmarkStore
 	voiceBoxStore     *store.VoiceBoxStore
 	sseHub            *sse.Hub
+	updater           *updater.Updater
 }
 
-func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, hub *sse.Hub) *Handlers {
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, hub *sse.Hub, upd *updater.Updater) *Handlers {
 	return &Handlers{
 		cfg:               cfg,
 		store:             st,
@@ -33,5 +35,6 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		bookmarkStore:     bookmarkSt,
 		voiceBoxStore:     voiceBoxSt,
 		sseHub:            hub,
+		updater:           upd,
 	}
 }

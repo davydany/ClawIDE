@@ -25,6 +25,7 @@ type Config struct {
 	MaxNotifications       int    `json:"max_notifications"`
 	SidebarPosition        string `json:"sidebar_position"`
 	SidebarWidth           int    `json:"sidebar_width"`
+	AutoUpdateCheck        bool   `json:"auto_update_check"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -43,6 +44,7 @@ func DefaultConfig() *Config {
 		MaxNotifications: 200,
 		SidebarPosition:  "left",
 		SidebarWidth:     288,
+		AutoUpdateCheck:  true,
 	}
 }
 
@@ -178,6 +180,14 @@ func (c *Config) VoiceBoxFilePath() string {
 
 func (c *Config) HooksDir() string {
 	return filepath.Join(c.DataDir, "hooks")
+}
+
+func (c *Config) UpdateStatePath() string {
+	return filepath.Join(c.DataDir, "update-state.json")
+}
+
+func (c *Config) UpdateTempDir() string {
+	return filepath.Join(c.DataDir, "update-tmp")
 }
 
 func (c *Config) Addr() string {

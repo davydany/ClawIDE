@@ -76,6 +76,6 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	bookmarkSt, err := store.NewBookmarkStore(filepath.Join(storeDir, "bookmarks.json"))
 	require.NoError(t, err)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, nil, sse.NewHub())
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, nil, sse.NewHub(), nil)
 	return h, st
 }
