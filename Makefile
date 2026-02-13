@@ -30,11 +30,11 @@ run: build
 
 # Build Tailwind CSS
 css:
-	npx tailwindcss -i web/static/css/input.css -o web/static/dist/app.css --minify
+	./web/src/node_modules/.bin/tailwindcss -i web/static/css/input.css -o web/static/dist/app.css --minify
 
 # Watch Tailwind CSS for changes
 css-watch:
-	npx tailwindcss -i web/static/css/input.css -o web/static/dist/app.css --watch
+	./web/src/node_modules/.bin/tailwindcss -i web/static/css/input.css -o web/static/dist/app.css --watch
 
 # Download and vendor JS dependencies
 vendor-js:
