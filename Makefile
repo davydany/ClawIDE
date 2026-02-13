@@ -47,6 +47,10 @@ vendor-js:
 		curl -sL https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js -o web/static/vendor/alpine.min.js; \
 		echo "Downloaded alpine.min.js"; \
 	fi
+	@if [ ! -f web/static/vendor/qrcode.min.js ]; then \
+		curl -sL https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js -o web/static/vendor/qrcode.min.js; \
+		echo "Downloaded qrcode.min.js"; \
+	fi
 	@cd web/src && npm install && npm run build
 
 # Clean build artifacts

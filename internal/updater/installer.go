@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"syscall"
 )
 
 // installing guards against concurrent install attempts.
@@ -105,8 +106,8 @@ func (u *Updater) Install() error {
 		return fmt.Errorf("starting new process: %w", err)
 	}
 
-	os.Exit(0)
-	return nil // unreachable
+	syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+	select {} // block until signal handler exits the process
 }
 
 func downloadFile(client *http.Client, url, dest string) error {

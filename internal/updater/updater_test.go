@@ -252,6 +252,23 @@ func TestNotificationSent(t *testing.T) {
 	assert.Contains(t, notifs[0].Body, "v1.1.0")
 }
 
+func TestState_IsDockerField(t *testing.T) {
+	orig := version.Version
+	defer func() { version.Version = orig }()
+	version.Version = "v1.0.0"
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(fakeRelease("v1.0.0"))
+	})
+
+	u, ts := setupTestUpdater(t, handler)
+	defer ts.Close()
+
+	state := u.State()
+	// IsDocker should match the standalone function
+	assert.Equal(t, IsDocker(), state.IsDocker)
+}
+
 func TestNotificationIdempotent(t *testing.T) {
 	orig := version.Version
 	defer func() { version.Version = orig }()

@@ -27,6 +27,7 @@ const (
 // State represents the cached update check result.
 type State struct {
 	IsDev           bool      `json:"is_dev"`
+	IsDocker        bool      `json:"is_docker"`
 	CurrentVersion  string    `json:"current_version"`
 	UpdateAvailable bool      `json:"update_available"`
 	LatestVersion   string    `json:"latest_version"`
@@ -140,6 +141,7 @@ func (u *Updater) State() State {
 	defer u.mu.RUnlock()
 	s := u.state
 	s.IsDev = version.IsDevVersion()
+	s.IsDocker = IsDocker()
 	s.CurrentVersion = version.Version
 	return s
 }
