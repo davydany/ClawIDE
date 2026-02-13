@@ -13,6 +13,8 @@ import (
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/davydany/ClawIDE/internal/version"
 )
 
 type Renderer struct {
@@ -44,6 +46,9 @@ func (r *Renderer) parseTemplates() error {
 		"json": func(v any) template.JS {
 			b, _ := json.Marshal(v)
 			return template.JS(b)
+		},
+		"version": func() string {
+			return version.Version
 		},
 	}
 
