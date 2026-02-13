@@ -209,7 +209,10 @@
     // Action handlers for data-action buttons
     var actions = {
         copy: handleCopy,
-        paste: handlePaste
+        paste: handlePaste,
+        voicebox: function() {
+            if (window.ClawIDEVoiceBox) window.ClawIDEVoiceBox.open();
+        }
     };
 
     // Initialize toolbar interactions

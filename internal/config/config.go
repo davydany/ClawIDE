@@ -172,6 +172,10 @@ func (c *Config) BookmarksFilePath() string {
 	return filepath.Join(c.DataDir, "bookmarks.json")
 }
 
+func (c *Config) VoiceBoxFilePath() string {
+	return filepath.Join(c.DataDir, "voicebox.json")
+}
+
 func (c *Config) HooksDir() string {
 	return filepath.Join(c.DataDir, "hooks")
 }

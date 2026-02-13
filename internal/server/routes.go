@@ -141,6 +141,14 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Patch("/{bookmarkID}/star", s.handlers.ToggleBookmarkStar)
 	})
 
+	// Voice Box API (global, not project-scoped)
+	r.Route("/api/voicebox", func(r chi.Router) {
+		r.Get("/", s.handlers.ListVoiceBoxEntries)
+		r.Post("/", s.handlers.CreateVoiceBoxEntry)
+		r.Delete("/", s.handlers.DeleteAllVoiceBoxEntries)
+		r.Delete("/{entryID}", s.handlers.DeleteVoiceBoxEntry)
+	})
+
 	// Notifications API (global, not project-scoped)
 	r.Route("/api/notifications", func(r chi.Router) {
 		r.Post("/", s.handlers.CreateNotification)
