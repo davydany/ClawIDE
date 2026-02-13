@@ -150,6 +150,73 @@ async function main() {
     await waitForStable(page, "[data-testid='snippets'], .snippet-drawer, .snippets-panel");
     await capture(page, "code-snippets", "Code snippets drawer");
 
+    // ---- 12. Bookmarks ----
+    // Navigate to a project and open the bookmarks panel
+    await page.goto(`${BASE_URL}/`, WAIT_OPTIONS);
+    const bookmarksBtn = await page.$("[data-testid='bookmarks'], [title*='bookmark' i], button:has-text('Bookmark'), a:has-text('Bookmark')");
+    if (bookmarksBtn) {
+      await bookmarksBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    await waitForStable(page, "[data-testid='bookmarks-panel'], .bookmarks-panel, .bookmarks-container");
+    await capture(page, "bookmarks", "Bookmarks panel");
+
+    // ---- 13. Notes ----
+    const notesBtn = await page.$("[data-testid='notes'], [title*='note' i], button:has-text('Note'), a:has-text('Note')");
+    if (notesBtn) {
+      await notesBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    await waitForStable(page, "[data-testid='notes-panel'], .notes-panel, .notes-container");
+    await capture(page, "notes", "Notes panel");
+
+    // ---- 14. Notifications ----
+    const notifBtn = await page.$("[data-testid='notifications'], [title*='notification' i], button:has-text('Notification'), .notification-bell");
+    if (notifBtn) {
+      await notifBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    await waitForStable(page, "[data-testid='notifications-panel'], .notifications-panel, .notifications-container");
+    await capture(page, "notifications", "Notification center");
+
+    // ---- 15. System Statistics ----
+    const statsBtn = await page.$("[data-testid='system-stats'], [title*='stats' i], button:has-text('Stats'), a:has-text('Stats'), a:has-text('System')");
+    if (statsBtn) {
+      await statsBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    await waitForStable(page, "[data-testid='system-stats-panel'], .system-stats, .stats-container");
+    await capture(page, "system-stats", "System statistics view");
+
+    // ---- 16. Auto-Update (Settings page) ----
+    await page.goto(`${BASE_URL}/settings`, WAIT_OPTIONS);
+    await page.waitForTimeout(500);
+    // Scroll to the update section if it exists
+    const updateSection = await page.$("[data-testid='update-section'], .update-section, #update-settings");
+    if (updateSection) {
+      await updateSection.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    }
+    await capture(page, "auto-update", "Auto-update section in settings");
+
+    // ---- 17. Claude Code Hooks (Settings page) ----
+    const claudeSection = await page.$("[data-testid='claude-section'], .claude-section, #claude-settings");
+    if (claudeSection) {
+      await claudeSection.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    }
+    await capture(page, "claude-hooks", "Claude Code hooks section in settings");
+
+    // ---- 18. VoiceBox ----
+    await page.goto(`${BASE_URL}/`, WAIT_OPTIONS);
+    const voiceBtn = await page.$("[data-testid='voicebox'], [title*='voice' i], button:has-text('Voice'), a:has-text('Voice')");
+    if (voiceBtn) {
+      await voiceBtn.click();
+      await page.waitForTimeout(1000);
+    }
+    await waitForStable(page, "[data-testid='voicebox-panel'], .voicebox-panel, .voicebox-container");
+    await capture(page, "voicebox", "VoiceBox panel");
+
     console.log(`\nDone! ${fs.readdirSync(SCREENSHOT_DIR).filter(f => f.endsWith(".png")).length} screenshots saved to:`);
     console.log(`  ${SCREENSHOT_DIR}\n`);
 

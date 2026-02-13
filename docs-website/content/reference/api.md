@@ -41,6 +41,86 @@ ClawIDE exposes HTTP and WebSocket endpoints for all functionality. The HTTP API
 |--------|------|-------------|
 | GET | `/static/*` | Serves embedded static assets (CSS, JS, vendor libraries) |
 
+## Bookmarks
+
+Bookmark endpoints use the `project_id` query parameter to scope results to a specific project.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/bookmarks?project_id={projectID}` | List all bookmarks for a project |
+| GET | `/api/bookmarks?project_id={projectID}&q={query}` | Search bookmarks by name or URL |
+| POST | `/api/bookmarks` | Create a new bookmark |
+| PUT | `/api/bookmarks/{bookmarkID}` | Update a bookmark's name, URL, or emoji |
+| DELETE | `/api/bookmarks/{bookmarkID}` | Delete a bookmark |
+| PATCH | `/api/bookmarks/{bookmarkID}/star` | Toggle a bookmark's starred status (max 5 per project) |
+
+## Notes
+
+Notes can be scoped to a project or kept global (no `project_id`).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/notes?project_id={projectID}` | List notes for a project |
+| GET | `/api/notes?q={query}` | Search notes by title or content |
+| POST | `/api/notes` | Create a new note |
+| PUT | `/api/notes/{noteID}` | Update a note's title or content |
+| DELETE | `/api/notes/{noteID}` | Delete a note |
+
+## Notifications
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/notifications` | List all notifications (newest first) |
+| GET | `/api/notifications?unread_only=true` | List unread notifications only |
+| POST | `/api/notifications` | Create a notification |
+| GET | `/api/notifications/unread-count` | Get the unread notification count |
+| GET | `/api/notifications/stream` | SSE stream for real-time notification delivery |
+| PATCH | `/api/notifications/{notifID}/read` | Mark a notification as read |
+| POST | `/api/notifications/read-all` | Mark all notifications as read |
+| DELETE | `/api/notifications/{notifID}` | Delete a notification |
+
+The SSE stream at `/api/notifications/stream` sends events in the following format:
+
+```
+event: notification
+data: {"id":"...","title":"...","level":"info","read":false,...}
+```
+
+A keepalive ping is sent every 15 seconds. The server buffers up to 50 events per client.
+
+## System Statistics
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/system/stats` | Returns current CPU, memory, network, session, and project metrics |
+
+## Auto-Update
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/update/check` | Force an immediate update check against GitHub releases |
+| GET | `/api/update/status` | Get the cached update state (version, availability, last check) |
+| POST | `/api/update/apply` | Download, verify (SHA-256), and install the latest release |
+
+## Claude Code Hooks
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/claude/detect` | Check if the Claude CLI is installed |
+| POST | `/api/claude/setup-hook` | Install the stop hook script and configure Claude settings |
+| DELETE | `/api/claude/hook` | Remove the hook script and clean up Claude settings |
+
+## VoiceBox
+
+VoiceBox endpoints are global and not scoped to a project.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/voicebox` | List all voice entries |
+| POST | `/api/voicebox` | Create a new voice entry |
+| DELETE | `/api/voicebox/{entryID}` | Delete a specific voice entry |
+| DELETE | `/api/voicebox` | Delete all voice entries |
+
 ## Snippets
 
 Snippet endpoints are global and not scoped to a project.
@@ -113,6 +193,7 @@ Pane operations are scoped to a specific session.
 | GET | `/projects/{id}/api/branches` | List all git branches |
 | POST | `/projects/{id}/api/branches` | Create a new branch |
 | POST | `/projects/{id}/api/checkout` | Checkout a branch |
+| POST | `/projects/{id}/api/pull-main` | Pull latest changes from the main branch |
 
 ### Ports
 
@@ -146,6 +227,7 @@ Feature endpoints create self-contained workspaces backed by git worktrees.
 | GET | `/projects/{id}/features/{fid}/api/status` | Get git status for the feature branch |
 | POST | `/projects/{id}/features/{fid}/api/commit` | Commit changes in the feature branch |
 | POST | `/projects/{id}/features/{fid}/api/merge` | Merge the feature branch back to the parent |
+| POST | `/projects/{id}/features/{fid}/api/pull-main` | Pull latest main branch changes into the feature branch |
 
 ## WebSocket Endpoints
 

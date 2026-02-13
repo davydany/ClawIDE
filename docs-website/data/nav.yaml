@@ -25,6 +25,20 @@ sections:
         url: /features/code-snippets/
       - title: Onboarding
         url: /features/onboarding/
+      - title: Bookmarks
+        url: /features/bookmarks/
+      - title: Notes
+        url: /features/notes/
+      - title: Notifications
+        url: /features/notifications/
+      - title: System Statistics
+        url: /features/system-stats/
+      - title: Auto-Update
+        url: /features/auto-update/
+      - title: Claude Code Hooks
+        url: /features/claude-hooks/
+      - title: VoiceBox
+        url: /features/voicebox/
   - title: Reference
     items:
       - title: Architecture

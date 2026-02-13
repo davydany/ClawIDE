@@ -54,6 +54,48 @@ A guided welcome experience that introduces ClawIDE's key features and walks you
 
 [Learn more →]({{< ref "features/onboarding" >}})
 
+## Bookmarks
+
+Save project-specific web bookmarks with starred favorites and emoji labels. Keep your documentation links, staging URLs, and CI dashboards one click away.
+
+[Learn more →]({{< ref "features/bookmarks" >}})
+
+## Notes
+
+Create project-scoped and global markdown notes for quick reference. Jot down reminders, architecture decisions, or setup instructions.
+
+[Learn more →]({{< ref "features/notes" >}})
+
+## Notifications
+
+Real-time notification system with SSE streaming. Receive alerts from system events, Docker status changes, and Claude Code task completions.
+
+[Learn more →]({{< ref "features/notifications" >}})
+
+## System Statistics
+
+Monitor CPU, memory, and network information from within ClawIDE. View active session counts and network interfaces with QR codes.
+
+[Learn more →]({{< ref "features/system-stats" >}})
+
+## Auto-Update
+
+Automatic update checking against GitHub releases with one-click installation. Updates are verified with SHA-256 checksums.
+
+[Learn more →]({{< ref "features/auto-update" >}})
+
+## Claude Code Hooks
+
+Integrate with Claude Code's hook system to receive notifications when Claude finishes tasks in any terminal session.
+
+[Learn more →]({{< ref "features/claude-hooks" >}})
+
+## VoiceBox
+
+Capture voice memos and quick text entries for reference across sessions and projects.
+
+[Learn more →]({{< ref "features/voicebox" >}})
+
 ## Dashboard
 
 The central hub for all your projects. Create new projects, import existing ones, and navigate to any project workspace.
