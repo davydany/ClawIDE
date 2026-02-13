@@ -203,6 +203,27 @@ func (h *Handlers) CreateBranch(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// PullMain fetches origin and merges the remote main branch into the
+// project's currently checked-out branch.
+// POST /projects/{id}/api/pull-main
+func (h *Handlers) PullMain(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+
+	if !git.IsGitRepo(project.Path) {
+		http.Error(w, "project path is not a git repository", http.StatusBadRequest)
+		return
+	}
+
+	if err := git.PullMain(project.Path); err != nil {
+		log.Printf("Error pulling main in %s: %v", project.Path, err)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "pulled"})
+}
+
 // ListBranches returns a JSON array of local and remote branches for the
 // project's repository.
 func (h *Handlers) ListBranches(w http.ResponseWriter, r *http.Request) {
