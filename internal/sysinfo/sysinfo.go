@@ -46,6 +46,7 @@ type Stats struct {
 	Network      []NetworkInterface `json:"network"`
 	TmuxSessions int                `json:"tmux_sessions"`
 	Projects     Projects           `json:"projects"`
+	ServerPort   int                `json:"server_port"`
 }
 
 // Gather collects all system stats. Each sub-collector is non-fatal;

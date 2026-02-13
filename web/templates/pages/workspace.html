@@ -241,6 +241,7 @@
              x-data="{
                 stats: null,
                 loading: true,
+                hoveredIface: null,
                 async poll() {
                     try {
                         const r = await fetch('/api/system/stats');
@@ -266,11 +267,33 @@
                             <div class="text-gray-500 pl-4">No interfaces</div>
                         </template>
                         <template x-for="iface in stats.network" :key="iface.name">
-                            <div class="flex items-center gap-1.5 pl-4 py-0.5 truncate">
-                                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                      :class="iface.status === 'up' ? 'bg-green-400' : 'bg-red-400'"></span>
-                                <span class="text-gray-300 font-mono" x-text="iface.name"></span>
-                                <span class="text-gray-500 truncate" x-text="iface.ipv4"></span>
+                            <div class="relative"
+                                 @mouseenter="if (iface.status === 'up') { hoveredIface = iface.name; $nextTick(() => { const c = $el.querySelector('.qr-container'); if (c) generateQR(c, 'http://' + iface.ipv4 + ':' + stats.server_port, 3); }) }"
+                                 @mouseleave="hoveredIface = null">
+                                <div class="flex items-center gap-1.5 pl-4 py-0.5 truncate">
+                                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                          :class="iface.status === 'up' ? 'bg-green-400' : 'bg-red-400'"></span>
+                                    <span class="text-gray-300 font-mono" x-text="iface.name"></span>
+                                    <span class="text-gray-500 truncate" x-text="iface.ipv4"></span>
+                                    <svg x-show="iface.status === 'up'" class="w-3 h-3 ml-auto text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                </div>
+                                <!-- QR tooltip -->
+                                <div x-show="hoveredIface === iface.name"
+                                     x-transition:enter="transition ease-out duration-150"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-100"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     x-cloak
+                                     class="absolute z-50 bottom-0 {{if eq .SidebarPosition "right"}}right-full mr-2{{else}}left-full ml-2{{end}} bg-white rounded-lg shadow-xl p-3 w-[168px]"
+                                     style="pointer-events: none;">
+                                    <div class="qr-container flex items-center justify-center" style="width:128px;height:128px;margin:0 auto;"></div>
+                                    <div class="mt-2 text-center">
+                                        <div class="text-[10px] text-gray-700 font-mono break-all" x-text="'http://' + iface.ipv4 + ':' + stats.server_port"></div>
+                                        <div class="text-[9px] text-gray-400 mt-0.5">Scan to connect</div>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                     </div>
