@@ -1,0 +1,32 @@
+name: Deploy Docs to Heroku
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs-website/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Deploy docs-website subtree to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git config user.email "ci@github.com"
+          git config user.name "GitHub Actions"
+
+          # Extract docs-website as a subtree into a temporary branch
+          git subtree split --prefix docs-website -b heroku-deploy
+
+          # Push the subtree branch to Heroku
+          git push https://heroku:${HEROKU_API_KEY}@git.heroku.com/clawide-docs.git heroku-deploy:main --force

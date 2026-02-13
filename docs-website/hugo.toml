@@ -1,4 +1,4 @@
-baseURL = 'https://clawide.vercel.app/'
+baseURL = '/'
 languageCode = 'en-us'
 title = 'ClawIDE'
 enableRobotsTXT = true
