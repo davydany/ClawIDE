@@ -10,6 +10,7 @@
 <script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
 <script src="/static/js/snippets.js"></script>
+<script src="/static/js/voicebox.js"></script>
 {{end}}
 
 {{define "body"}}
@@ -340,6 +341,9 @@
                 <span class="text-white font-medium truncate">{{.Feature.Name}}</span>
             </nav>
             <div class="ml-auto flex items-center gap-2">
+                <button onclick="ClawIDEVoiceBox.open()" class="p-1.5 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Voice Box">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                </button>
                 {{template "notification-bell" .}}
                 <span class="px-2 py-1 text-xs font-mono bg-purple-900/40 text-purple-300 border border-purple-800 rounded">
                     {{.Feature.BranchName}}
@@ -567,6 +571,10 @@
                         </button>
                         <button data-key="right" aria-label="Right arrow">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="modifier-separator"></div>
+                        <button data-action="voicebox" aria-label="Voice Box">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                         </button>
                     </div>
                 </div>
@@ -846,4 +854,46 @@ function deleteSession(projectID, sessionID) {
     });
 }
 </script>
+
+<!-- Voice Box Modal -->
+<div id="voicebox-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true" aria-label="Voice Box">
+    <div class="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-lg mx-4" @click.stop>
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+            <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                Voice Box
+            </h2>
+            <button onclick="ClawIDEVoiceBox.close()" class="p-1 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="p-4">
+            <textarea id="voicebox-textarea" rows="5" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-y" placeholder="Type or dictate text to send to terminal..."></textarea>
+        </div>
+        <!-- Footer -->
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-800">
+            <span class="text-[10px] text-gray-500 hidden sm:inline">Cmd/Ctrl+Enter to send</span>
+            <div class="flex items-center gap-2 ml-auto">
+                <button onclick="ClawIDEVoiceBox.close()" class="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="ClawIDEVoiceBox.send()" class="px-4 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors">Send to Terminal</button>
+            </div>
+        </div>
+        <!-- History section -->
+        <div id="voicebox-history-section" class="border-t border-gray-800" x-data="{ historyOpen: false }">
+            <button @click="historyOpen = !historyOpen" class="flex items-center justify-between w-full px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors">
+                <span>History</span>
+                <svg class="w-3.5 h-3.5 transition-transform" :class="historyOpen ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div x-show="historyOpen" x-cloak class="max-h-48 overflow-y-auto">
+                <div class="flex items-center justify-between px-4 py-1">
+                    <span class="text-[10px] text-gray-500">Recent entries</span>
+                    <button onclick="ClawIDEVoiceBox.clearHistory()" class="text-[10px] text-red-400 hover:text-red-300 transition-colors">Clear All</button>
+                </div>
+                <div id="voicebox-history-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
 {{end}}
