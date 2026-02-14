@@ -21,7 +21,7 @@ const SCREENSHOT_DIR = path.join(__dirname, "..", "static", "images", "screensho
 const VIEWPORT = { width: 1440, height: 900 };
 
 // How long to wait for network to settle
-const WAIT_OPTIONS = { waitUntil: "networkidle", timeout: 30000 };
+const WAIT_OPTIONS = { waitUntil: "domcontentloaded", timeout: 30000 };
 
 async function ensureScreenshotDir() {
   if (!fs.existsSync(SCREENSHOT_DIR)) {
