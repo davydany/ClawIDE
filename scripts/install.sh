@@ -107,7 +107,7 @@ install_binary() {
 
   echo -e "${BLUE}Downloading ClawIDE v$VERSION...${NC}"
 
-  if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/$FILENAME"; then
+  if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/$FILENAME" < /dev/null; then
     echo -e "${RED}Error: Failed to download binary${NC}"
     exit 1
   fi
