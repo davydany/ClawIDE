@@ -134,14 +134,10 @@
             }
 
             if (key === 'v') {
-                // If Clipboard API is available, read from it directly
-                if (navigator.clipboard && navigator.clipboard.readText) {
+                // Try to read clipboard - check for images first, then text
+                if (navigator.clipboard) {
                     ev.preventDefault();
-                    navigator.clipboard.readText().then(function(text) {
-                        if (text) sendData(text);
-                    }).catch(function() {
-                        console.warn('Clipboard read denied — use right-click paste or toolbar button');
-                    });
+                    handleClipboardPaste();
                     return false;
                 }
                 // No Clipboard API (non-secure context): let the browser handle
@@ -159,26 +155,49 @@
             });
         }
 
-        // Handle image paste events
-        container.addEventListener('paste', function(e) {
-            if (!e.clipboardData) return;
-
-            var items = e.clipboardData.items;
-            if (!items) return;
-
-            // Look for image data
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-                if (item.kind === 'file' && item.type.startsWith('image/')) {
-                    e.preventDefault();
-                    var blob = item.getAsFile();
-                    if (blob) {
-                        handleImagePaste(blob);
-                    }
-                    return;
-                }
+        // Handle clipboard paste - check for images first, then text
+        function handleClipboardPaste() {
+            if (!navigator.clipboard || !navigator.clipboard.read) {
+                console.warn('Clipboard read not supported');
+                return;
             }
-        });
+
+            navigator.clipboard.read().then(function(items) {
+                // Look for image data first
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    var imageType = Array.from(item.types).find(function(type) {
+                        return type.startsWith('image/');
+                    });
+
+                    if (imageType) {
+                        item.getType(imageType).then(function(blob) {
+                            handleImagePaste(blob);
+                        }).catch(function(err) {
+                            console.error('Failed to read image:', err);
+                        });
+                        return;
+                    }
+                }
+
+                // No image found, try text
+                var textType = Array.from(items[0].types).find(function(type) {
+                    return type === 'text/plain';
+                });
+
+                if (textType && items[0]) {
+                    items[0].getType(textType).then(function(blob) {
+                        return blob.text();
+                    }).then(function(text) {
+                        if (text) sendData(text);
+                    }).catch(function(err) {
+                        console.error('Failed to read text:', err);
+                    });
+                }
+            }).catch(function(err) {
+                console.warn('Clipboard read denied:', err);
+            });
+        }
 
         function handleImagePaste(blob) {
             var reader = new FileReader();
@@ -194,6 +213,9 @@
                         window.ClawIDEToast.show('✓ Image pasted');
                     }
                 }
+            };
+            reader.onerror = function(err) {
+                console.error('Failed to read image blob:', err);
             };
             reader.readAsDataURL(blob);
         }
