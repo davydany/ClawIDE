@@ -177,8 +177,9 @@ main() {
   # Show installation plan
   show_plan "$VERSION" "$DOWNLOAD_URL"
 
-  # Debug output
-  echo "DEBUG: main() - FILENAME='$FILENAME' DOWNLOAD_URL='$DOWNLOAD_URL'" >&2
+  # Debug output - write to a temporary file to verify code is reached
+  touch /tmp/clawide_debug_marker_$$ 2>/dev/null || true
+  echo "At main() debug point: VERSION=$VERSION FILENAME=$FILENAME" >> /tmp/clawide_debug_output.txt 2>/dev/null || true
 
   # Install binary
   install_binary "$VERSION" "$DOWNLOAD_URL" "$FILENAME"
