@@ -153,6 +153,27 @@
             term.textarea.addEventListener('focus', function() {
                 updateFocusedPane(paneID);
             });
+
+            // Handle paste events for mobile (context menu paste, not keyboard)
+            term.textarea.addEventListener('paste', function(e) {
+                if (!e.clipboardData) return;
+
+                var items = e.clipboardData.items;
+                if (!items || items.length === 0) return;
+
+                // Check for images first
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        var blob = item.getAsFile();
+                        if (blob) {
+                            handleImagePaste(blob);
+                        }
+                        return;
+                    }
+                }
+            });
         }
 
         // Handle clipboard paste - check for images first, then text
