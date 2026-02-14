@@ -13,7 +13,7 @@ NC='\033[0m'
 
 # Configuration
 REPO="davydany/ClawIDE"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 BINARY_NAME="clawide"
 
 echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
@@ -97,24 +97,46 @@ fi
 
 echo -e "${BLUE}Installing to $INSTALL_DIR...${NC}"
 
-# Install (use sudo if needed)
+# Create install directory if it doesn't exist
+mkdir -p "$INSTALL_DIR"
+
 if [ ! -w "$INSTALL_DIR" ]; then
-  if [ -t 0 ]; then
-    # Terminal is available, can use sudo interactively
-    sudo mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
-    sudo chmod +x "$INSTALL_DIR/$BINARY_NAME"
-  else
-    # No terminal (piped script), can't use sudo interactively
-    echo -e "${RED}Error: $INSTALL_DIR is not writable and running in non-interactive mode${NC}"
-    echo -e "${RED}Please run with sudo or set INSTALL_DIR to a writable directory:${NC}"
-    echo "  sudo curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash"
-    echo "  or"
-    echo "  INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash"
-    exit 1
+  echo -e "${RED}Error: $INSTALL_DIR is not writable${NC}"
+  exit 1
+fi
+
+# Install binary
+mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
+chmod +x "$INSTALL_DIR/$BINARY_NAME"
+
+# Update shell configuration if needed
+if [[ "$INSTALL_DIR" == *"/.local/bin" ]]; then
+  # Check if ~/.local/bin is in PATH
+  if ! grep -q "\.local/bin" "$HOME/.bashrc" 2>/dev/null && ! grep -q "\.local/bin" "$HOME/.zshrc" 2>/dev/null; then
+    echo ""
+    echo -e "${YELLOW}Note: $INSTALL_DIR is not in your PATH${NC}"
+    echo -e "${BLUE}Adding to shell configuration...${NC}"
+
+    # Add to bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+      echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+      echo "  Added to ~/.bashrc"
+    fi
+
+    # Add to zshrc if it exists
+    if [ -f "$HOME/.zshrc" ]; then
+      echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
+      echo "  Added to ~/.zshrc"
+    fi
+
+    # If neither exists, create .bashrc
+    if [ ! -f "$HOME/.bashrc" ] && [ ! -f "$HOME/.zshrc" ]; then
+      echo 'export PATH="$HOME/.local/bin:$PATH"' > "$HOME/.bashrc"
+      echo "  Created ~/.bashrc with PATH"
+    fi
+
+    echo -e "${YELLOW}Please reload your shell: exec \$SHELL${NC}"
   fi
-else
-  mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
-  chmod +x "$INSTALL_DIR/$BINARY_NAME"
 fi
 
 echo -e "${GREEN}✓ Installation successful!${NC}"
