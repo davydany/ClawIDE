@@ -55,6 +55,7 @@
                 <h2 class="text-xl font-semibold text-white mb-6">Settings</h2>
 
                 <div class="space-y-6">
+                    <!-- General Settings -->
                     <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
                         <h3 class="text-sm font-medium text-white mb-4">General</h3>
                         <div class="space-y-4">
@@ -66,42 +67,90 @@
                                 <label class="block text-sm text-gray-400 mb-1">Max Sessions</label>
                                 <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.MaxSessions}}</p>
                             </div>
-                            <div x-data="{
-                                agentCmd: '{{.Config.AgentCommand}}',
-                                agentArgs: '{{.Config.AgentArgs}}',
-                                customCmd: '',
-                                saving: false,
-                                saved: false,
-                                init() {
-                                    var presets = ['claude', 'codex', 'aider', ''];
-                                    if (presets.indexOf(this.agentCmd) === -1) {
-                                        this.customCmd = this.agentCmd;
-                                    }
-                                },
-                                get isPreset() {
-                                    return ['claude', 'codex', 'aider', ''].indexOf(this.agentCmd) !== -1;
-                                },
-                                get effectiveCmd() {
-                                    return this.isPreset ? this.agentCmd : this.customCmd;
-                                },
-                                save() {
-                                    var self = this;
-                                    self.saving = true;
-                                    self.saved = false;
-                                    var cmd = self.isPreset ? self.agentCmd : self.customCmd;
-                                    fetch('/api/settings', {
-                                        method: 'PUT',
-                                        headers: {'Content-Type': 'application/json'},
-                                        body: JSON.stringify({agent_command: cmd, agent_args: self.agentArgs})
-                                    }).then(function(r) {
-                                        if (r.ok) { self.saved = true; setTimeout(function(){ self.saved = false; }, 2000); }
-                                    }).finally(function() { self.saving = false; });
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">Listen Address</label>
+                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.Host}}:{{.Config.Port}}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Agent CLI Configuration -->
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                         x-data="{
+                            agentCmd: '{{.Config.AgentCommand}}',
+                            agentArgs: '{{.Config.AgentArgs}}',
+                            customCmd: '',
+                            saving: false,
+                            saved: false,
+                            showHelp: false,
+                            init() {
+                                var presets = ['claude', 'codex', 'aider', ''];
+                                if (presets.indexOf(this.agentCmd) === -1) {
+                                    this.customCmd = this.agentCmd;
                                 }
-                            }">
-                                <label class="block text-sm text-gray-400 mb-1">AI Agent Command</label>
+                            },
+                            get isPreset() {
+                                return ['claude', 'codex', 'aider', ''].indexOf(this.agentCmd) !== -1;
+                            },
+                            get effectiveCmd() {
+                                return this.isPreset ? this.agentCmd : this.customCmd;
+                            },
+                            save() {
+                                var self = this;
+                                self.saving = true;
+                                self.saved = false;
+                                var cmd = self.isPreset ? self.agentCmd : self.customCmd;
+                                fetch('/api/settings', {
+                                    method: 'PUT',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({agent_command: cmd, agent_args: self.agentArgs})
+                                }).then(function(r) {
+                                    if (r.ok) { self.saved = true; setTimeout(function(){ self.saved = false; }, 2000); }
+                                }).finally(function() { self.saving = false; });
+                            }
+                         }">
+                        <div class="mb-4">
+                            <div class="flex items-start justify-between mb-2">
+                                <h3 class="text-sm font-medium text-white">AI Agent CLI Configuration</h3>
+                                <button @click="showHelp = !showHelp"
+                                        class="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded bg-indigo-900/20 hover:bg-indigo-900/40 transition-colors">
+                                    <span x-text="showHelp ? 'Hide Help' : 'Show Help'"></span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-400">Configure the AI agent command and options that ClawIDE will auto-launch in new terminal panes.</p>
+                        </div>
+
+                        <!-- Help Section -->
+                        <div x-show="showHelp" class="mb-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                            <div class="text-xs text-gray-300 space-y-2">
+                                <p><strong>What is this?</strong> ClawIDE can automatically launch an AI agent in new terminal panes to help with code tasks.</p>
+                                <p><strong>Supported Agents:</strong></p>
+                                <ul class="list-disc list-inside pl-2 space-y-1">
+                                    <li><code class="text-indigo-300">claude</code> - Claude Code (recommended)</li>
+                                    <li><code class="text-indigo-300">codex</code> - OpenAI Codex</li>
+                                    <li><code class="text-indigo-300">aider</code> - Aider</li>
+                                    <li><code class="text-indigo-300">(custom)</code> - Any command path</li>
+                                </ul>
+                                <p><strong>CLI Arguments:</strong> Add options like <code class="text-indigo-300">--model opus --verbose</code> to customize behavior.</p>
+                                <p><strong>Common Options:</strong></p>
+                                <ul class="list-disc list-inside pl-2 space-y-1 text-gray-400">
+                                    <li><code class="text-indigo-300">--model sonnet|opus|haiku</code> - Choose model</li>
+                                    <li><code class="text-indigo-300">--effort low|medium|high</code> - Effort level</li>
+                                    <li><code class="text-indigo-300">--permission-mode plan|acceptEdits|default</code> - Permission level</li>
+                                    <li><code class="text-indigo-300">-c, --continue</code> - Resume previous session</li>
+                                    <li><code class="text-indigo-300">--verbose</code> - Enable verbose output</li>
+                                </ul>
+                                <p><strong>📖 Full Reference:</strong> See <code class="text-indigo-300">docs/claude-cli-options.md</code> for complete options list.</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <!-- Agent Command Selection -->
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">AI Agent Command</label>
                                 <div class="flex items-center gap-2 mb-2">
                                     <select x-model="agentCmd"
-                                            class="bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
                                         <option value="claude">Claude Code (claude)</option>
                                         <option value="codex">OpenAI Codex (codex)</option>
                                         <option value="aider">Aider (aider)</option>
@@ -111,29 +160,41 @@
                                         </template>
                                     </select>
                                     <button @click="save()" :disabled="saving"
-                                            class="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors">
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
-                                        <span x-show="saved" class="text-green-300">Saved</span>
+                                        <span x-show="saved" class="text-green-300">✓ Saved</span>
                                     </button>
                                 </div>
-                                <div x-show="!isPreset" class="mb-2">
-                                    <input type="text" x-model="customCmd"
-                                           placeholder="Custom command path..."
-                                           class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
-                                </div>
-                                <div x-show="effectiveCmd !== ''" class="mb-2">
-                                    <label class="block text-sm text-gray-400 mb-1">Additional CLI Arguments</label>
-                                    <input type="text" x-model="agentArgs"
-                                           placeholder="e.g. --model opus --verbose"
-                                           class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
-                                </div>
-                                <p class="text-xs text-gray-500">Command auto-launched in new terminal panes. Leave empty for plain shell.</p>
+                                <p class="text-xs text-gray-500">Command that will auto-launch in new terminal panes.</p>
                             </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Listen Address</label>
-                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.Host}}:{{.Config.Port}}</p>
+
+                            <!-- Custom Command Path -->
+                            <div x-show="!isPreset" class="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                                <label class="block text-sm text-gray-400 mb-2">Custom Command Path</label>
+                                <input type="text" x-model="customCmd"
+                                       placeholder="e.g. /usr/local/bin/claude or /path/to/custom-agent"
+                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
+                                <p class="text-xs text-gray-500 mt-1">Provide the full path to your custom AI agent command.</p>
                             </div>
+
+                            <!-- CLI Arguments -->
+                            <div x-show="effectiveCmd !== ''">
+                                <label class="block text-sm text-gray-400 mb-2">Additional CLI Arguments</label>
+                                <input type="text" x-model="agentArgs"
+                                       placeholder="e.g. --model opus --effort high --permission-mode acceptEdits"
+                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono mb-1">
+                                <p class="text-xs text-gray-500">Optional flags passed to the agent command. Separate multiple options with spaces.</p>
+                            </div>
+
+                            <!-- No Agent Option -->
+                            <template x-if="effectiveCmd === ''">
+                                <div class="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                                    <p class="text-sm text-gray-400">
+                                        <span class="text-yellow-400">ℹ️</span> Shell only mode: New panes will launch a plain shell without an AI agent.
+                                    </p>
+                                </div>
+                            </template>
                         </div>
                     </div>
 
