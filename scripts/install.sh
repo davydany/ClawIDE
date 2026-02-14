@@ -158,9 +158,6 @@ install_binary() {
 
 # Main installation flow
 main() {
-  # Redirect stdin from /dev/null to handle piped script execution
-  exec 0< /dev/null
-
   echo -e "${GREEN}╔════════════════════════════════════════╗${NC}"
   echo -e "${GREEN}║    ClawIDE Installation Script        ║${NC}"
   echo -e "${GREEN}╚════════════════════════════════════════╝${NC}"
