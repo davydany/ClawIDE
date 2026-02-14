@@ -75,7 +75,6 @@ build_download_url() {
   esac
 
   DOWNLOAD_URL="https://github.com/$REPO/releases/download/v${VERSION}/$FILENAME"
-  echo "$DOWNLOAD_URL"
 }
 
 # Show installation plan
@@ -166,7 +165,7 @@ main() {
   echo -e "${GREEN}Latest version: v$VERSION${NC}"
 
   # Build download URL
-  DOWNLOAD_URL=$(build_download_url "$VERSION")
+  build_download_url "$VERSION"
 
   # Show installation plan
   show_plan "$VERSION" "$DOWNLOAD_URL"
