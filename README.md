@@ -31,6 +31,15 @@ A web-based IDE for managing multiple Claude Code sessions across projects, with
 
 ## Quick Start
 
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+clawide
+```
+
+Open [http://localhost:9800](http://localhost:9800) in your browser.
+
 ### Build from Source
 
 ```bash

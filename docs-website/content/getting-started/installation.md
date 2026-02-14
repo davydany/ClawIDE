@@ -4,7 +4,37 @@ description: "Detailed installation instructions for ClawIDE: build from source 
 weight: 20
 ---
 
-ClawIDE can be installed in two ways: building from source or running with Docker.
+ClawIDE can be installed in three ways: using the installation script, building from source, or running with Docker.
+
+## Quick Install (Recommended)
+
+The fastest way to get started is using our installation script. It automatically detects your system and downloads the latest pre-built binary.
+
+### Install from Script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+```
+
+This script will:
+- Detect your OS and architecture
+- Download the latest pre-built binary from GitHub releases
+- Install to `/usr/local/bin` (with sudo if needed)
+- Display the installation plan before proceeding
+
+**You can inspect the script before running it:**
+- View the script: [scripts/install.sh](https://github.com/davydany/ClawIDE/blob/master/scripts/install.sh)
+- Review what it downloads: [GitHub Releases](https://github.com/davydany/ClawIDE/releases)
+
+Once installed, simply run:
+
+```bash
+clawide
+```
+
+Then open [http://localhost:9800](http://localhost:9800) in your browser.
+
+---
 
 ## Build from Source
 
