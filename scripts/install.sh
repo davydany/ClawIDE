@@ -99,8 +99,19 @@ echo -e "${BLUE}Installing to $INSTALL_DIR...${NC}"
 
 # Install (use sudo if needed)
 if [ ! -w "$INSTALL_DIR" ]; then
-  sudo mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
-  sudo chmod +x "$INSTALL_DIR/$BINARY_NAME"
+  if [ -t 0 ]; then
+    # Terminal is available, can use sudo interactively
+    sudo mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
+    sudo chmod +x "$INSTALL_DIR/$BINARY_NAME"
+  else
+    # No terminal (piped script), can't use sudo interactively
+    echo -e "${RED}Error: $INSTALL_DIR is not writable and running in non-interactive mode${NC}"
+    echo -e "${RED}Please run with sudo or set INSTALL_DIR to a writable directory:${NC}"
+    echo "  sudo curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash"
+    echo "  or"
+    echo "  INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash"
+    exit 1
+  fi
 else
   mv "$BINARY_PATH" "$INSTALL_DIR/$BINARY_NAME"
   chmod +x "$INSTALL_DIR/$BINARY_NAME"
