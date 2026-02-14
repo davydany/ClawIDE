@@ -100,4 +100,4 @@ ClawIDE/
 
 ## License
 
-[MIT](LICENSE) — Copyright 2024 davydany
+[MIT](LICENSE) — Copyright 2026 davydany
