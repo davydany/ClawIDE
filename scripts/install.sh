@@ -99,6 +99,7 @@ show_plan() {
 install_binary() {
   VERSION=$1
   DOWNLOAD_URL=$2
+  FILENAME=$3
 
   # Create temporary directory
   TEMP_DIR=$(mktemp -d)
@@ -106,7 +107,7 @@ install_binary() {
 
   echo -e "${BLUE}Downloading ClawIDE v$VERSION...${NC}"
 
-  if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/$FILENAME" < /dev/null; then
+  if ! curl -fsSL "$DOWNLOAD_URL" -o "$TEMP_DIR/$FILENAME"; then
     echo -e "${RED}Error: Failed to download binary${NC}"
     exit 1
   fi
@@ -171,7 +172,7 @@ main() {
   show_plan "$VERSION" "$DOWNLOAD_URL"
 
   # Install binary
-  install_binary "$VERSION" "$DOWNLOAD_URL"
+  install_binary "$VERSION" "$DOWNLOAD_URL" "$FILENAME"
 
   echo -e "${GREEN}Done! Enjoy using ClawIDE.${NC}"
 }
