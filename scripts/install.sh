@@ -1,6 +1,6 @@
 #!/bin/bash
 # ClawIDE Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 
 set -e
 
