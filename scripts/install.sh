@@ -30,9 +30,9 @@ detect_system() {
   esac
 
   case "$ARCH" in
-    x86_64)     ARCH_TYPE="x86_64" ;;
-    aarch64)    ARCH_TYPE="aarch64" ;;
-    arm64)      ARCH_TYPE="aarch64" ;;  # macOS M1/M2
+    x86_64)     ARCH_TYPE="amd64" ;;
+    aarch64)    ARCH_TYPE="arm64" ;;
+    arm64)      ARCH_TYPE="arm64" ;;  # macOS M1/M2
     *)          ARCH_TYPE="UNKNOWN" ;;
   esac
 
@@ -64,13 +64,13 @@ build_download_url() {
 
   case "$OS_TYPE" in
     linux)
-      FILENAME="clawide-linux-${ARCH_TYPE}.tar.gz"
+      FILENAME="clawide-v${VERSION}-linux-${ARCH_TYPE}.tar.gz"
       ;;
     darwin)
-      FILENAME="clawide-darwin-${ARCH_TYPE}.tar.gz"
+      FILENAME="clawide-v${VERSION}-darwin-${ARCH_TYPE}.tar.gz"
       ;;
     windows)
-      FILENAME="clawide-windows-${ARCH_TYPE}.zip"
+      FILENAME="clawide-v${VERSION}-windows-${ARCH_TYPE}.zip"
       ;;
   esac
 
