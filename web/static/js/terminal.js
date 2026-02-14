@@ -72,11 +72,18 @@
         fitAddon.fit();
 
         // Clipboard helpers (defined before key handler so they're in scope)
+        function showCopyToast() {
+            if (window.ClawIDEToast) {
+                window.ClawIDEToast.show('✓ Copied');
+            }
+        }
+
         function copyToClipboard(text) {
             // Try async Clipboard API first (requires secure context)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(function() {
                     console.log('Copied via Clipboard API');
+                    showCopyToast();
                 }).catch(function() {
                     fallbackCopy(text);
                 });
@@ -95,6 +102,7 @@
             try {
                 document.execCommand('copy');
                 console.log('Copied via execCommand fallback');
+                showCopyToast();
             } catch (e) {
                 console.error('Copy failed:', e);
             }
@@ -149,6 +157,45 @@
             term.textarea.addEventListener('focus', function() {
                 updateFocusedPane(paneID);
             });
+        }
+
+        // Handle image paste events
+        container.addEventListener('paste', function(e) {
+            if (!e.clipboardData) return;
+
+            var items = e.clipboardData.items;
+            if (!items) return;
+
+            // Look for image data
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    var blob = item.getAsFile();
+                    if (blob) {
+                        handleImagePaste(blob);
+                    }
+                    return;
+                }
+            }
+        });
+
+        function handleImagePaste(blob) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64Data = e.target.result;
+                // Extract just the base64 part (after the comma)
+                var base64String = base64Data.split(',')[1];
+                if (base64String) {
+                    // Send image data to terminal with a special prefix
+                    // Claude Code can detect this and handle the image appropriately
+                    sendData('__IMAGE_PASTED__:' + base64String + '\n');
+                    if (window.ClawIDEToast) {
+                        window.ClawIDEToast.show('✓ Image pasted');
+                    }
+                }
+            };
+            reader.readAsDataURL(blob);
         }
 
         // Connect WebSocket with both sessionID and paneID

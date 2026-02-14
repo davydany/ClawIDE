@@ -21,7 +21,6 @@
     var MOMENTUM_MIN_VELOCITY = 0.5;    // px/ms threshold to stop
     var SCROLL_MULTIPLIER = 1.5;        // amplify swipe delta for smoother scrolling
     var VELOCITY_BUFFER_SIZE = 5;
-    var COPY_BTN_TIMEOUT = 5000;
 
     function attach(termState) {
         if (!isTouchDevice) return;
@@ -44,8 +43,6 @@
         var velocityIdx = 0;
         var selStartCol = 0;
         var selStartRow = 0;
-        var copyBtn = null;
-        var copyBtnTimer = null;
         var isCarouselSwipe = false;    // true when swiping horizontally in phone carousel mode
 
         // --- Helpers ---
@@ -140,49 +137,6 @@
             }
         }
 
-        function showCopyButton(touchX, touchY) {
-            removeCopyButton();
-
-            copyBtn = document.createElement('button');
-            copyBtn.className = 'touch-copy-btn';
-            copyBtn.textContent = 'Copy';
-            copyBtn.setAttribute('type', 'button');
-            document.body.appendChild(copyBtn);
-
-            // Position near the touch point, above it
-            var btnRect = copyBtn.getBoundingClientRect();
-            var left = Math.max(8, Math.min(touchX - btnRect.width / 2, window.innerWidth - btnRect.width - 8));
-            var top = touchY - 50;
-            if (top < 8) top = touchY + 20;
-            copyBtn.style.left = left + 'px';
-            copyBtn.style.top = top + 'px';
-
-            copyBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var selection = term.getSelection();
-                if (selection) {
-                    copyToClipboard(selection);
-                }
-                removeCopyButton();
-                term.clearSelection();
-            });
-
-            copyBtnTimer = setTimeout(function() {
-                removeCopyButton();
-            }, COPY_BTN_TIMEOUT);
-        }
-
-        function removeCopyButton() {
-            if (copyBtnTimer) {
-                clearTimeout(copyBtnTimer);
-                copyBtnTimer = null;
-            }
-            if (copyBtn && copyBtn.parentNode) {
-                copyBtn.parentNode.removeChild(copyBtn);
-                copyBtn = null;
-            }
-        }
 
         function copyToClipboard(text) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -211,27 +165,24 @@
             if (e.touches.length > 1) {
                 cancelLongPress();
                 cancelMomentum();
-                removeCopyButton();
                 state = STATE.IDLE;
                 return;
             }
 
             var touch = e.touches[0];
 
-            // Ignore touches on pane toolbar, resize handles, copy button
+            // Ignore touches on pane toolbar, resize handles
             var target = touch.target || e.target;
             if (target.closest && (
                 target.closest('.pane-toolbar') ||
                 target.closest('.pane-resize-handle') ||
-                target.closest('.modifier-toolbar') ||
-                target.closest('.touch-copy-btn')
+                target.closest('.modifier-toolbar')
             )) {
                 return;
             }
 
             // Cancel any existing momentum
             cancelMomentum();
-            removeCopyButton();
 
             startX = touch.clientX;
             startY = touch.clientY;
@@ -381,10 +332,10 @@
 
                 var selection = term.getSelection();
                 if (selection) {
-                    // Show floating copy button near last touch position
-                    var lastTouch = e.changedTouches[0];
-                    if (lastTouch) {
-                        showCopyButton(lastTouch.clientX, lastTouch.clientY);
+                    // Auto-copy and show toast notification
+                    copyToClipboard(selection);
+                    if (window.ClawIDEToast) {
+                        window.ClawIDEToast.show('✓ Copied');
                     }
                 }
                 return;
@@ -396,7 +347,6 @@
         function onTouchCancel() {
             cancelLongPress();
             cancelMomentum();
-            removeCopyButton();
             isCarouselSwipe = false;
             container.classList.remove('touch-selecting');
             state = STATE.IDLE;
