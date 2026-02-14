@@ -72,11 +72,18 @@
         fitAddon.fit();
 
         // Clipboard helpers (defined before key handler so they're in scope)
+        function showCopyToast() {
+            if (window.ClawIDEToast) {
+                window.ClawIDEToast.show('✓ Copied');
+            }
+        }
+
         function copyToClipboard(text) {
             // Try async Clipboard API first (requires secure context)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(text).then(function() {
                     console.log('Copied via Clipboard API');
+                    showCopyToast();
                 }).catch(function() {
                     fallbackCopy(text);
                 });
@@ -95,6 +102,7 @@
             try {
                 document.execCommand('copy');
                 console.log('Copied via execCommand fallback');
+                showCopyToast();
             } catch (e) {
                 console.error('Copy failed:', e);
             }
@@ -126,14 +134,10 @@
             }
 
             if (key === 'v') {
-                // If Clipboard API is available, read from it directly
-                if (navigator.clipboard && navigator.clipboard.readText) {
+                // Try to read clipboard - check for images first, then text
+                if (navigator.clipboard) {
                     ev.preventDefault();
-                    navigator.clipboard.readText().then(function(text) {
-                        if (text) sendData(text);
-                    }).catch(function() {
-                        console.warn('Clipboard read denied — use right-click paste or toolbar button');
-                    });
+                    handleClipboardPaste();
                     return false;
                 }
                 // No Clipboard API (non-secure context): let the browser handle
@@ -149,6 +153,92 @@
             term.textarea.addEventListener('focus', function() {
                 updateFocusedPane(paneID);
             });
+
+            // Handle paste events for mobile (context menu paste, not keyboard)
+            term.textarea.addEventListener('paste', function(e) {
+                if (!e.clipboardData) return;
+
+                var items = e.clipboardData.items;
+                if (!items || items.length === 0) return;
+
+                // Check for images first
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    if (item.kind === 'file' && item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        var blob = item.getAsFile();
+                        if (blob) {
+                            handleImagePaste(blob);
+                        }
+                        return;
+                    }
+                }
+            });
+        }
+
+        // Handle clipboard paste - check for images first, then text
+        function handleClipboardPaste() {
+            if (!navigator.clipboard || !navigator.clipboard.read) {
+                console.warn('Clipboard read not supported');
+                return;
+            }
+
+            navigator.clipboard.read().then(function(items) {
+                // Look for image data first
+                for (var i = 0; i < items.length; i++) {
+                    var item = items[i];
+                    var imageType = Array.from(item.types).find(function(type) {
+                        return type.startsWith('image/');
+                    });
+
+                    if (imageType) {
+                        item.getType(imageType).then(function(blob) {
+                            handleImagePaste(blob);
+                        }).catch(function(err) {
+                            console.error('Failed to read image:', err);
+                        });
+                        return;
+                    }
+                }
+
+                // No image found, try text
+                var textType = Array.from(items[0].types).find(function(type) {
+                    return type === 'text/plain';
+                });
+
+                if (textType && items[0]) {
+                    items[0].getType(textType).then(function(blob) {
+                        return blob.text();
+                    }).then(function(text) {
+                        if (text) sendData(text);
+                    }).catch(function(err) {
+                        console.error('Failed to read text:', err);
+                    });
+                }
+            }).catch(function(err) {
+                console.warn('Clipboard read denied:', err);
+            });
+        }
+
+        function handleImagePaste(blob) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var base64Data = e.target.result;
+                // Extract just the base64 part (after the comma)
+                var base64String = base64Data.split(',')[1];
+                if (base64String) {
+                    // Send image data to terminal with a special prefix
+                    // Claude Code can detect this and handle the image appropriately
+                    sendData('__IMAGE_PASTED__:' + base64String + '\n');
+                    if (window.ClawIDEToast) {
+                        window.ClawIDEToast.show('✓ Image pasted');
+                    }
+                }
+            };
+            reader.onerror = function(err) {
+                console.error('Failed to read image blob:', err);
+            };
+            reader.readAsDataURL(blob);
         }
 
         // Connect WebSocket with both sessionID and paneID
@@ -240,6 +330,9 @@
             sendInput: function(data) {
                 sendData(data);
             },
+            paste: function() {
+                handleClipboardPaste();
+            },
             destroy: function() {
                 this.closed = true;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -314,6 +407,12 @@
             var ts = terminals[paneID];
             if (ts) {
                 ts.sendInput(data);
+            }
+        },
+        paste: function(paneID) {
+            var ts = terminals[paneID];
+            if (ts && ts.paste) {
+                ts.paste();
             }
         },
         addDataInterceptor: function(fn) {
