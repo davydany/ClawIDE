@@ -101,6 +101,9 @@ install_binary() {
   DOWNLOAD_URL=$2
   FILENAME=$3
 
+  # Debug: Show what parameters were passed
+  echo "DEBUG: install_binary received: VERSION='$VERSION' FILENAME='$FILENAME' DOWNLOAD_URL='$DOWNLOAD_URL'"
+
   # Create temporary directory
   TEMP_DIR=$(mktemp -d)
   trap "rm -rf $TEMP_DIR" EXIT
