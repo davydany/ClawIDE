@@ -1,8 +1,0 @@
-{
-  "build": {
-    "command": "npm install && hugo --minify --gc",
-    "output": "public"
-  },
-  "framework": "hugo",
-  "installCommand": "npm install"
-}
