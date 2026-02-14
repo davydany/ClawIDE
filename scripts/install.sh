@@ -180,6 +180,9 @@ main() {
   # Show installation plan
   show_plan "$VERSION" "$DOWNLOAD_URL"
 
+  # Debug output
+  echo "DEBUG: main() - FILENAME='$FILENAME' DOWNLOAD_URL='$DOWNLOAD_URL'" >&2
+
   # Install binary
   install_binary "$VERSION" "$DOWNLOAD_URL" "$FILENAME"
 
