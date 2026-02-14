@@ -99,7 +99,15 @@ show_plan() {
 # Request user confirmation
 confirm_installation() {
   echo -e "${YELLOW}Proceed with installation? (y/n)${NC}"
-  read -r -p "> " response
+
+  # Check if we can read from terminal (handles piped scripts)
+  if [ -t 0 ]; then
+    # Terminal is available, read normally
+    read -r -p "> " response
+  else
+    # No terminal (piped script), read from /dev/tty
+    read -r -p "> " response < /dev/tty
+  fi
 
   case "$response" in
     [yY][eE][sS]|[yY])
