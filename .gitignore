@@ -40,6 +40,8 @@ docs-website/public/
 docs-website/resources/
 docs-website/node_modules/
 *.png
+# But allow documentation screenshots
+!docs-website/static/images/screenshots/*.png
 
 # Playwright MCP
 .playwright-mcp/
