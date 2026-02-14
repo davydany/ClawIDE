@@ -8,12 +8,9 @@ ClawIDE is a single Go binary that gives you a web-based IDE for managing multip
 
 ## What You'll Need
 
-- **Go 1.24+** — for building from source
-- **Node.js** — for compiling frontend assets
 - **tmux** — terminal multiplexer used as the session backend
-- **Docker** (optional) — for Docker integration features or running ClawIDE in a container
 
 ## Next Steps
 
-- [Quick Start]({{< ref "getting-started/quick-start" >}}) — Get running in three steps
-- [Installation]({{< ref "getting-started/installation" >}}) — Detailed installation paths and prerequisites
+- [Quick Start]({{< ref "getting-started/quick-start" >}}) — Get running in two steps
+- [Installation]({{< ref "getting-started/installation" >}}) — Detailed installation and verification

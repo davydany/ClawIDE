@@ -24,14 +24,9 @@ A web-based IDE for managing multiple Claude Code sessions across projects, with
 
 ## Prerequisites
 
-- **Go 1.24+**
-- **Node.js** (for building frontend assets)
 - **tmux** (terminal multiplexer backend)
-- **Docker** (optional, for Docker integration features)
 
 ## Quick Start
-
-### Quick Install (Recommended)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
@@ -39,33 +34,6 @@ clawide
 ```
 
 Open [http://localhost:9800](http://localhost:9800) in your browser.
-
-### Build from Source
-
-```bash
-git clone https://github.com/davydany/ClawIDE.git
-cd ClawIDE
-
-# Build frontend assets and Go binary
-make all
-
-# Run the server
-./clawide
-```
-
-Open [http://localhost:9800](http://localhost:9800) in your browser.
-
-### Docker
-
-```bash
-git clone https://github.com/davydany/ClawIDE.git
-cd ClawIDE
-
-# Start with docker compose
-docker compose up -d
-```
-
-The default `docker-compose.yml` mounts `~/projects` (read-only) and `~/.clawide` for persistent state, and exposes port 9800.
 
 ## Configuration
 
