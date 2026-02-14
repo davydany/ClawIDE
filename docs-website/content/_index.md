@@ -22,7 +22,7 @@ ClawIDE is a web-based IDE for managing multiple Claude Code sessions across pro
 ### Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 clawide
 ```
 

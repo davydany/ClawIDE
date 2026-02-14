@@ -9,7 +9,7 @@ ClawIDE is installed using a single command that downloads the latest pre-built 
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 ```
 
 This script will:

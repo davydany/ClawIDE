@@ -21,7 +21,7 @@ sudo apt install tmux
 ## Step 1: Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 ```
 
 ## Step 2: Start ClawIDE

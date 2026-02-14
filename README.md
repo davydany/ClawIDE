@@ -29,7 +29,7 @@ A web-based IDE for managing multiple Claude Code sessions across projects, with
 ## Quick Start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 clawide
 ```
 
@@ -41,17 +41,17 @@ ClawIDE loads configuration from three sources in order of precedence: **flags >
 
 The config file is located at `~/.clawide/config.json`.
 
-| Setting | Flag | Env Var | Default | Description |
-|---------|------|---------|---------|-------------|
-| Host | `--host` | `CLAWIDE_HOST` | `0.0.0.0` | Listen address |
-| Port | `--port` | `CLAWIDE_PORT` | `9800` | Listen port |
-| Projects Dir | `--projects-dir` | `CLAWIDE_PROJECTS_DIR` | `~/projects` | Root directory for projects |
-| Max Sessions | `--max-sessions` | `CLAWIDE_MAX_SESSIONS` | `10` | Maximum concurrent terminal sessions |
-| Scrollback Size | — | `CLAWIDE_SCROLLBACK_SIZE` | `65536` | Terminal scrollback buffer size (bytes) |
-| Claude Command | `--claude-command` | `CLAWIDE_CLAUDE_COMMAND` | `claude` | Claude CLI binary name |
-| Log Level | `--log-level` | `CLAWIDE_LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
-| Data Dir | `--data-dir` | `CLAWIDE_DATA_DIR` | `~/.clawide` | Directory for state, config, and PID file |
-| Restart | `--restart` | — | `false` | Kill existing instance and start a new one |
+| Setting         | Flag               | Env Var                   | Default      | Description                                |
+| --------------- | ------------------ | ------------------------- | ------------ | ------------------------------------------ |
+| Host            | `--host`           | `CLAWIDE_HOST`            | `0.0.0.0`    | Listen address                             |
+| Port            | `--port`           | `CLAWIDE_PORT`            | `9800`       | Listen port                                |
+| Projects Dir    | `--projects-dir`   | `CLAWIDE_PROJECTS_DIR`    | `~/projects` | Root directory for projects                |
+| Max Sessions    | `--max-sessions`   | `CLAWIDE_MAX_SESSIONS`    | `10`         | Maximum concurrent terminal sessions       |
+| Scrollback Size | —                  | `CLAWIDE_SCROLLBACK_SIZE` | `65536`      | Terminal scrollback buffer size (bytes)    |
+| Claude Command  | `--claude-command` | `CLAWIDE_CLAUDE_COMMAND`  | `claude`     | Claude CLI binary name                     |
+| Log Level       | `--log-level`      | `CLAWIDE_LOG_LEVEL`       | `info`       | Log level (debug, info, warn, error)       |
+| Data Dir        | `--data-dir`       | `CLAWIDE_DATA_DIR`        | `~/.clawide` | Directory for state, config, and PID file  |
+| Restart         | `--restart`        | —                         | `false`      | Kill existing instance and start a new one |
 
 ### Example
 
