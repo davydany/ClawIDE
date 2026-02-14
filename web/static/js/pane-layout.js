@@ -166,6 +166,23 @@
             };
             kebabMenu.appendChild(menuItemShell);
 
+            // Add separator
+            var separator = document.createElement('div');
+            separator.className = 'border-t border-gray-700 my-1';
+            kebabMenu.appendChild(separator);
+
+            // Paste button
+            var menuItemPaste = document.createElement('button');
+            menuItemPaste.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemPaste.textContent = 'Paste from Clipboard';
+            menuItemPaste.onclick = function() {
+                kebabMenu.classList.add('hidden');
+                if (window.ClawIDETerminal) {
+                    window.ClawIDETerminal.paste(node.pane_id);
+                }
+            };
+            kebabMenu.appendChild(menuItemPaste);
+
             kebabBtn.onclick = function(e) {
                 e.stopPropagation();
                 kebabMenu.classList.toggle('hidden');

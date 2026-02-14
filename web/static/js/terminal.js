@@ -330,6 +330,9 @@
             sendInput: function(data) {
                 sendData(data);
             },
+            paste: function() {
+                handleClipboardPaste();
+            },
             destroy: function() {
                 this.closed = true;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -404,6 +407,12 @@
             var ts = terminals[paneID];
             if (ts) {
                 ts.sendInput(data);
+            }
+        },
+        paste: function(paneID) {
+            var ts = terminals[paneID];
+            if (ts && ts.paste) {
+                ts.paste();
             }
         },
         addDataInterceptor: function(fn) {
