@@ -96,30 +96,6 @@ show_plan() {
   echo ""
 }
 
-# Request user confirmation
-confirm_installation() {
-  echo -e "${YELLOW}Proceed with installation? (y/n)${NC}"
-
-  # Check if we can read from terminal (handles piped scripts)
-  if [ -t 0 ]; then
-    # Terminal is available, read normally
-    read -r -p "> " response
-  else
-    # No terminal (piped script), read from /dev/tty
-    read -r -p "> " response < /dev/tty
-  fi
-
-  case "$response" in
-    [yY][eE][sS]|[yY])
-      return 0
-      ;;
-    *)
-      echo -e "${RED}Installation cancelled.${NC}"
-      exit 0
-      ;;
-  esac
-}
-
 # Download and install
 install_binary() {
   VERSION=$1
@@ -194,9 +170,6 @@ main() {
 
   # Show installation plan
   show_plan "$VERSION" "$DOWNLOAD_URL"
-
-  # Confirm before installing
-  confirm_installation
 
   # Install binary
   install_binary "$VERSION" "$DOWNLOAD_URL"
