@@ -54,6 +54,6 @@ enableRobotsTXT = true
 
 [params]
   mascot = '🦀'
-  warningText = 'ClawIDE is not production ready. Use at your own risk.'
+  warningText = 'ClawIDE is for Production Systems. It is for Development Systems. If you are using in a production system, you are use at your own risk.'
   githubRepo = 'https://github.com/davydany/ClawIDE'
   description = 'A web-based IDE for managing multiple Claude Code sessions across projects.'
