@@ -27,7 +27,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Get("/api/version", s.handlers.Version)
 
 	// Update
-	r.Get("/api/update/check", s.handlers.CheckForUpdate)
+	r.Post("/api/update/check", s.handlers.CheckForUpdate)
 	r.Get("/api/update/status", s.handlers.UpdateStatus)
 	r.Post("/api/update/apply", s.handlers.ApplyUpdate)
 
