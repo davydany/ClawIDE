@@ -790,13 +790,20 @@
 
                 <!-- Files panel -->
                 <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
-                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false }"
+                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false, fileTreeCollapsed: localStorage.getItem('editor.preferences.fileTreeCollapsed') === 'true' }"
                      x-effect="if (activeTab === 'files' && !loaded) { loaded = true; $nextTick(() => { window._clawIDELoadFileTree && window._clawIDELoadFileTree() }) }">
-                    <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
-                        <div class="p-2 border-b border-gray-800">
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                    <div class="file-tree-sidebar border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0"
+                         :class="fileTreeCollapsed ? 'file-tree-sidebar-collapsed' : 'file-tree-sidebar-expanded'">
+                        <div class="p-2 border-b border-gray-800 flex items-center justify-between">
+                            <h3 x-show="!fileTreeCollapsed" class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                            <button @click="fileTreeCollapsed = !fileTreeCollapsed; localStorage.setItem('editor.preferences.fileTreeCollapsed', fileTreeCollapsed)"
+                                    class="flex items-center justify-center w-7 h-7 min-w-[28px] min-h-[28px] rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                                    :title="fileTreeCollapsed ? 'Expand file tree' : 'Collapse file tree'">
+                                <svg x-show="!fileTreeCollapsed" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+                                <svg x-show="fileTreeCollapsed" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+                            </button>
                         </div>
-                        <div id="file-tree" class="p-1">
+                        <div x-show="!fileTreeCollapsed" id="file-tree" class="p-1">
                             <div class="text-gray-500 text-xs p-2">Click Files tab to load...</div>
                         </div>
                         <script>
