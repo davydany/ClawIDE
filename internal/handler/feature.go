@@ -155,6 +155,7 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 		"IsGitRepo":         true,
 		"SidebarPosition":   h.cfg.SidebarPosition,
 		"SidebarWidth":      h.cfg.SidebarWidth,
+		"AIReviewCommand":   h.cfg.AIReviewCommand,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "feature-workspace", "feature-workspace", data); err != nil {

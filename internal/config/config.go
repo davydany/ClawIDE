@@ -26,6 +26,7 @@ type Config struct {
 	SidebarPosition        string `json:"sidebar_position"`
 	SidebarWidth           int    `json:"sidebar_width"`
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
+	AIReviewCommand        string `json:"ai_review_command"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
