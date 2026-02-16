@@ -119,26 +119,36 @@ func Validate(req WizardRequest) ValidationResult {
 	return result
 }
 
-// validateDocPath checks that a supporting document path, if provided, points
-// to an existing readable file.
+// validateDocPath checks that a supporting document is either:
+// 1. A file path pointing to an existing readable file, OR
+// 2. Direct document content (multi-line text)
+// This allows users to either provide file paths or paste content directly.
 func validateDocPath(result *ValidationResult, field, path string) {
 	path = strings.TrimSpace(path)
 	if path == "" {
 		return
 	}
-	expanded := expandHomePath(path)
-	info, err := os.Stat(expanded)
-	if err != nil {
-		if os.IsNotExist(err) {
-			result.Add(field, "File does not exist")
-		} else {
-			result.Add(field, fmt.Sprintf("Cannot access file: %v", err))
+
+	// Check if this looks like a file path (starts with / or ~/)
+	isFilePath := strings.HasPrefix(path, "/") || strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "./")
+
+	if isFilePath {
+		// Validate as file path
+		expanded := expandHomePath(path)
+		info, err := os.Stat(expanded)
+		if err != nil {
+			if os.IsNotExist(err) {
+				result.Add(field, "File does not exist")
+			} else {
+				result.Add(field, fmt.Sprintf("Cannot access file: %v", err))
+			}
+			return
 		}
-		return
+		if info.IsDir() {
+			result.Add(field, "Path is a directory, expected a file")
+		}
 	}
-	if info.IsDir() {
-		result.Add(field, "Path is a directory, expected a file")
-	}
+	// If not a file path, assume it's direct content (markdown, text, etc.) - no validation needed
 }
 
 // expandHomePath expands a leading ~ to the user's home directory.

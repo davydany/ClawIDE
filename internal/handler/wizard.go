@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,15 +53,21 @@ func (h *Handlers) GetWizardLanguages(w http.ResponseWriter, r *http.Request) {
 
 // createWizardRequest is the JSON body for project creation.
 type createWizardRequest struct {
-	ProjectName     string `json:"project_name"`
-	Language        string `json:"language"`
-	Framework       string `json:"framework"`
-	OutputDir       string `json:"output_dir"`
-	Description     string `json:"description"`
-	DocPRD          string `json:"doc_prd"`
-	DocUIUX         string `json:"doc_uiux"`
-	DocArchitecture string `json:"doc_architecture"`
-	DocOther        string `json:"doc_other"`
+	ProjectName     string  `json:"project_name"`
+	Language        string  `json:"language"`
+	Framework       string  `json:"framework"`
+	OutputDir       string  `json:"output_dir"`
+	Description     string  `json:"description"`
+	DocPRD          string  `json:"doc_prd"`
+	DocUIUX         string  `json:"doc_uiux"`
+	DocArchitecture string  `json:"doc_architecture"`
+	DocOther        string  `json:"doc_other"`
+	AIEnabled       bool    `json:"ai_enabled"`
+	AIProvider      string  `json:"ai_provider"`
+	AIModel         string  `json:"ai_model"`
+	AIAPIKey        string  `json:"ai_api_key"`
+	AIBaseURL       string  `json:"ai_base_url"`
+	AITemperature   float32 `json:"ai_temperature"`
 }
 
 // wizardStatusResponse is the JSON response for job status polling.
@@ -90,6 +97,12 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 			http.Error(w, "Invalid form data", http.StatusBadRequest)
 			return
 		}
+		aiTemp := float32(0.7) // default
+		if tempStr := r.FormValue("ai_temperature"); tempStr != "" {
+			if val, err := parseFloat32(tempStr); err == nil {
+				aiTemp = val
+			}
+		}
 		body = createWizardRequest{
 			ProjectName:     r.FormValue("project_name"),
 			Language:        r.FormValue("language"),
@@ -100,12 +113,29 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 			DocUIUX:         r.FormValue("doc_uiux"),
 			DocArchitecture: r.FormValue("doc_architecture"),
 			DocOther:        r.FormValue("doc_other"),
+			AIEnabled:       r.FormValue("ai_enabled") == "true",
+			AIProvider:      r.FormValue("ai_provider"),
+			AIModel:         r.FormValue("ai_model"),
+			AIAPIKey:        r.FormValue("ai_api_key"),
+			AIBaseURL:       r.FormValue("ai_base_url"),
+			AITemperature:   aiTemp,
 		}
 	}
 
 	// Default output directory to configured projects dir
 	if body.OutputDir == "" {
 		body.OutputDir = h.cfg.ProjectsDir
+	}
+
+	// Map AI provider from string to AIProvider type
+	aiProvider := wizard.AIProviderAnthropic // default
+	if body.AIProvider != "" {
+		aiProvider = wizard.AIProvider(body.AIProvider)
+	}
+	// Default temperature if not provided
+	aiTemp := body.AITemperature
+	if aiTemp == 0 && body.AIEnabled {
+		aiTemp = 0.7 // sensible default
 	}
 
 	wizReq := wizard.WizardRequest{
@@ -118,6 +148,12 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 		DocUIUX:         body.DocUIUX,
 		DocArchitecture: body.DocArchitecture,
 		DocOther:        body.DocOther,
+		AIEnabled:       body.AIEnabled,
+		AIProvider:      aiProvider,
+		AIModel:         body.AIModel,
+		AIAPIKey:        body.AIAPIKey,
+		AIBaseURL:       body.AIBaseURL,
+		AITemperature:   aiTemp,
 	}
 
 	// Validate synchronously before creating the job
@@ -224,6 +260,17 @@ func (h *Handlers) ValidateWizardField(w http.ResponseWriter, r *http.Request) {
 		body.OutputDir = h.cfg.ProjectsDir
 	}
 
+	// Map AI provider from string to AIProvider type
+	aiProvider := wizard.AIProviderAnthropic // default
+	if body.AIProvider != "" {
+		aiProvider = wizard.AIProvider(body.AIProvider)
+	}
+	// Default temperature if not provided
+	aiTemp := body.AITemperature
+	if aiTemp == 0 && body.AIEnabled {
+		aiTemp = 0.7 // sensible default
+	}
+
 	wizReq := wizard.WizardRequest{
 		ProjectName:     body.ProjectName,
 		Language:        body.Language,
@@ -234,6 +281,12 @@ func (h *Handlers) ValidateWizardField(w http.ResponseWriter, r *http.Request) {
 		DocUIUX:         body.DocUIUX,
 		DocArchitecture: body.DocArchitecture,
 		DocOther:        body.DocOther,
+		AIEnabled:       body.AIEnabled,
+		AIProvider:      aiProvider,
+		AIModel:         body.AIModel,
+		AIAPIKey:        body.AIAPIKey,
+		AIBaseURL:       body.AIBaseURL,
+		AITemperature:   aiTemp,
 	}
 
 	field := r.URL.Query().Get("field")
@@ -283,4 +336,64 @@ func (h *Handlers) ScanProjectsDir(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"projects_dir": h.cfg.ProjectsDir,
 	})
+}
+
+// GetWizardProviders returns the list of available AI providers.
+func (h *Handlers) GetWizardProviders(w http.ResponseWriter, r *http.Request) {
+	providers := wizard.GetAvailableProviders()
+	providerData := make([]map[string]any, len(providers))
+
+	for i, provider := range providers {
+		models := wizard.ProviderModels(provider)
+		providerData[i] = map[string]any{
+			"id":    string(provider),
+			"name":  providerDisplayName(provider),
+			"models": models,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"providers": providerData,
+	})
+}
+
+// GetWizardModels returns the available models for a given AI provider.
+func (h *Handlers) GetWizardModels(w http.ResponseWriter, r *http.Request) {
+	provider := r.URL.Query().Get("provider")
+	if provider == "" {
+		http.Error(w, "provider parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	aiProvider := wizard.AIProvider(provider)
+	models := wizard.ProviderModels(aiProvider)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"provider": provider,
+		"models":   models,
+	})
+}
+
+// providerDisplayName returns a human-readable name for an AI provider.
+func providerDisplayName(provider wizard.AIProvider) string {
+	switch provider {
+	case wizard.AIProviderAnthropic:
+		return "Anthropic (Claude)"
+	case wizard.AIProviderOpenAI:
+		return "OpenAI (GPT)"
+	case wizard.AIProviderGemini:
+		return "Google Gemini"
+	case wizard.AIProviderOllama:
+		return "Ollama (Self-Hosted)"
+	default:
+		return string(provider)
+	}
+}
+
+// parseFloat32 parses a string to float32.
+func parseFloat32(s string) (float32, error) {
+	f64, err := strconv.ParseFloat(s, 32)
+	return float32(f64), err
 }

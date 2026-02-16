@@ -204,13 +204,63 @@
                     </div>
 
                     <!-- Enable AI Code Generation -->
-                    <div class="flex items-start gap-3 p-4 bg-gray-800/30 border border-gray-800 rounded-lg">
-                        <input type="checkbox" id="wizard-ai" x-model="enableAI"
-                               class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-gray-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0">
-                        <div>
-                            <label for="wizard-ai" class="text-sm font-medium text-gray-200 cursor-pointer">Enable AI code generation</label>
-                            <p class="text-xs text-gray-500 mt-0.5">Use Claude to generate starter code beyond the template boilerplate. Requires an API key configured in settings.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3 p-4 bg-gray-800/30 border border-gray-800 rounded-lg">
+                            <input type="checkbox" id="wizard-ai" x-model="enableAI" @change="loadAIProviders()"
+                                   class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-gray-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0">
+                            <div>
+                                <label for="wizard-ai" class="text-sm font-medium text-gray-200 cursor-pointer">Enable AI code generation</label>
+                                <p class="text-xs text-gray-500 mt-0.5">Use Claude or other models to generate starter code beyond the template boilerplate.</p>
+                            </div>
                         </div>
+
+                        <!-- AI Provider & Model Selection (shown when AI is enabled) -->
+                        <template x-if="enableAI">
+                            <div x-transition class="space-y-4 p-4 bg-gray-800/20 border border-gray-700 rounded-lg">
+                                <!-- Provider Selection -->
+                                <div>
+                                    <label for="wizard-ai-provider" class="block text-sm font-medium text-gray-300 mb-2">AI Provider</label>
+                                    <select id="wizard-ai-provider" x-model="aiProvider" @change="loadAIModels()"
+                                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <template x-for="provider in aiProviders" :key="provider.id">
+                                            <option :value="provider.id" x-text="provider.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <!-- Model Selection -->
+                                <div>
+                                    <label for="wizard-ai-model" class="block text-sm font-medium text-gray-300 mb-2">Model</label>
+                                    <select id="wizard-ai-model" x-model="aiModel"
+                                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                        <option value="">Select a model...</option>
+                                        <template x-for="model in aiModels" :key="model.id">
+                                            <option :value="model.id" x-text="model.name"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <!-- API Key -->
+                                <div>
+                                    <label for="wizard-ai-key" class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                                    <input type="password" id="wizard-ai-key" x-model="aiAPIKey"
+                                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                           placeholder="Your API key for the selected provider">
+                                    <p class="text-xs text-gray-500 mt-1">Your API key is used only for this project creation and not stored.</p>
+                                </div>
+
+                                <!-- Base URL (for Ollama) -->
+                                <template x-if="aiProvider === 'ollama'">
+                                    <div x-transition>
+                                        <label for="wizard-ai-baseurl" class="block text-sm font-medium text-gray-300 mb-2">Ollama Base URL</label>
+                                        <input type="text" id="wizard-ai-baseurl" x-model="aiBaseURL"
+                                               class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                               placeholder="http://localhost:11434">
+                                        <p class="text-xs text-gray-500 mt-1">URL where your Ollama instance is running.</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -396,6 +446,12 @@ function projectWizard() {
         selectedLanguage: 'python',
         selectedFramework: '',
         enableAI: false,
+        aiProvider: 'anthropic',
+        aiModel: '',
+        aiAPIKey: '',
+        aiBaseURL: '',
+        aiProviders: [],
+        aiModels: [],
 
         // Step 3 fields
         jobId: '',
@@ -443,6 +499,10 @@ function projectWizard() {
             this.selectedLanguage = 'python';
             this.selectedFramework = '';
             this.enableAI = false;
+            this.aiProvider = 'anthropic';
+            this.aiModel = '';
+            this.aiAPIKey = '';
+            this.aiBaseURL = '';
             this.jobId = '';
             this.jobStatus = '';
             this.jobError = '';
@@ -523,6 +583,48 @@ function projectWizard() {
             }
         },
 
+        // Load available AI providers
+        loadAIProviders: function() {
+            var self = this;
+            fetch('/projects/wizard/providers')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    self.aiProviders = data.providers || [];
+                    if (self.aiProviders.length > 0 && !self.aiProvider) {
+                        self.aiProvider = self.aiProviders[0].id;
+                        self.loadAIModels();
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Failed to load AI providers:', err);
+                    self.aiProviders = [
+                        { id: 'anthropic', name: 'Anthropic (Claude)', models: [] },
+                        { id: 'openai', name: 'OpenAI (GPT)', models: [] },
+                        { id: 'gemini', name: 'Google Gemini', models: [] },
+                        { id: 'ollama', name: 'Ollama (Self-Hosted)', models: [] }
+                    ];
+                });
+        },
+
+        // Load models for selected AI provider
+        loadAIModels: function() {
+            var self = this;
+            if (!self.aiProvider) return;
+
+            fetch('/projects/wizard/models?provider=' + encodeURIComponent(self.aiProvider))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    self.aiModels = data.models || [];
+                    if (self.aiModels.length > 0 && !self.aiModel) {
+                        self.aiModel = self.aiModels[0].id;
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Failed to load AI models:', err);
+                    self.aiModels = [];
+                });
+        },
+
         // Submit the wizard form
         submitWizard: function() {
             var self = this;
@@ -546,7 +648,12 @@ function projectWizard() {
                 doc_uiux: self.docUiux.trim(),
                 doc_architecture: self.docArchitecture.trim(),
                 doc_other: self.docOther.trim(),
-                enable_ai: self.enableAI
+                ai_enabled: self.enableAI,
+                ai_provider: self.aiProvider,
+                ai_model: self.aiModel,
+                ai_api_key: self.aiAPIKey,
+                ai_base_url: self.aiBaseURL,
+                ai_temperature: 0.7
             };
 
             fetch('/projects/wizard/create', {
