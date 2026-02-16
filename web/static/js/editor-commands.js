@@ -445,6 +445,16 @@
         return true;
     }
 
+    // --- View Commands ---
+
+    function toggleSidebar() {
+        if (typeof window.ClawIDESidebar !== 'undefined' && typeof window.ClawIDESidebar.toggleCollapse === 'function') {
+            window.ClawIDESidebar.toggleCollapse();
+            return true;
+        }
+        return false;
+    }
+
     // --- Expose to global scope ---
     window.ClawIDECommands = {
         // Text Transformations
@@ -481,5 +491,8 @@
         selectAll: selectAll,
         selectLine: selectLine,
         selectWord: selectWord,
+
+        // View
+        toggleSidebar: toggleSidebar,
     };
 })();

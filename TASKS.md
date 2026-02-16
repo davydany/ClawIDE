@@ -88,48 +88,48 @@
 ## Testing Checklist
 
 ### Word Wrap
-- [ ] Alt+Z toggles wrap in active editor
-- [ ] State persists on page reload
-- [ ] Works across multiple tabs
-- [ ] localStorage contains `wordWrap` preference
+- [X] Alt+Z toggles wrap in active editor
+- [X] State persists on page reload
+- [X] Works across multiple tabs
+- [X] localStorage contains `wordWrap` preference
 
 ### Sidebar Collapse
-- [ ] Toggle button works
-- [ ] Cmd+B keyboard shortcut works
-- [ ] Smooth 300ms transition
-- [ ] Mobile vs desktop states separate
-- [ ] State persists on reload
-- [ ] File tree hidden when collapsed
+- [X] Toggle button works
+- [X] Cmd+B keyboard shortcut works
+- [X] Smooth 300ms transition
+- [X] Mobile vs desktop states separate
+- [X] State persists on reload
+- [X] File tree hidden when collapsed
 
 ### Command Palette
-- [ ] Opens with Cmd+K
-- [ ] Opens with Cmd+Shift+P
-- [ ] FAB button works on mobile
-- [ ] Search filters instantly
-- [ ] Keyboard navigation (↑↓ Enter Esc)
-- [ ] Recent commands prioritized
-- [ ] All 25 commands present
-- [ ] Commands execute correctly
-- [ ] Closes after execution or on Esc
+- [X] Opens with Cmd+K
+- [X] Opens with Cmd+Shift+P
+- [X] FAB button works on mobile
+- [X] Search filters instantly
+- [X] Keyboard navigation (↑↓ Enter Esc)
+- [X] Recent commands prioritized
+- [X] All 26 commands present (25 editor + 1 view)
+- [X] Commands execute correctly
+- [X] Closes after execution or on Esc
 
 ### Text Commands
-- [ ] Sort ascending/descending
-- [ ] Case transformations (upper, lower, title)
-- [ ] Trim whitespace removes trailing spaces
-- [ ] Delete empty lines filters correctly
-- [ ] Go to line prompt works
-- [ ] Copy path to clipboard
-- [ ] Duplicate/delete line functions
-- [ ] Comment toggle works
-- [ ] Indent/outdent work
+- [X] Sort ascending/descending
+- [X] Case transformations (upper, lower, title)
+- [X] Trim whitespace removes trailing spaces
+- [X] Delete empty lines filters correctly
+- [X] Go to line prompt works
+- [X] Copy path to clipboard
+- [X] Duplicate/delete line functions
+- [X] Comment toggle works
+- [X] Indent/outdent work
 
 ### Cross-Device
-- [ ] iPhone Safari: FAB positioning, full-screen modal
-- [ ] Android Chrome: Touch targets, gestures
-- [ ] iPad Safari: Keyboard shortcuts + touch
-- [ ] Desktop: All keyboard shortcuts functional
-- [ ] No layout shifts on mobile
-- [ ] Virtual keyboard doesn't break UI
+- [X] iPhone Safari: FAB positioning, full-screen modal
+- [X] Android Chrome: Touch targets, gestures
+- [X] iPad Safari: Keyboard shortcuts + touch
+- [X] Desktop: All keyboard shortcuts functional
+- [X] No layout shifts on mobile
+- [X] Virtual keyboard doesn't break UI
 
 ## Implementation Notes
 - Follow existing code patterns (IIFE modules, debounced persistence)
