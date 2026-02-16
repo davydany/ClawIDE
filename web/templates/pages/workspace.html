@@ -533,6 +533,28 @@
                     </div>
                 </div>
                 {{end}}
+                {{if .NonStarredProjects}}
+                <div class="relative flex-shrink-0 ml-auto" x-data="{ projectsOpen: false }">
+                    <button @click="projectsOpen = !projectsOpen" class="flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-md text-gray-400 hover:text-white hover:bg-gray-800 border border-transparent transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m0-7l7-7 7 7"/>
+                        </svg>
+                        Projects
+                    </button>
+                    <div x-show="projectsOpen" x-cloak @click.away="projectsOpen = false"
+                         class="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+                        <div class="max-h-64 overflow-y-auto">
+                            {{range .NonStarredProjects}}
+                            <a href="/projects/{{.ID}}/" hx-boost="false"
+                               class="block px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-b border-gray-800 last:border-b-0">
+                                {{if .Color}}<span class="w-2 h-2 rounded-full inline-block mr-2 flex-shrink-0" style="background-color: {{.Color}}"></span>{{end}}
+                                {{.Name}}
+                            </a>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+                {{end}}
             </div>
             {{end}}
 
