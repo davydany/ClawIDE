@@ -357,6 +357,31 @@
     pointer-events: none;
 }
 
+/* Sidebar collapse transition */
+#app-sidebar {
+    transition: width 300ms ease-in-out;
+}
+
+#app-sidebar.collapsed .sidebar-collapse-hide {
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+}
+
+#app-sidebar.collapsed nav,
+#app-sidebar.collapsed .sidebar-stats,
+#app-sidebar.collapsed .sidebar-collapse-hide {
+    display: none;
+}
+
+#app-sidebar.collapsed .sidebar-header-content {
+    display: none;
+}
+
+#app-sidebar.collapsed .sidebar-collapse-toggle {
+    margin: 0 auto;
+}
+
 /* Sidebar resize handle */
 .sidebar-resize-handle {
     width: 4px;
