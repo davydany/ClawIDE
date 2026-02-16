@@ -17,6 +17,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/tmux"
 	"github.com/davydany/ClawIDE/internal/updater"
 	"github.com/davydany/ClawIDE/internal/version"
+	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 type Server struct {
@@ -70,12 +71,20 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 
 	upd := updater.New(cfg, notificationStore, sseHub)
 
+	// Initialize wizard components
+	wizardJobs := wizard.NewJobTracker()
+	tmplRegistry, err := wizard.NewTemplateRegistry(wizard.TemplatesFS)
+	if err != nil {
+		log.Fatalf("failed to load wizard templates: %v", err)
+	}
+	wizardGen := wizard.NewGenerator(tmplRegistry, wizardJobs)
+
 	s := &Server{
 		cfg:        cfg,
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, sseHub, upd),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, sseHub, upd, wizardJobs, wizardGen),
 		updater:    upd,
 	}
 

@@ -1,0 +1,15 @@
+class HealthController < ApplicationController
+  def index
+    render json: {
+      project: "{{.ProjectName}}",
+      status: "running"
+    }
+  end
+
+  def show
+    render json: {
+      status: "healthy",
+      timestamp: Time.current.iso8601
+    }
+  end
+end

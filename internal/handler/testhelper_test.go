@@ -9,6 +9,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
+	"github.com/davydany/ClawIDE/internal/wizard"
 	"github.com/stretchr/testify/require"
 )
 
@@ -76,6 +77,11 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	bookmarkSt, err := store.NewBookmarkStore(filepath.Join(storeDir, "bookmarks.json"))
 	require.NoError(t, err)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, nil, sse.NewHub(), nil)
+	wizJobs := wizard.NewJobTracker()
+	wizReg, err := wizard.NewTemplateRegistry(wizard.TemplatesFS)
+	require.NoError(t, err)
+	wizGen := wizard.NewGenerator(wizReg, wizJobs)
+
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, nil, sse.NewHub(), nil, wizJobs, wizGen)
 	return h, st
 }

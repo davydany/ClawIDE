@@ -1,0 +1,55 @@
+# {{.ProjectName}}
+
+## Project Overview
+
+{{.Description}}
+
+This is a Node.js/Express backend application using TypeScript.
+
+## Tech Stack
+
+- **Runtime**: Node.js 22 (LTS)
+- **Framework**: Express.js
+- **Language**: TypeScript
+- **Database**: PostgreSQL 16
+- **Testing**: Jest + Supertest
+- **Linting**: ESLint + Prettier
+
+## Commands
+
+```bash
+make dev          # Run development server
+make start        # Start Docker Compose stack
+make stop         # Stop Docker Compose stack
+make test         # Run tests
+make lint         # Run linter
+make format       # Format code
+make build        # Production build
+```
+
+## Project Structure
+
+- `src/index.ts` - Server entry point
+- `src/app.ts` - Express app configuration
+- `src/routes/` - Route definitions
+- `src/controllers/` - Request handlers with business logic
+- `src/services/` - External service integrations
+- `src/middleware/` - Express middleware (error handling, auth, etc.)
+- `src/models/` - Data models and types
+- `tests/` - Test files mirroring src structure
+{{if .HasPRD}}
+## Supporting Documentation
+
+- `docs/supporting/` contains the project PRD and requirements
+{{end}}{{if .HasUIUX}}
+- `docs/supporting/` contains UI/UX design specifications
+{{end}}{{if .HasArchitecture}}
+- `docs/supporting/` contains architecture documentation
+{{end}}
+## Conventions
+
+- Use async/await for asynchronous operations
+- All routes return JSON responses
+- Error responses follow the format: `{ error: { message: string } }`
+- Environment variables loaded via dotenv from `.env`
+- Keep controllers thin; business logic goes in services

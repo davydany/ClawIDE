@@ -1,0 +1,73 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Go 1.21+
+- Docker & Docker Compose
+
+## Getting Started
+
+```bash
+# Quick setup (starts DB, installs deps, runs migrations)
+make setup
+
+# Or manually:
+make docker-up
+make migrate
+make run
+```
+
+The server starts at http://localhost:8080.
+
+## API Endpoints
+
+| Method | Path             | Description        |
+|--------|------------------|--------------------|
+| GET    | /health          | Health check       |
+| GET    | /api/v1/users    | List all users     |
+| GET    | /api/v1/posts    | List all posts     |
+
+## Project Structure
+
+```
+cmd/server/           - HTTP server entrypoint
+cmd/migrate/          - Database migration tool
+internal/config/      - Configuration loading
+internal/database/    - Database connection and pooling
+internal/models/      - GORM models (User, Post)
+internal/repository/  - Repository pattern for data access
+migrations/           - SQL migration reference files
+scripts/              - Setup and utility scripts
+pkg/                  - Public library code
+docs/supporting/      - Project documentation
+```
+
+## Database
+
+This project uses GORM with PostgreSQL. Models use UUID primary keys and soft deletes.
+
+### Models
+- **User**: email, name, has many posts
+- **Post**: title, body, published flag, belongs to user
+
+### Migrations
+GORM AutoMigrate handles schema changes. SQL files in `migrations/` serve as documentation of the intended schema.
+
+## Make Commands
+
+```bash
+make run          # Run the application
+make build        # Build binary
+make migrate      # Run database migrations
+make setup        # Full setup (DB + deps + migrations)
+make test         # Run tests
+make coverage     # Run tests with coverage
+make fmt          # Format code
+make vet          # Vet code
+make docker-up    # Start PostgreSQL
+make docker-down  # Stop PostgreSQL
+make tidy         # Tidy Go modules
+make clean        # Clean build artifacts
+```

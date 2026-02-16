@@ -1,0 +1,53 @@
+# {{.ProjectName}} - AI Development Guide
+
+## Project Overview
+{{.Description}}
+
+## Tech Stack
+- **Language**: Ruby 3.3
+- **Framework**: Ruby on Rails 8.0
+- **Database**: PostgreSQL 17 (via Docker)
+- **ORM**: Active Record
+- **Web Server**: Puma
+
+## Project Structure
+- `app/controllers/` - Action controllers
+- `app/models/` - Active Record models
+- `app/views/` - View templates (ERB)
+- `config/` - Configuration files
+- `config/routes.rb` - Route definitions
+- `db/migrate/` - Database migrations
+- `test/` - Minitest test suite
+- `docs/supporting/` - Supporting documentation
+
+## Development Commands
+```bash
+make start    # Start Docker Compose stack
+make stop     # Stop all services
+make test     # Run tests
+make migrate  # Run migrations
+make shell    # Rails console
+make bash     # Shell into container
+make routes   # Show routes
+```
+
+## Conventions
+- Follow Rails conventions (MVC, RESTful routes, Active Record)
+- Models in `app/models/`, controllers in `app/controllers/`
+- Use Rails generators for scaffolding
+- Database config in `config/database.yml`
+- Environment config via ENV variables
+- Use strong parameters for mass assignment protection
+{{if .HasPRD}}
+## Product Requirements
+See `docs/supporting/prd.md` for product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Design
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+See `docs/supporting/` for additional project documentation.
+{{end}}

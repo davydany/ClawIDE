@@ -1,0 +1,26 @@
+id: nextjs
+language: javascript
+name: Next.js
+description: Full-stack React framework with App Router, TypeScript, and Tailwind CSS
+icon: "\u25B2"
+category: fullstack-framework
+version: "18"
+
+features:
+  - Next.js 15 with App Router
+  - TypeScript pre-configured
+  - Tailwind CSS v4
+  - React 19
+  - Vitest test framework
+  - ESLint + Prettier
+  - Docker Compose local development
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: node
+    version: ">=18"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

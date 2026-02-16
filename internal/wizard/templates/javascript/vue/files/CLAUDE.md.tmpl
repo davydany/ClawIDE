@@ -1,0 +1,56 @@
+# {{.ProjectName}}
+
+## Project Overview
+
+{{.Description}}
+
+This is a Vue 3 application using the Composition API with TypeScript.
+
+## Tech Stack
+
+- **Framework**: Vue 3 (Composition API)
+- **Build Tool**: Vite 6
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Routing**: Vue Router 4
+- **Testing**: Vitest + Vue Test Utils
+
+## Commands
+
+```bash
+make dev          # Run Vite dev server
+make start        # Start Docker Compose stack
+make stop         # Stop Docker Compose stack
+make build        # Production build
+make test         # Run tests
+make lint         # Run linter
+make format       # Format code
+```
+
+## Project Structure
+
+- `src/main.ts` - Application entry point
+- `src/App.vue` - Root component
+- `src/views/` - Page-level route components
+- `src/components/` - Reusable UI components
+- `src/composables/` - Composition API composables (shared logic)
+- `src/router/` - Vue Router configuration
+- `src/types/` - TypeScript type definitions
+- `tests/` - Test files
+{{if .HasPRD}}
+## Supporting Documentation
+
+- `docs/supporting/` contains the project PRD and requirements
+{{end}}{{if .HasUIUX}}
+- `docs/supporting/` contains UI/UX design specifications
+{{end}}{{if .HasArchitecture}}
+- `docs/supporting/` contains architecture documentation
+{{end}}
+## Conventions
+
+- Use `<script setup lang="ts">` for all components
+- Composition API only (no Options API)
+- Views in `src/views/`, reusable components in `src/components/`
+- Shared state/logic in `src/composables/` with `use` prefix
+- Path alias `@/` maps to `src/`
+- Tailwind CSS for all styling

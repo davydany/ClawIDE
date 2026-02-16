@@ -1,0 +1,100 @@
+directories:
+  - cmd/server
+  - internal/handlers
+  - internal/models
+  - internal/middleware
+  - internal/config
+  - internal/database
+  - pkg
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: go.mod
+    source: files/go.mod.tmpl
+    type: template
+
+  - path: cmd/server/main.go
+    source: files/main.go.tmpl
+    type: template
+
+  - path: internal/config/config.go
+    source: files/config.go.tmpl
+    type: template
+
+  - path: internal/database/database.go
+    source: files/database.go.tmpl
+    type: template
+
+  - path: internal/models/models.go
+    source: files/models.go.tmpl
+    type: template
+
+  - path: internal/handlers/handlers.go
+    source: files/handlers.go.tmpl
+    type: template
+
+  - path: internal/middleware/middleware.go
+    source: files/middleware.go.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Download Go dependencies
+    cmd: go mod tidy
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Stage all files
+    cmd: git add -A
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Initial commit
+    cmd: "git commit -m 'Initial commit: Gin project scaffolded by ClawIDE'"
+    work_dir: .
+    timeout: 30s
+    critical: true

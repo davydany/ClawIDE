@@ -1,0 +1,25 @@
+id: gorm
+language: go
+name: GORM Database Application
+description: "Database-first Go project with GORM ORM, migrations, repository pattern, and PostgreSQL"
+icon: "\U0001F439"
+category: database
+version: "1.21"
+
+features:
+  - GORM ORM with PostgreSQL driver
+  - Database migrations with versioned SQL files
+  - Repository pattern for data access
+  - Sample models with UUID primary keys
+  - Database connection pooling
+  - Docker Compose with PostgreSQL
+  - CLI and HTTP server entrypoints
+  - Setup script for initial database state
+
+requires:
+  - name: go
+    version: ">=1.21"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

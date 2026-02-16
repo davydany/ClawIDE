@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Setup script for {{.ProjectName}}
+# Run this after Docker Compose is up: docker compose exec web bash scripts/setup.sh
+
+set -euo pipefail
+
+echo "Initializing Flask-Migrate..."
+flask db init 2>/dev/null || true
+
+echo "Running database migrations..."
+flask db upgrade
+
+echo "Setup complete."

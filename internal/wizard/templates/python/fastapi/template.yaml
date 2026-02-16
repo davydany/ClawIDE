@@ -1,0 +1,26 @@
+id: fastapi
+language: python
+name: FastAPI Async Application
+description: Modern async Python API framework with PostgreSQL, Redis, and Docker
+icon: "\u26A1"
+category: web-framework
+version: "0.115"
+
+features:
+  - Async request handling
+  - PostgreSQL with SQLAlchemy 2.0
+  - Alembic database migrations
+  - Redis caching
+  - Docker Compose local development
+  - pytest async test suite
+  - uv package management
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: python
+    version: ">=3.12"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

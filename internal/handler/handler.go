@@ -7,6 +7,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/davydany/ClawIDE/internal/updater"
+	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 type Handlers struct {
@@ -21,9 +22,11 @@ type Handlers struct {
 	voiceBoxStore     *store.VoiceBoxStore
 	sseHub            *sse.Hub
 	updater           *updater.Updater
+	wizardJobs        *wizard.JobTracker
+	wizardGenerator   *wizard.Generator
 }
 
-func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, hub *sse.Hub, upd *updater.Updater) *Handlers {
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, hub *sse.Hub, upd *updater.Updater, wizJobs *wizard.JobTracker, wizGen *wizard.Generator) *Handlers {
 	return &Handlers{
 		cfg:               cfg,
 		store:             st,
@@ -36,5 +39,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		voiceBoxStore:     voiceBoxSt,
 		sseHub:            hub,
 		updater:           upd,
+		wizardJobs:        wizJobs,
+		wizardGenerator:   wizGen,
 	}
 }

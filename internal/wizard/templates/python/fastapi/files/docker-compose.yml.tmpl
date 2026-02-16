@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: {{.ProjectName}}
+      POSTGRES_USER: {{.ProjectName}}
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{.ProjectName}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}
+      - DATABASE_URL_SYNC=postgresql://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=1
+      - SECRET_KEY=local-dev-secret-key-change-in-production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

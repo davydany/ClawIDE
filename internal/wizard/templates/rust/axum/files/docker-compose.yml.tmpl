@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: {{.ProjectName}}
+      POSTGRES_USER: {{.ProjectName}}
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{.ProjectName}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}
+      - RUST_LOG={{.ProjectName}}=debug,tower_http=debug
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

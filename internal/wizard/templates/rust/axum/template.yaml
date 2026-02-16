@@ -1,0 +1,27 @@
+id: axum
+language: rust
+name: Axum Web Application
+description: Ergonomic Rust web framework built on Tokio with PostgreSQL and Docker
+icon: "\U0001F980"
+category: web-framework
+version: "0.8"
+
+features:
+  - Axum 0.8 with Tokio async runtime
+  - SQLx with PostgreSQL (compile-time checked queries)
+  - Tower middleware ecosystem
+  - Serde JSON serialization
+  - Docker Compose development environment
+  - Cargo build system
+  - Makefile with common commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: rust
+    version: ">=1.82"
+  - name: cargo
+    version: "*"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

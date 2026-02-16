@@ -1,0 +1,65 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+
+	"{{.ProjectName}}/internal/config"
+	"{{.ProjectName}}/internal/database"
+	"{{.ProjectName}}/internal/repository"
+)
+
+func main() {
+	cfg := config.Load()
+
+	db, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	userRepo := repository.NewUserRepository(db)
+	postRepo := repository.NewPostRepository(db)
+
+	// Health check
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		sqlDB, err := db.DB()
+		if err != nil {
+			http.Error(w, "unhealthy", http.StatusServiceUnavailable)
+			return
+		}
+		if err := sqlDB.Ping(); err != nil {
+			http.Error(w, "unhealthy", http.StatusServiceUnavailable)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+	})
+
+	// List users
+	http.HandleFunc("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
+		users, err := userRepo.FindAll(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(users)
+	})
+
+	// List posts
+	http.HandleFunc("/api/v1/posts", func(w http.ResponseWriter, r *http.Request) {
+		posts, err := postRepo.FindAllWithUser(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(posts)
+	})
+
+	addr := fmt.Sprintf(":%s", cfg.Port)
+	log.Printf("server starting on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
+}

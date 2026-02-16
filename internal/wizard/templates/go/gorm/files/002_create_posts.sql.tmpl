@@ -1,0 +1,16 @@
+-- Migration: Create posts table
+
+CREATE TABLE IF NOT EXISTS posts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    body TEXT,
+    published BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_posts_deleted_at ON posts(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_published ON posts(published);

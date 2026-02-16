@@ -1,0 +1,23 @@
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+
+from app.api.v1.router import api_router
+from app.core.config import settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    yield
+    # Shutdown
+
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    description="{{.Description}}",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+app.include_router(api_router, prefix="/api/v1")

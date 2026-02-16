@@ -1,0 +1,72 @@
+.PHONY: help start up stop shutdown status ps logs bash shell test clean
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# Docker Compose
+start: ## Start the docker compose stack
+	docker compose up -d
+
+up: start ## Alias for start
+
+stop: ## Stop the docker compose stack
+	docker compose down
+
+shutdown: stop ## Alias for stop
+
+status: ## Show status of all containers
+	docker compose ps -a
+
+ps: status ## Alias for status
+
+logs: ## Show all logs and follow
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+bash: ## Open bash shell in the app container
+	docker compose exec app bash
+
+shell: ## Open Tinker (Laravel REPL)
+	docker compose exec app php artisan tinker
+
+# Artisan
+artisan: ## Run artisan command (usage: make artisan CMD="migrate")
+	docker compose exec app php artisan $(CMD)
+
+migrate: ## Run database migrations
+	docker compose exec app php artisan migrate
+
+seed: ## Run database seeders
+	docker compose exec app php artisan db:seed
+
+fresh: ## Fresh migrate and seed
+	docker compose exec app php artisan migrate:fresh --seed
+
+# Dependencies
+install: ## Install Composer dependencies
+	docker compose exec app composer install
+
+update: ## Update Composer dependencies
+	docker compose exec app composer update
+
+# Test
+test: ## Run all tests
+	docker compose exec app php artisan test
+
+tests: test ## Alias for test
+
+lint: ## Run code style fixer
+	docker compose exec app ./vendor/bin/pint
+
+# Cache
+cache-clear: ## Clear all caches
+	docker compose exec app php artisan cache:clear
+	docker compose exec app php artisan config:clear
+	docker compose exec app php artisan route:clear
+	docker compose exec app php artisan view:clear
+
+key-generate: ## Generate application key
+	docker compose exec app php artisan key:generate

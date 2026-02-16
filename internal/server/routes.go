@@ -51,6 +51,13 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Get("/", s.handlers.ListProjects)
 		r.Post("/", s.handlers.CreateProject)
 
+		// Wizard routes (before /{id} to avoid conflict)
+		r.Get("/wizard", s.handlers.ShowWizard)
+		r.Get("/wizard/languages", s.handlers.GetWizardLanguages)
+		r.Post("/wizard/create", s.handlers.CreateProjectFromWizard)
+		r.Get("/wizard/status/{jobID}", s.handlers.GetWizardStatus)
+		r.Post("/wizard/validate", s.handlers.ValidateWizardField)
+
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
 

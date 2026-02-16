@@ -1,0 +1,81 @@
+package main
+
+import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.ProjectName}}/internal/config"
+	"{{.ProjectName}}/internal/database"
+	"{{.ProjectName}}/internal/handlers"
+	"{{.ProjectName}}/internal/middleware"
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	cfg := config.Load()
+
+	db, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	if cfg.Environment != "production" {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.Logger())
+	r.Use(middleware.CORS())
+
+	h := handlers.New(db)
+
+	// Health check
+	r.GET("/health", h.Health)
+
+	// API routes
+	api := r.Group("/api/v1")
+	{
+		api.GET("/items", h.ListItems)
+		api.POST("/items", h.CreateItem)
+		api.GET("/items/:id", h.GetItem)
+		api.PUT("/items/:id", h.UpdateItem)
+		api.DELETE("/items/:id", h.DeleteItem)
+	}
+
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	go func() {
+		log.Printf("server starting on :%s", cfg.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown: %v", err)
+	}
+
+	log.Println("server exited")
+}

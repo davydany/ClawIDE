@@ -1,0 +1,27 @@
+id: vue
+language: javascript
+name: Vue.js
+description: Progressive JavaScript framework with Vue 3, Composition API, TypeScript, and Tailwind CSS
+icon: "\U0001F49A"
+category: frontend-spa
+version: "18"
+
+features:
+  - Vue 3 with Composition API
+  - TypeScript pre-configured
+  - Vite build tool
+  - Tailwind CSS v4
+  - Vue Router for navigation
+  - Vitest test framework
+  - ESLint + Prettier
+  - Docker Compose local development
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: node
+    version: ">=18"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

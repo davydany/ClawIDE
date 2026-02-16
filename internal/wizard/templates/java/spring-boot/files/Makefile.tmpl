@@ -1,0 +1,60 @@
+.PHONY: help start up stop shutdown status ps logs bash shell build test clean package
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# Docker Compose
+start: ## Start the docker compose stack
+	docker compose up -d
+
+up: start ## Alias for start
+
+stop: ## Stop the docker compose stack
+	docker compose down
+
+shutdown: stop ## Alias for stop
+
+status: ## Show status of all containers
+	docker compose ps -a
+
+ps: status ## Alias for status
+
+logs: ## Show all logs and follow
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+bash: ## Open bash shell in the app container
+	docker compose exec app bash
+
+shell: ## Open Java shell (jshell) in the app container
+	docker compose exec app jshell
+
+# Build
+build: ## Build the project with Maven
+	mvn clean compile -B
+
+package: ## Package the application as JAR
+	mvn clean package -B
+
+clean: ## Clean build artifacts
+	mvn clean
+
+# Test
+test: ## Run all tests
+	mvn test -B
+
+tests: test ## Alias for test
+
+# Development
+run: ## Run the application locally
+	mvn spring-boot:run
+
+dev: ## Run with devtools (auto-reload)
+	mvn spring-boot:run -Dspring-boot.run.profiles=local
+
+# Database
+migrate: ## Run database migrations (JPA auto-update)
+	@echo "JPA handles migrations automatically via spring.jpa.hibernate.ddl-auto"

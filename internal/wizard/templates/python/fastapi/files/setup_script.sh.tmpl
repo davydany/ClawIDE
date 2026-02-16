@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Setup script for {{.ProjectName}}
+# Run this after Docker Compose is up: docker compose exec web bash scripts/setup.sh
+
+set -euo pipefail
+
+echo "Running database migrations..."
+alembic upgrade head
+
+echo "Setup complete."

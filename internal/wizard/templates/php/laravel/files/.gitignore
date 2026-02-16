@@ -1,0 +1,39 @@
+# Laravel
+/vendor/
+/node_modules/
+/public/hot
+/public/storage
+/storage/*.key
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# Cache
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Docker
+docker-compose.override.yml
+
+# Compiled
+/bootstrap/cache/*.php

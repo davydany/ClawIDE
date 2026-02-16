@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
+
+class HealthController extends Controller
+{
+    public function index(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'healthy',
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    }
+
+    public function info(): JsonResponse
+    {
+        return response()->json([
+            'project' => '{{.ProjectName}}',
+            'framework' => 'Laravel',
+            'php_version' => PHP_VERSION,
+            'timestamp' => now()->toIso8601String(),
+        ]);
+    }
+}

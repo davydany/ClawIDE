@@ -1,0 +1,80 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Redis, Flask) via Docker Compose.
+
+The app will be available at http://localhost:5000.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the web container
+make shell       # Flask interactive shell
+make test        # Run test suite
+make migrate     # Run database migrations
+make migration   # Create new migration
+make reqs        # Compile requirements files
+```
+
+### Manual Setup (without Docker)
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip compile requirements.in -o requirements.txt
+uv pip install -r requirements.txt
+cp .env.example .env  # Edit with your settings
+flask db upgrade
+flask run --debug
+```
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── app/
+│   ├── __init__.py            # Application factory
+│   ├── extensions.py          # Flask extensions
+│   ├── blueprints/            # Route handlers
+│   │   └── main.py
+│   ├── models/                # SQLAlchemy models
+│   └── templates/             # Jinja2 templates
+├── tests/                     # Test suite
+├── migrations/                # Alembic migrations (via Flask-Migrate)
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                   # Utility scripts
+├── config.py                  # Configuration classes
+├── wsgi.py                    # WSGI entry point
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── requirements.in
+└── CLAUDE.md
+```
+
+## Testing
+
+```bash
+make test                         # Run all tests
+make test ARGS="-k test_name"     # Run specific test
+make test ARGS="--cov=app"        # Run with coverage
+```

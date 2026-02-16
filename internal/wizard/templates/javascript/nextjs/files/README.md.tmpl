@@ -1,0 +1,62 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker and Docker Compose (for local development)
+
+### Local Development
+
+```bash
+# Start with Docker
+make start
+
+# Or run locally
+npm install
+npm run dev
+```
+
+The dev server starts at [http://localhost:3000](http://localhost:3000).
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `make dev` | Run Next.js development server |
+| `make start` | Start Docker Compose stack |
+| `make stop` | Stop Docker Compose stack |
+| `make build` | Production build |
+| `make test` | Run test suite |
+| `make lint` | Run Next.js lint |
+| `make format` | Format code with Prettier |
+| `make logs` | View container logs |
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/health` | Health check |
+
+### Project Structure
+
+```
+app/
+  layout.tsx         # Root layout
+  page.tsx           # Home page
+  globals.css        # Global styles (Tailwind)
+  api/               # API route handlers
+components/          # Reusable UI components
+lib/                 # Utility functions
+types/               # TypeScript type definitions
+public/              # Static assets
+tests/               # Test files
+```
+{{if .HasPRD}}
+## Documentation
+
+See `docs/supporting/` for project documentation including the PRD.
+{{end}}

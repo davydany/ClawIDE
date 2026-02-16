@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Setup script for {{.ProjectName}}
+# Run this after Docker Compose is up: docker compose exec web bash scripts/setup.sh
+
+set -euo pipefail
+
+echo "Running migrations..."
+python manage.py migrate
+
+echo "Collecting static files..."
+python manage.py collectstatic --noinput
+
+echo "Setup complete."
+echo "Create a superuser with: python manage.py createsuperuser"

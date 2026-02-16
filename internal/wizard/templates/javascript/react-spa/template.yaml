@@ -1,0 +1,26 @@
+id: react-spa
+language: javascript
+name: React SPA
+description: React single-page application with Vite, TypeScript, and Tailwind CSS
+icon: "\u269B\uFE0F"
+category: frontend-spa
+version: "18"
+
+features:
+  - React 19 with TypeScript
+  - Vite build tool
+  - Tailwind CSS v4
+  - Vitest test framework
+  - React Router for navigation
+  - ESLint + Prettier
+  - Docker Compose local development
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: node
+    version: ">=18"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

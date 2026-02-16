@@ -1,0 +1,55 @@
+# {{.ProjectName}}
+
+## Project Overview
+
+{{.Description}}
+
+This is a React single-page application built with Vite and TypeScript.
+
+## Tech Stack
+
+- **Framework**: React 19
+- **Build Tool**: Vite 6
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Routing**: React Router v7
+- **Testing**: Vitest + React Testing Library
+
+## Commands
+
+```bash
+make dev          # Run Vite dev server
+make start        # Start Docker Compose stack
+make stop         # Stop Docker Compose stack
+make build        # Production build
+make test         # Run tests
+make lint         # Run linter
+make format       # Format code
+```
+
+## Project Structure
+
+- `src/main.tsx` - Application entry point
+- `src/App.tsx` - Root component with route definitions
+- `src/components/` - Reusable UI components
+- `src/pages/` - Page-level route components
+- `src/hooks/` - Custom React hooks
+- `src/lib/` - Utility functions and helpers
+- `src/types/` - TypeScript type definitions
+- `tests/` - Test files
+{{if .HasPRD}}
+## Supporting Documentation
+
+- `docs/supporting/` contains the project PRD and requirements
+{{end}}{{if .HasUIUX}}
+- `docs/supporting/` contains UI/UX design specifications
+{{end}}{{if .HasArchitecture}}
+- `docs/supporting/` contains architecture documentation
+{{end}}
+## Conventions
+
+- Components use named exports
+- Pages are in `src/pages/`, one file per route
+- Custom hooks prefixed with `use` in `src/hooks/`
+- Tailwind CSS for all styling (no CSS modules)
+- Path alias `@/` maps to `src/`

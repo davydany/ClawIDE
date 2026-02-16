@@ -1,0 +1,17 @@
+[project]
+name = "{{.ProjectName}}"
+version = "0.1.0"
+description = "{{.Description}}"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "-v --tb=short"

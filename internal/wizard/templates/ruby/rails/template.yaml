@@ -1,0 +1,27 @@
+id: rails
+language: ruby
+name: Ruby on Rails Web Application
+description: Full-stack Ruby framework with Active Record, PostgreSQL, and Docker
+icon: "\U0001F48E"
+category: web-framework
+version: "8.0"
+
+features:
+  - Rails 8.0 with Ruby 3.3
+  - Active Record ORM with PostgreSQL
+  - RESTful resource routing
+  - Action Controller and Action View
+  - Docker Compose development environment
+  - Bundler dependency management
+  - Makefile with common commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: ruby
+    version: ">=3.3"
+  - name: bundler
+    version: ">=2.0"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

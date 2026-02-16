@@ -1,0 +1,668 @@
+{{define "wizard"}}
+<dialog id="wizardModal"
+        class="bg-gray-900 text-gray-100 rounded-xl shadow-2xl border border-gray-700 p-0 w-full max-w-3xl backdrop:bg-black/50"
+        x-data="projectWizard()"
+        @close="resetWizard()">
+
+    <div class="flex flex-col max-h-[90vh]">
+        <!-- Header with step indicator -->
+        <div class="px-6 pt-6 pb-4 border-b border-gray-800">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-white">New Project</h3>
+                <button type="button" @click="closeWizard()"
+                        class="p-1 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Step indicator -->
+            <div class="flex items-center justify-center gap-0">
+                <template x-for="(s, i) in [{n:1, label:'Basics'}, {n:2, label:'Stack'}, {n:3, label:'Create'}]" :key="i">
+                    <div class="flex items-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200"
+                                 :class="step > s.n ? 'bg-indigo-600 text-white' : step === s.n ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-2 ring-offset-gray-900' : 'bg-gray-800 text-gray-500 border border-gray-700'">
+                                <template x-if="step > s.n">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </template>
+                                <template x-if="step <= s.n">
+                                    <span x-text="s.n"></span>
+                                </template>
+                            </div>
+                            <span class="text-xs mt-1.5 transition-colors duration-200"
+                                  :class="step >= s.n ? 'text-gray-200' : 'text-gray-600'"
+                                  x-text="s.label"></span>
+                        </div>
+                        <template x-if="i < 2">
+                            <div class="w-16 sm:w-24 h-px mx-2 mb-5 transition-colors duration-200"
+                                 :class="step > s.n ? 'bg-indigo-600' : 'bg-gray-700'"></div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Step content (scrollable) -->
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+
+            <!-- Step 1: Project Metadata -->
+            <div x-show="step === 1" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="space-y-4">
+                    <!-- Project Name -->
+                    <div>
+                        <label for="wizard-name" class="block text-sm font-medium text-gray-300 mb-1">Project Name <span class="text-red-400">*</span></label>
+                        <input type="text" id="wizard-name" x-model="name"
+                               @input="clearError('project_name')"
+                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                               :class="errors.project_name ? 'border-red-500' : 'border-gray-700'"
+                               placeholder="my-awesome-project">
+                        <p x-show="errors.project_name" x-text="errors.project_name" class="text-xs text-red-400 mt-1"></p>
+                        <p x-show="!errors.project_name" class="text-xs text-gray-500 mt-1">Letters, numbers, hyphens, underscores, dots. Max 64 characters.</p>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="wizard-desc" class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <textarea id="wizard-desc" x-model="description" rows="2"
+                                  class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                  placeholder="A brief description of your project"></textarea>
+                    </div>
+
+                    <!-- Parent Directory -->
+                    <div>
+                        <label for="wizard-path" class="block text-sm font-medium text-gray-300 mb-1">Parent Directory <span class="text-red-400">*</span></label>
+                        <input type="text" id="wizard-path" x-model="parentDir"
+                               @input="clearError('output_dir')"
+                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-colors"
+                               :class="errors.output_dir ? 'border-red-500' : 'border-gray-700'"
+                               placeholder="~/projects">
+                        <p x-show="errors.output_dir" x-text="errors.output_dir" class="text-xs text-red-400 mt-1"></p>
+                        <p x-show="!errors.output_dir" class="text-xs text-gray-500 mt-1">The project folder will be created inside this directory.</p>
+                    </div>
+
+                    <!-- Supporting Documentation (Collapsible) -->
+                    <div class="border border-gray-800 rounded-lg overflow-hidden">
+                        <button type="button" @click="showDocs = !showDocs"
+                                class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Supporting Documentation
+                                <span class="text-xs text-gray-600">(optional)</span>
+                            </span>
+                            <svg class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                                 :class="showDocs ? 'rotate-180' : ''"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+
+                        <div x-show="showDocs"
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 -translate-y-2"
+                             x-transition:enter-end="opacity-100 translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 -translate-y-2">
+                            <div class="px-4 pb-4 space-y-3 border-t border-gray-800 pt-3">
+                                <p class="text-xs text-gray-500">Paste documentation to include in your project. These will be saved to <code class="text-gray-400">docs/supporting/</code>.</p>
+
+                                <!-- PRD -->
+                                <div>
+                                    <label for="wizard-doc-prd" class="block text-xs font-medium text-gray-400 mb-1">Product Requirements (PRD)</label>
+                                    <textarea id="wizard-doc-prd" x-model="docPrd" rows="3"
+                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              placeholder="Paste your PRD content here..."></textarea>
+                                </div>
+
+                                <!-- UI/UX Design -->
+                                <div>
+                                    <label for="wizard-doc-uiux" class="block text-xs font-medium text-gray-400 mb-1">UI/UX Design</label>
+                                    <textarea id="wizard-doc-uiux" x-model="docUiux" rows="3"
+                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              placeholder="Paste your UI/UX design specs here..."></textarea>
+                                </div>
+
+                                <!-- System Architecture -->
+                                <div>
+                                    <label for="wizard-doc-arch" class="block text-xs font-medium text-gray-400 mb-1">System Architecture</label>
+                                    <textarea id="wizard-doc-arch" x-model="docArchitecture" rows="3"
+                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              placeholder="Paste your architecture documentation here..."></textarea>
+                                </div>
+
+                                <!-- Other -->
+                                <div>
+                                    <label for="wizard-doc-other" class="block text-xs font-medium text-gray-400 mb-1">Other Documentation</label>
+                                    <textarea id="wizard-doc-other" x-model="docOther" rows="3"
+                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              placeholder="Any additional documentation..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Language & Framework Selection -->
+            <div x-show="step === 2" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="space-y-4">
+                    <!-- Language tabs -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="lang in languages" :key="lang.id">
+                                <button type="button"
+                                        @click="selectLanguage(lang.id)"
+                                        class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-150"
+                                        :class="selectedLanguage === lang.id
+                                            ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-500/20'
+                                            : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'">
+                                    <span x-text="lang.name"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <p x-show="errors.language" x-text="errors.language" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+
+                    <!-- Framework cards -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Framework</label>
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <template x-for="fw in currentFrameworks()" :key="fw.id">
+                                <button type="button"
+                                        @click="selectedFramework = fw.id; clearError('framework')"
+                                        class="text-left p-4 rounded-lg border-2 transition-all duration-150"
+                                        :class="selectedFramework === fw.id
+                                            ? 'bg-indigo-900/30 border-indigo-500 shadow-sm shadow-indigo-500/10'
+                                            : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'">
+                                    <div class="flex items-start justify-between">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium truncate"
+                                               :class="selectedFramework === fw.id ? 'text-white' : 'text-gray-200'"
+                                               x-text="fw.name"></p>
+                                            <p class="text-xs mt-1 line-clamp-2"
+                                               :class="selectedFramework === fw.id ? 'text-indigo-200' : 'text-gray-500'"
+                                               x-text="fw.description"></p>
+                                        </div>
+                                        <div x-show="selectedFramework === fw.id"
+                                             class="flex-shrink-0 ml-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </button>
+                            </template>
+                        </div>
+                        <p x-show="errors.framework" x-text="errors.framework" class="text-xs text-red-400 mt-1"></p>
+                    </div>
+
+                    <!-- Enable AI Code Generation -->
+                    <div class="flex items-start gap-3 p-4 bg-gray-800/30 border border-gray-800 rounded-lg">
+                        <input type="checkbox" id="wizard-ai" x-model="enableAI"
+                               class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-gray-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0">
+                        <div>
+                            <label for="wizard-ai" class="text-sm font-medium text-gray-200 cursor-pointer">Enable AI code generation</label>
+                            <p class="text-xs text-gray-500 mt-0.5">Use Claude to generate starter code beyond the template boilerplate. Requires an API key configured in settings.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Progress -->
+            <div x-show="step === 3" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+                <div class="space-y-5">
+                    <!-- Summary -->
+                    <div class="bg-gray-800/50 border border-gray-800 rounded-lg p-4">
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="text-gray-500">Project</span>
+                                <p class="text-white font-medium" x-text="name"></p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Stack</span>
+                                <p class="text-white font-medium" x-text="selectedLanguageName() + ' / ' + selectedFrameworkName()"></p>
+                            </div>
+                            <div class="col-span-2">
+                                <span class="text-gray-500">Location</span>
+                                <p class="text-white font-mono text-xs" x-text="parentDir + '/' + name"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overall progress bar -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-300" x-text="jobStatusLabel()"></span>
+                            <span class="text-sm font-mono text-gray-400" x-text="progressPercent() + '%'"></span>
+                        </div>
+                        <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all duration-500 ease-out"
+                                 :class="jobStatus === 'failed' || jobStatus === 'rolled_back' ? 'bg-red-500' : jobStatus === 'completed' ? 'bg-green-500' : 'bg-indigo-500'"
+                                 :style="'width: ' + progressPercent() + '%'"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-step progress -->
+                    <div class="space-y-2">
+                        <template x-for="(js, i) in jobSteps" :key="i">
+                            <div class="flex items-center gap-3 py-1.5">
+                                <!-- Status icon -->
+                                <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center">
+                                    <template x-if="js.status === 'completed'">
+                                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </template>
+                                    <template x-if="js.status === 'running'">
+                                        <svg class="w-5 h-5 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                        </svg>
+                                    </template>
+                                    <template x-if="js.status === 'failed'">
+                                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </template>
+                                    <template x-if="js.status === 'pending'">
+                                        <div class="w-3 h-3 mx-1 rounded-full bg-gray-700"></div>
+                                    </template>
+                                </div>
+                                <!-- Step name -->
+                                <span class="text-sm"
+                                      :class="js.status === 'completed' ? 'text-gray-300' : js.status === 'running' ? 'text-white font-medium' : js.status === 'failed' ? 'text-red-400' : 'text-gray-600'"
+                                      x-text="stepLabel(js.name)"></span>
+                                <!-- Step message -->
+                                <span x-show="js.message && js.status !== 'failed'" class="text-xs text-gray-600 ml-auto truncate max-w-48" x-text="js.message"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Error display -->
+                    <template x-if="jobError">
+                        <div class="bg-red-900/20 border border-red-700/50 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-red-300">Project creation failed</p>
+                                    <p class="text-xs text-red-400/80 mt-1 break-words" x-text="jobError"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Success display -->
+                    <template x-if="jobStatus === 'completed'">
+                        <div class="bg-green-900/20 border border-green-700/50 rounded-lg p-4">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-green-300">Project created successfully</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">Redirecting to your new project...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer with navigation buttons -->
+        <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-between">
+            <div>
+                <!-- Back button (Step 2 only) -->
+                <button type="button" x-show="step === 2"
+                        @click="step = 1"
+                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                    Back
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Cancel button (Steps 1 & 2) -->
+                <button type="button" x-show="step < 3"
+                        @click="closeWizard()"
+                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                    Cancel
+                </button>
+
+                <!-- Next button (Step 1) -->
+                <button type="button" x-show="step === 1"
+                        @click="goToStep2()"
+                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                    Next
+                </button>
+
+                <!-- Create button (Step 2) -->
+                <button type="button" x-show="step === 2"
+                        @click="submitWizard()"
+                        :disabled="submitting || !selectedFramework"
+                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-medium rounded-lg transition-colors">
+                    <span x-show="!submitting">Create Project</span>
+                    <span x-show="submitting" class="flex items-center gap-2">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Creating...
+                    </span>
+                </button>
+
+                <!-- Retry button (Step 3, failed) -->
+                <button type="button" x-show="step === 3 && (jobStatus === 'failed' || jobStatus === 'rolled_back')"
+                        @click="retryWizard()"
+                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                    Retry
+                </button>
+
+                <!-- Close button (Step 3) -->
+                <button type="button" x-show="step === 3"
+                        @click="closeWizard()"
+                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<script>
+function projectWizard() {
+    return {
+        step: 1,
+
+        // Step 1 fields
+        name: '',
+        description: '',
+        parentDir: '{{if .ProjectsDir}}{{.ProjectsDir}}{{else}}~/projects{{end}}',
+        showDocs: false,
+        docPrd: '',
+        docUiux: '',
+        docArchitecture: '',
+        docOther: '',
+
+        // Step 2 fields
+        selectedLanguage: 'python',
+        selectedFramework: '',
+        enableAI: false,
+
+        // Step 3 fields
+        jobId: '',
+        jobStatus: '',
+        jobError: '',
+        jobSteps: [],
+        pollTimer: null,
+
+        // UI state
+        errors: {},
+        submitting: false,
+
+        // Language/framework data - injected from Go template
+        languages: {{if .Languages}}{{json .Languages}}{{else}}[]{{end}},
+
+        // Open the wizard dialog
+        openWizard: function() {
+            this.$el.showModal();
+        },
+
+        // Close the wizard dialog
+        closeWizard: function() {
+            if (this.pollTimer) {
+                clearInterval(this.pollTimer);
+                this.pollTimer = null;
+            }
+            this.$el.close();
+        },
+
+        // Reset wizard to initial state
+        resetWizard: function() {
+            if (this.pollTimer) {
+                clearInterval(this.pollTimer);
+                this.pollTimer = null;
+            }
+            this.step = 1;
+            this.name = '';
+            this.description = '';
+            this.parentDir = '{{if .ProjectsDir}}{{.ProjectsDir}}{{else}}~/projects{{end}}';
+            this.showDocs = false;
+            this.docPrd = '';
+            this.docUiux = '';
+            this.docArchitecture = '';
+            this.docOther = '';
+            this.selectedLanguage = 'python';
+            this.selectedFramework = '';
+            this.enableAI = false;
+            this.jobId = '';
+            this.jobStatus = '';
+            this.jobError = '';
+            this.jobSteps = [];
+            this.errors = {};
+            this.submitting = false;
+        },
+
+        // Clear a specific field error
+        clearError: function(field) {
+            var e = Object.assign({}, this.errors);
+            delete e[field];
+            this.errors = e;
+        },
+
+        // Select a language and reset framework
+        selectLanguage: function(langId) {
+            this.selectedLanguage = langId;
+            this.selectedFramework = '';
+            this.clearError('language');
+            this.clearError('framework');
+        },
+
+        // Get frameworks for current language
+        currentFrameworks: function() {
+            var self = this;
+            for (var i = 0; i < self.languages.length; i++) {
+                if (self.languages[i].id === self.selectedLanguage) {
+                    return self.languages[i].frameworks;
+                }
+            }
+            return [];
+        },
+
+        // Get display name for selected language
+        selectedLanguageName: function() {
+            var self = this;
+            for (var i = 0; i < self.languages.length; i++) {
+                if (self.languages[i].id === self.selectedLanguage) {
+                    return self.languages[i].name;
+                }
+            }
+            return '';
+        },
+
+        // Get display name for selected framework
+        selectedFrameworkName: function() {
+            var self = this;
+            var fws = self.currentFrameworks();
+            for (var i = 0; i < fws.length; i++) {
+                if (fws[i].id === self.selectedFramework) {
+                    return fws[i].name;
+                }
+            }
+            return '';
+        },
+
+        // Client-side validation for Step 1
+        validateStep1: function() {
+            var errs = {};
+            var n = this.name.trim();
+            if (!n) {
+                errs.project_name = 'Project name is required';
+            } else if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(n)) {
+                errs.project_name = 'Must start with a letter or number. Only letters, numbers, hyphens, underscores, dots allowed.';
+            }
+            if (!this.parentDir.trim()) {
+                errs.output_dir = 'Parent directory is required';
+            }
+            this.errors = errs;
+            return Object.keys(errs).length === 0;
+        },
+
+        // Navigate to Step 2
+        goToStep2: function() {
+            if (this.validateStep1()) {
+                this.step = 2;
+            }
+        },
+
+        // Submit the wizard form
+        submitWizard: function() {
+            var self = this;
+
+            // Validate framework selection
+            if (!self.selectedFramework) {
+                self.errors = { framework: 'Please select a framework' };
+                return;
+            }
+
+            self.submitting = true;
+            self.errors = {};
+
+            var body = {
+                project_name: self.name.trim(),
+                language: self.selectedLanguage,
+                framework: self.selectedFramework,
+                output_dir: self.parentDir.trim(),
+                description: self.description.trim(),
+                doc_prd: self.docPrd.trim(),
+                doc_uiux: self.docUiux.trim(),
+                doc_architecture: self.docArchitecture.trim(),
+                doc_other: self.docOther.trim(),
+                enable_ai: self.enableAI
+            };
+
+            fetch('/projects/wizard/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function(r) {
+                if (r.ok) {
+                    return r.json().then(function(data) {
+                        self.jobId = data.job_id;
+                        self.jobStatus = 'pending';
+                        self.jobSteps = data.steps || [];
+                        self.step = 3;
+                        self.startPolling();
+                    });
+                } else if (r.status === 400) {
+                    return r.json().then(function(data) {
+                        // Validation errors from backend (ErrorMap format: {field: message})
+                        if (data.errors) {
+                            self.errors = data.errors;
+                            // Go back to Step 1 if there are name/path errors
+                            if (data.errors.project_name || data.errors.output_dir) {
+                                self.step = 1;
+                            }
+                        }
+                    });
+                } else {
+                    throw new Error('Server error');
+                }
+            }).catch(function(err) {
+                self.errors = { _general: 'Failed to create project. Please try again.' };
+            }).finally(function() {
+                self.submitting = false;
+            });
+        },
+
+        // Poll for job status
+        startPolling: function() {
+            var self = this;
+            if (self.pollTimer) {
+                clearInterval(self.pollTimer);
+            }
+            self.pollTimer = setInterval(function() {
+                if (!self.jobId) return;
+
+                fetch('/projects/wizard/status/' + self.jobId).then(function(r) {
+                    if (!r.ok) throw new Error('Poll failed');
+                    return r.json();
+                }).then(function(data) {
+                    self.jobStatus = data.status;
+                    self.jobSteps = data.steps || self.jobSteps;
+                    self.jobError = data.error || '';
+
+                    // Stop polling on terminal states
+                    if (data.status === 'completed' || data.status === 'failed' || data.status === 'rolled_back') {
+                        clearInterval(self.pollTimer);
+                        self.pollTimer = null;
+
+                        // Auto-redirect on success
+                        if (data.status === 'completed' && data.project_id) {
+                            setTimeout(function() {
+                                window.location.href = '/projects/' + data.project_id;
+                            }, 1500);
+                        }
+                    }
+                }).catch(function() {
+                    // Silently retry on network errors
+                });
+            }, 1000);
+        },
+
+        // Retry after failure
+        retryWizard: function() {
+            this.jobId = '';
+            this.jobStatus = '';
+            this.jobError = '';
+            this.jobSteps = [];
+            this.step = 2;
+        },
+
+        // Human-readable labels for job steps
+        stepLabel: function(name) {
+            var labels = {
+                'validate': 'Validating project configuration',
+                'create_directory': 'Creating project directory',
+                'copy_templates': 'Copying template files',
+                'copy_docs': 'Copying documentation',
+                'generate_claude_md': 'Generating CLAUDE.md',
+                'init_git': 'Initializing git repository',
+                'install_deps': 'Installing dependencies'
+            };
+            return labels[name] || name;
+        },
+
+        // Human-readable label for overall job status
+        jobStatusLabel: function() {
+            var labels = {
+                'pending': 'Preparing...',
+                'running': 'Creating project...',
+                'completed': 'Complete!',
+                'failed': 'Failed',
+                'rolled_back': 'Rolled back'
+            };
+            return labels[this.jobStatus] || 'Initializing...';
+        },
+
+        // Calculate progress percentage
+        progressPercent: function() {
+            if (!this.jobSteps || this.jobSteps.length === 0) return 0;
+            var completed = 0;
+            for (var i = 0; i < this.jobSteps.length; i++) {
+                if (this.jobSteps[i].status === 'completed') completed++;
+            }
+            return Math.round((completed / this.jobSteps.length) * 100);
+        }
+    };
+}
+</script>
+{{end}}

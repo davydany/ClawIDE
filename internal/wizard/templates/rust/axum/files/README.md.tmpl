@@ -1,0 +1,84 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Rust 1.82+ (stable)
+- Cargo
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Axum server) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the app container
+make test        # Run test suite
+make build       # Build the project
+make run         # Run locally
+make watch       # Run with auto-reload
+make check       # Check compilation
+make fmt         # Format code
+make clippy      # Run clippy linter
+make lint        # Run all linters
+make release     # Build release binary
+```
+
+### Manual Setup (without Docker)
+
+```bash
+# Ensure PostgreSQL is running on localhost:5432
+cp .env.example .env
+cargo run
+```
+
+The API will be available at `http://localhost:8080`.
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── src/
+│   ├── main.rs                # Entry point, router setup
+│   ├── handlers/
+│   │   ├── mod.rs             # Handler module
+│   │   └── health.rs          # Health check handlers
+│   └── models/
+│       └── mod.rs             # Data models
+├── tests/                     # Integration tests
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                   # Utility scripts
+├── Cargo.toml                 # Dependencies
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+└── CLAUDE.md
+```
+
+## API Endpoints
+
+| Method | Path     | Description    |
+|--------|----------|----------------|
+| GET    | /        | Project info   |
+| GET    | /health  | Health check   |
+
+## Testing
+
+```bash
+make test                     # Run all tests
+cargo test -- --test-threads=1  # Run tests sequentially
+cargo test health             # Run tests matching "health"
+```

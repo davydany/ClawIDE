@@ -1,0 +1,27 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+type Post struct {
+	ID        uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+	Title     string         `json:"title" gorm:"not null"`
+	Body      string         `json:"body"`
+	Published bool           `json:"published" gorm:"default:false"`
+	UserID    uuid.UUID      `json:"user_id" gorm:"type:uuid;not null;index"`
+	User      User           `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+func (p *Post) BeforeCreate(tx *gorm.DB) error {
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	return nil
+}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/davydany/ClawIDE/internal/model"
+	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +68,8 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 		"Projects":        unstarredProjects,
 		"Discovered":      discovered,
 		"StartTour":       r.URL.Query().Get("tour") == "dashboard",
+		"Languages":       wizard.SupportedLanguages(),
+		"ProjectsDir":     h.cfg.ProjectsDir,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "project-list", "project-list", data); err != nil {

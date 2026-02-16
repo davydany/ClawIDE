@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: {{.ProjectName}}_development
+      POSTGRES_USER: {{.ProjectName}}
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{.ProjectName}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: bundle exec rails server -b 0.0.0.0
+    volumes:
+      - .:/app
+      - bundle-cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+      - DB_HOST=db
+      - DB_USER={{.ProjectName}}
+      - DB_PASSWORD=localdev
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  bundle-cache:

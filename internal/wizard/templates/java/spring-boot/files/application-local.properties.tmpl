@@ -1,0 +1,10 @@
+# Local development profile
+spring.datasource.url=jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:{{.ProjectName}}}
+spring.datasource.username=${DB_USER:{{.ProjectName}}}
+spring.datasource.password=${DB_PASSWORD:localdev}
+
+# Enable SQL logging for development
+spring.jpa.show-sql=true
+
+# DevTools
+spring.devtools.restart.enabled=true

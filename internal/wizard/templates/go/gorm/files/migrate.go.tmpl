@@ -1,0 +1,29 @@
+package main
+
+import (
+	"log"
+
+	"{{.ProjectName}}/internal/config"
+	"{{.ProjectName}}/internal/database"
+	"{{.ProjectName}}/internal/models"
+)
+
+func main() {
+	cfg := config.Load()
+
+	db, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	log.Println("running migrations...")
+
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Post{},
+	); err != nil {
+		log.Fatalf("migration failed: %v", err)
+	}
+
+	log.Println("migrations completed successfully")
+}

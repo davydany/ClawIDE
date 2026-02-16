@@ -1,0 +1,27 @@
+id: spring-boot
+language: java
+name: Spring Boot Web Application
+description: Enterprise Java framework with Spring Boot, PostgreSQL, and Docker
+icon: "\u2615"
+category: web-framework
+version: "3.4"
+
+features:
+  - Spring Boot 3.4 with Java 21
+  - Spring Data JPA with PostgreSQL
+  - Spring Web MVC REST API
+  - Spring Boot Actuator health checks
+  - Docker Compose development environment
+  - Maven build system
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: java
+    version: ">=21"
+  - name: maven
+    version: ">=3.9"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

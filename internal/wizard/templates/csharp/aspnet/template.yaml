@@ -1,0 +1,25 @@
+id: aspnet
+language: csharp
+name: ASP.NET Core Web Application
+description: Cross-platform C# web framework with Entity Framework Core and Docker
+icon: "\U0001F7E3"
+category: web-framework
+version: "9.0"
+
+features:
+  - .NET 9.0 with C# 13
+  - Entity Framework Core with PostgreSQL
+  - Dependency injection configured
+  - Health check endpoints
+  - Swagger/OpenAPI documentation
+  - Docker Compose development environment
+  - Makefile with dotnet commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: dotnet
+    version: ">=9.0"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

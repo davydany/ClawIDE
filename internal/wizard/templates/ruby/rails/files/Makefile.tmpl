@@ -1,0 +1,73 @@
+.PHONY: help start up stop shutdown status ps logs bash shell test clean
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# Docker Compose
+start: ## Start the docker compose stack
+	docker compose up -d
+
+up: start ## Alias for start
+
+stop: ## Stop the docker compose stack
+	docker compose down
+
+shutdown: stop ## Alias for stop
+
+status: ## Show status of all containers
+	docker compose ps -a
+
+ps: status ## Alias for status
+
+logs: ## Show all logs and follow
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+bash: ## Open bash shell in the web container
+	docker compose exec web bash
+
+shell: ## Open Rails console
+	docker compose exec web bundle exec rails console
+
+# Dependencies
+install: ## Install Ruby dependencies
+	docker compose exec web bundle install
+
+update: ## Update Ruby dependencies
+	docker compose exec web bundle update
+
+# Database
+migrate: ## Run database migrations
+	docker compose exec web bundle exec rails db:migrate
+
+seed: ## Run database seeds
+	docker compose exec web bundle exec rails db:seed
+
+setup-db: ## Create, migrate, and seed database
+	docker compose exec web bundle exec rails db:setup
+
+reset-db: ## Drop, create, migrate, and seed
+	docker compose exec web bundle exec rails db:reset
+
+# Test
+test: ## Run all tests
+	docker compose exec web bundle exec rails test
+
+tests: test ## Alias for test
+
+# Code Quality
+lint: ## Run RuboCop linter
+	docker compose exec web bundle exec rubocop
+
+lint-fix: ## Auto-fix RuboCop issues
+	docker compose exec web bundle exec rubocop -A
+
+# Rails
+routes: ## Show all routes
+	docker compose exec web bundle exec rails routes
+
+generate: ## Run Rails generator (usage: make generate CMD="model User name:string")
+	docker compose exec web bundle exec rails generate $(CMD)

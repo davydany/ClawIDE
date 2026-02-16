@@ -1,0 +1,55 @@
+# {{.ProjectName}} - AI Development Guide
+
+## Project Overview
+{{.Description}}
+
+## Tech Stack
+- **Language**: PHP 8.3
+- **Framework**: Laravel 11
+- **Database**: PostgreSQL 17 (via Docker)
+- **ORM**: Eloquent
+- **Web Server**: Nginx + PHP-FPM (Docker)
+
+## Project Structure
+- `app/Http/Controllers/` - HTTP controllers
+- `app/Models/` - Eloquent model classes
+- `app/Providers/` - Service providers
+- `config/` - Configuration files
+- `database/migrations/` - Database migration files
+- `routes/web.php` - Web routes
+- `routes/api.php` - API routes
+- `resources/views/` - Blade templates
+- `tests/` - Test suite (Feature and Unit)
+- `docs/supporting/` - Supporting documentation
+
+## Development Commands
+```bash
+make start      # Start Docker Compose stack
+make stop       # Stop all services
+make test       # Run tests
+make migrate    # Run migrations
+make shell      # Open Tinker REPL
+make bash       # Shell into container
+make lint       # Code style fixes
+```
+
+## Conventions
+- Follow Laravel conventions (Controllers, Models, Migrations)
+- Use Eloquent ORM for database operations
+- Routes in `routes/web.php` and `routes/api.php`
+- Configuration via `.env` file
+- Use Laravel validation for request data
+- Use resource controllers for CRUD operations
+{{if .HasPRD}}
+## Product Requirements
+See `docs/supporting/prd.md` for product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Design
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+See `docs/supporting/` for additional project documentation.
+{{end}}
