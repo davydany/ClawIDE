@@ -24,6 +24,8 @@ sudo apt install tmux
 curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
 ```
 
+> Need to pin a specific version or customize the install directory? See [Installation]({{< ref "getting-started/installation" >}}) for all options.
+
 ## Step 2: Start ClawIDE
 
 ```bash
