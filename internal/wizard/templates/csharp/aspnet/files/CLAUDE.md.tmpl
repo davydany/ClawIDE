@@ -1,0 +1,49 @@
+# {{.ProjectName}} - AI Development Guide
+
+## Project Overview
+{{.Description}}
+
+## Tech Stack
+- **Language**: C# 13
+- **Framework**: ASP.NET Core (.NET 9.0)
+- **Database**: PostgreSQL 17 (via Docker)
+- **ORM**: Entity Framework Core 9.0
+- **API Docs**: Swagger / OpenAPI
+
+## Project Structure
+- `Controllers/` - API controllers
+- `Models/` - Entity classes and DTOs
+- `Data/` - EF Core DbContext
+- `Services/` - Business logic layer
+- `docs/supporting/` - Supporting documentation
+
+## Development Commands
+```bash
+make start    # Start Docker Compose stack
+make stop     # Stop all services
+make test     # Run tests
+make build    # Build project
+make run      # Run locally
+make watch    # Run with hot reload
+```
+
+## Conventions
+- Use dependency injection for all services
+- Controllers should be thin (delegate to services)
+- Entity models in `Models/` namespace
+- Use async/await for I/O operations
+- Configuration via appsettings.json with environment overrides
+- Use `ILogger<T>` for structured logging
+{{if .HasPRD}}
+## Product Requirements
+See `docs/supporting/prd.md` for product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Design
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+See `docs/supporting/` for additional project documentation.
+{{end}}

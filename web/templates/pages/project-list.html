@@ -65,7 +65,7 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-semibold text-white">Projects</h2>
-                    <button data-tour="new-project" onclick="document.getElementById('newProjectModal').showModal()"
+                    <button data-tour="new-project" onclick="document.getElementById('wizardModal').showModal()"
                             class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -142,40 +142,8 @@
                 {{end}}
             </div>
 
-            <!-- New Project Modal -->
-            <dialog id="newProjectModal" class="bg-gray-900 text-gray-100 rounded-xl shadow-2xl border border-gray-700 p-0 w-full max-w-md backdrop:bg-black/50">
-                <form method="dialog" class="p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">New Project</h3>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label for="project-name" class="block text-sm font-medium text-gray-300 mb-1">Project Name</label>
-                            <input type="text" id="project-name" name="name" required
-                                   class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   placeholder="my-project">
-                        </div>
-                        <div>
-                            <label for="project-path" class="block text-sm font-medium text-gray-300 mb-1">Project Path</label>
-                            <input type="text" id="project-path" name="path" required
-                                   class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                   placeholder="/Users/you/projects/my-project">
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-3 mt-6">
-                        <button type="button" onclick="this.closest('dialog').close()"
-                                class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
-                            Cancel
-                        </button>
-                        <button type="button"
-                                hx-post="/projects/"
-                                hx-include="#project-name, #project-path"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
-                            Create
-                        </button>
-                    </div>
-                </form>
-            </dialog>
+            <!-- New Project Wizard -->
+            {{template "wizard" .}}
         </main>
     </div>
 </div>

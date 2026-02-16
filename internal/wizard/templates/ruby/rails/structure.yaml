@@ -1,0 +1,147 @@
+# Ruby on Rails project structure definition
+# Directories are created in order, files are rendered from templates
+
+directories:
+  - app
+  - app/controllers
+  - app/models
+  - app/views
+  - app/views/layouts
+  - config
+  - config/environments
+  - config/initializers
+  - db
+  - db/migrate
+  - lib
+  - log
+  - public
+  - test
+  - test/controllers
+  - test/models
+  - tmp
+  - docs
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: Gemfile
+    source: files/Gemfile.tmpl
+    type: template
+
+  - path: Rakefile
+    source: files/Rakefile.tmpl
+    type: template
+
+  - path: config.ru
+    source: files/config.ru.tmpl
+    type: template
+
+  - path: config/database.yml
+    source: files/database.yml.tmpl
+    type: template
+
+  - path: config/application.rb
+    source: files/application.rb.tmpl
+    type: template
+
+  - path: config/environment.rb
+    source: files/environment.rb.tmpl
+    type: template
+
+  - path: config/routes.rb
+    source: files/routes.rb.tmpl
+    type: template
+
+  - path: config/environments/development.rb
+    source: files/development.rb.tmpl
+    type: template
+
+  - path: app/controllers/application_controller.rb
+    source: files/application_controller.rb.tmpl
+    type: template
+
+  - path: app/controllers/health_controller.rb
+    source: files/health_controller.rb.tmpl
+    type: template
+
+  - path: app/models/application_record.rb
+    source: files/application_record.rb.tmpl
+    type: template
+
+  - path: app/views/layouts/application.html.erb
+    source: files/application.html.erb.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Install Ruby dependencies
+    cmd: bundle install
+    work_dir: .
+    timeout: 300s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

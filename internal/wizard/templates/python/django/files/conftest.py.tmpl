@@ -1,0 +1,9 @@
+import pytest
+
+
+@pytest.fixture
+def api_client():
+    """Return a Django test client."""
+    from django.test import Client
+
+    return Client()

@@ -1,0 +1,24 @@
+id: echo
+language: go
+name: Echo Web Application
+description: "High-performance, extensible Go web framework with built-in middleware and GORM/PostgreSQL"
+icon: "\U0001F439"
+category: web-framework
+version: "1.21"
+
+features:
+  - Optimized HTTP router with zero dynamic memory allocation
+  - Built-in middleware (logger, recover, CORS, JWT)
+  - Data binding and validation
+  - GORM integration with PostgreSQL
+  - Docker Compose development environment
+  - Structured project layout (cmd/pkg/internal)
+  - Makefile with common commands
+
+requires:
+  - name: go
+    version: ">=1.21"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

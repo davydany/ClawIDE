@@ -1,0 +1,98 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
+
+	"{{.ProjectName}}/internal/models"
+)
+
+type Handler struct {
+	db *gorm.DB
+}
+
+func New(db *gorm.DB) *Handler {
+	return &Handler{db: db}
+}
+
+func (h *Handler) Health(c echo.Context) error {
+	sqlDB, err := h.db.DB()
+	if err != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"status": "unhealthy", "error": err.Error()})
+	}
+	if err := sqlDB.Ping(); err != nil {
+		return c.JSON(http.StatusServiceUnavailable, map[string]string{"status": "unhealthy", "error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"status": "healthy"})
+}
+
+func (h *Handler) ListItems(c echo.Context) error {
+	var items []models.Item
+	if err := h.db.Find(&items).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, items)
+}
+
+func (h *Handler) CreateItem(c echo.Context) error {
+	var item models.Item
+	if err := c.Bind(&item); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+	if err := h.db.Create(&item).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusCreated, item)
+}
+
+func (h *Handler) GetItem(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	var item models.Item
+	if err := h.db.First(&item, "id = ?", id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "item not found"})
+	}
+	return c.JSON(http.StatusOK, item)
+}
+
+func (h *Handler) UpdateItem(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	var item models.Item
+	if err := h.db.First(&item, "id = ?", id).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "item not found"})
+	}
+
+	var input models.Item
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	h.db.Model(&item).Updates(models.Item{
+		Name:        input.Name,
+		Description: input.Description,
+	})
+
+	return c.JSON(http.StatusOK, item)
+}
+
+func (h *Handler) DeleteItem(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	if err := h.db.Delete(&models.Item{}, "id = ?", id).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.NoContent(http.StatusNoContent)
+}

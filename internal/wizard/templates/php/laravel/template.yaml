@@ -1,0 +1,27 @@
+id: laravel
+language: php
+name: Laravel Web Application
+description: Expressive PHP framework with Eloquent ORM, PostgreSQL, and Docker
+icon: "\U0001F418"
+category: web-framework
+version: "11"
+
+features:
+  - Laravel 11 with PHP 8.3
+  - Eloquent ORM with PostgreSQL
+  - Artisan CLI commands
+  - Blade templating engine
+  - Docker Compose with PHP-FPM and Nginx
+  - Composer package management
+  - Makefile with common commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: php
+    version: ">=8.3"
+  - name: composer
+    version: ">=2.0"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

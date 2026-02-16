@@ -1,0 +1,79 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- .NET 9.0 SDK
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, ASP.NET Core) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the app container
+make test        # Run test suite
+make build       # Build the project
+make run         # Run locally
+make watch       # Run with hot reload
+make restore     # Restore NuGet packages
+```
+
+### Manual Setup (without Docker)
+
+```bash
+# Ensure PostgreSQL is running on localhost:5432
+dotnet restore
+dotnet run
+```
+
+The API will be available at `http://localhost:5000`.
+Swagger UI at `http://localhost:5000/swagger`.
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── Controllers/               # API controllers
+├── Models/                    # Entity models
+├── Data/                      # Database context
+├── Services/                  # Business logic
+├── Properties/                # Launch settings
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                   # Utility scripts
+├── Program.cs                 # Application entry point
+├── {{.ProjectName}}.csproj    # Project file
+├── appsettings.json           # Configuration
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+└── CLAUDE.md
+```
+
+## API Endpoints
+
+| Method | Path        | Description             |
+|--------|-------------|-------------------------|
+| GET    | /           | Project info            |
+| GET    | /api/info   | Runtime information     |
+| GET    | /health     | Health check            |
+| GET    | /swagger    | Swagger UI              |
+
+## Testing
+
+```bash
+make test    # Run all tests
+```

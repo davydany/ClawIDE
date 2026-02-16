@@ -1,0 +1,71 @@
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{.ProjectName}}/internal/config"
+	"{{.ProjectName}}/internal/database"
+	"{{.ProjectName}}/internal/handlers"
+	"{{.ProjectName}}/internal/middleware"
+	"github.com/labstack/echo/v4"
+	echomw "github.com/labstack/echo/v4/middleware"
+)
+
+func main() {
+	cfg := config.Load()
+
+	db, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	e := echo.New()
+	e.HideBanner = true
+
+	// Built-in middleware
+	e.Use(echomw.Recover())
+	e.Use(middleware.RequestLogger())
+	e.Use(middleware.CORS())
+
+	h := handlers.New(db)
+
+	// Health check
+	e.GET("/health", h.Health)
+
+	// API routes
+	api := e.Group("/api/v1")
+	{
+		api.GET("/items", h.ListItems)
+		api.POST("/items", h.CreateItem)
+		api.GET("/items/:id", h.GetItem)
+		api.PUT("/items/:id", h.UpdateItem)
+		api.DELETE("/items/:id", h.DeleteItem)
+	}
+
+	// Start server
+	go func() {
+		log.Printf("server starting on :%s", cfg.Port)
+		if err := e.Start(":" + cfg.Port); err != nil {
+			log.Printf("server stopped: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := e.Shutdown(ctx); err != nil {
+		log.Fatalf("server forced to shutdown: %v", err)
+	}
+
+	log.Println("server exited")
+}

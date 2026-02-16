@@ -1,0 +1,82 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Redis, Django) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the web container
+make shell       # Django interactive shell
+make test        # Run test suite
+make migrate     # Run database migrations
+make superuser   # Create admin superuser
+make reqs        # Compile requirements files
+```
+
+### Manual Setup (without Docker)
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip compile requirements.in -o requirements.txt
+uv pip install -r requirements.txt
+cp .env.example .env  # Edit with your settings
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── {{.ProjectName}}/          # Django project package
+│   ├── settings/
+│   │   ├── base.py            # Shared settings
+│   │   └── local.py           # Local dev overrides
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+├── apps/                      # Django applications
+├── tests/                     # Test suite
+├── static/                    # Static assets
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                   # Utility scripts
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── requirements.in
+└── CLAUDE.md
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and update values as needed.
+
+## Testing
+
+```bash
+make test                         # Run all tests
+make test ARGS="-k test_name"     # Run specific test
+make test ARGS="--cov"            # Run with coverage
+```

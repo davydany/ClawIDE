@@ -1,0 +1,131 @@
+directories:
+  - src
+  - src/routes
+  - src/middleware
+  - src/controllers
+  - src/services
+  - src/models
+  - src/types
+  - tests
+  - tests/unit
+  - tests/integration
+  - docs/supporting
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: package.json
+    source: files/package.json.tmpl
+    type: template
+
+  - path: tsconfig.json
+    source: files/tsconfig.json
+    type: static
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile
+    type: static
+
+  - path: .dockerignore
+    source: files/.dockerignore
+    type: static
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/.env.example
+    type: static
+
+  - path: .eslintrc.json
+    source: files/.eslintrc.json
+    type: static
+
+  - path: .prettierrc
+    source: files/.prettierrc
+    type: static
+
+  - path: jest.config.ts
+    source: files/jest.config.ts
+    type: static
+
+  - path: src/index.ts
+    source: files/src/index.ts
+    type: static
+
+  - path: src/app.ts
+    source: files/src/app.ts
+    type: static
+
+  - path: src/routes/health.ts
+    source: files/src/routes/health.ts
+    type: static
+
+  - path: src/middleware/errorHandler.ts
+    source: files/src/middleware/errorHandler.ts
+    type: static
+
+  - path: src/types/index.ts
+    source: files/src/types/index.ts
+    type: static
+
+  - path: tests/unit/health.test.ts
+    source: files/tests/health.test.ts
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Install dependencies
+    cmd: npm install
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Stage all files
+    cmd: git add -A
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Initial commit
+    cmd: git commit -m "Initial commit"
+    work_dir: .
+    timeout: 30s
+    critical: true

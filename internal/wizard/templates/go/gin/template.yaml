@@ -1,0 +1,24 @@
+id: gin
+language: go
+name: Gin Web Application
+description: "Fast, minimalist HTTP web framework for Go with middleware support and GORM/PostgreSQL"
+icon: "\U0001F439"
+category: web-framework
+version: "1.21"
+
+features:
+  - High-performance HTTP router
+  - Middleware support (logging, CORS, auth)
+  - JSON validation and binding
+  - GORM integration with PostgreSQL
+  - Docker Compose development environment
+  - Structured project layout (cmd/pkg/internal)
+  - Makefile with common commands
+
+requires:
+  - name: go
+    version: ">=1.21"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

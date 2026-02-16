@@ -1,0 +1,47 @@
+"""Flask configuration classes."""
+
+import os
+
+
+class Config:
+    """Base configuration."""
+
+    SECRET_KEY = os.environ.get("SECRET_KEY", "insecure-change-me")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Redis
+    CACHE_TYPE = "RedisCache"
+    CACHE_REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "postgresql://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}",
+    )
+
+
+class TestingConfig(Config):
+    """Testing configuration."""
+
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    CACHE_TYPE = "NullCache"
+
+
+class ProductionConfig(Config):
+    """Production configuration."""
+
+    DEBUG = False
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+
+
+config = {
+    "development": DevelopmentConfig,
+    "testing": TestingConfig,
+    "production": ProductionConfig,
+    "default": DevelopmentConfig,
+}

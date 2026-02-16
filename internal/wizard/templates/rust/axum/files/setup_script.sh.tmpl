@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Setting up {{.ProjectName}}..."
+
+# Copy environment file if it doesn't exist
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "Created .env from .env.example"
+fi
+
+# Check for Rust
+if command -v rustc &> /dev/null; then
+    echo "Rust version: $(rustc --version)"
+else
+    echo "WARNING: Rust not found. Install Rust from https://rustup.rs/"
+fi
+
+# Check for Cargo
+if command -v cargo &> /dev/null; then
+    echo "Cargo version: $(cargo --version)"
+    echo "Checking project compiles..."
+    cargo check
+    echo "Project compiles successfully."
+else
+    echo "WARNING: Cargo not found. Install Rust toolchain from https://rustup.rs/"
+fi
+
+# Check for Docker
+if command -v docker &> /dev/null; then
+    echo "Docker found. Starting services..."
+    docker compose up -d
+    echo "Waiting for database to be ready..."
+    sleep 5
+    echo "Services started."
+else
+    echo "WARNING: Docker not found. Install Docker to use docker-compose."
+fi
+
+echo ""
+echo "Setup complete! Run 'make start' to start the development environment."

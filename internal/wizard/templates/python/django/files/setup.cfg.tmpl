@@ -1,0 +1,8 @@
+[tool:pytest]
+DJANGO_SETTINGS_MODULE = {{.ProjectName}}.settings.local
+python_files = tests.py test_*.py *_tests.py
+python_paths = .
+
+[flake8]
+max-line-length = 120
+exclude = .venv,migrations

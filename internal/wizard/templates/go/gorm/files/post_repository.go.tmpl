@@ -1,0 +1,63 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+
+	"{{.ProjectName}}/internal/models"
+)
+
+type PostRepository struct {
+	db *gorm.DB
+}
+
+func NewPostRepository(db *gorm.DB) *PostRepository {
+	return &PostRepository{db: db}
+}
+
+func (r *PostRepository) FindAll(ctx context.Context) ([]models.Post, error) {
+	var posts []models.Post
+	err := r.db.WithContext(ctx).Find(&posts).Error
+	return posts, err
+}
+
+func (r *PostRepository) FindAllWithUser(ctx context.Context) ([]models.Post, error) {
+	var posts []models.Post
+	err := r.db.WithContext(ctx).Preload("User").Find(&posts).Error
+	return posts, err
+}
+
+func (r *PostRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.Post, error) {
+	var post models.Post
+	err := r.db.WithContext(ctx).Preload("User").First(&post, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &post, nil
+}
+
+func (r *PostRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]models.Post, error) {
+	var posts []models.Post
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&posts).Error
+	return posts, err
+}
+
+func (r *PostRepository) FindPublished(ctx context.Context) ([]models.Post, error) {
+	var posts []models.Post
+	err := r.db.WithContext(ctx).Where("published = ?", true).Preload("User").Find(&posts).Error
+	return posts, err
+}
+
+func (r *PostRepository) Create(ctx context.Context, post *models.Post) error {
+	return r.db.WithContext(ctx).Create(post).Error
+}
+
+func (r *PostRepository) Update(ctx context.Context, post *models.Post) error {
+	return r.db.WithContext(ctx).Save(post).Error
+}
+
+func (r *PostRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Delete(&models.Post{}, "id = ?", id).Error
+}

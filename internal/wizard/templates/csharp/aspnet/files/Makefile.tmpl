@@ -1,0 +1,63 @@
+.PHONY: help start up stop shutdown status ps logs bash build test clean run
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# Docker Compose
+start: ## Start the docker compose stack
+	docker compose up -d
+
+up: start ## Alias for start
+
+stop: ## Stop the docker compose stack
+	docker compose down
+
+shutdown: stop ## Alias for stop
+
+status: ## Show status of all containers
+	docker compose ps -a
+
+ps: status ## Alias for status
+
+logs: ## Show all logs and follow
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+bash: ## Open bash shell in the app container
+	docker compose exec app bash
+
+# Build
+build: ## Build the project
+	dotnet build
+
+clean: ## Clean build artifacts
+	dotnet clean
+
+restore: ## Restore NuGet packages
+	dotnet restore
+
+publish: ## Publish release build
+	dotnet publish -c Release
+
+# Test
+test: ## Run all tests
+	dotnet test
+
+tests: test ## Alias for test
+
+# Development
+run: ## Run the application locally
+	dotnet run
+
+watch: ## Run with hot reload
+	dotnet watch run
+
+# Database
+migrate: ## Create a new migration
+	dotnet ef migrations add $(NAME)
+
+update-db: ## Apply pending migrations
+	dotnet ef database update

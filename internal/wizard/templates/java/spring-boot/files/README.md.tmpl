@@ -1,0 +1,83 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Java 21+
+- Maven 3.9+
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Spring Boot) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the app container
+make test        # Run test suite
+make build       # Compile the project
+make package     # Build JAR artifact
+make run         # Run locally with Maven
+make dev         # Run with local profile
+```
+
+### Manual Setup (without Docker)
+
+```bash
+# Ensure PostgreSQL is running on localhost:5432
+mvn clean compile
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── src/
+│   ├── main/
+│   │   ├── java/com/example/app/
+│   │   │   ├── Application.java        # Entry point
+│   │   │   ├── controller/             # REST controllers
+│   │   │   ├── model/                  # JPA entities
+│   │   │   ├── repository/            # Spring Data repositories
+│   │   │   └── service/               # Business logic
+│   │   └── resources/
+│   │       ├── application.properties  # Base config
+│   │       └── application-local.properties
+│   └── test/
+│       └── java/com/example/app/
+├── docs/                              # Documentation
+│   └── supporting/                    # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                           # Utility scripts
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── pom.xml
+└── CLAUDE.md
+```
+
+## API Endpoints
+
+| Method | Path       | Description        |
+|--------|------------|--------------------|
+| GET    | /          | Project info       |
+| GET    | /health    | Health check       |
+| GET    | /actuator  | Actuator endpoints |
+
+## Testing
+
+```bash
+make test                    # Run all tests
+mvn test -Dtest=TestClass    # Run specific test class
+```

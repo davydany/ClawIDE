@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Setting up {{.ProjectName}}..."
+
+# Copy environment file if it doesn't exist
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "Created .env from .env.example"
+fi
+
+# Check for PHP
+if command -v php &> /dev/null; then
+    echo "PHP version: $(php -v | head -n 1)"
+else
+    echo "WARNING: PHP not found. Install PHP 8.3+ to run locally."
+fi
+
+# Check for Composer
+if command -v composer &> /dev/null; then
+    echo "Composer version: $(composer --version 2>&1 | head -n 1)"
+else
+    echo "WARNING: Composer not found. Install Composer 2.x to manage dependencies."
+fi
+
+# Check for Docker
+if command -v docker &> /dev/null; then
+    echo "Docker found. Starting services..."
+    docker compose up -d
+    echo "Waiting for database to be ready..."
+    sleep 5
+    echo "Generating application key..."
+    docker compose exec app php artisan key:generate
+    echo "Running migrations..."
+    docker compose exec app php artisan migrate
+    echo "Services started."
+else
+    echo "WARNING: Docker not found. Install Docker to use docker-compose."
+fi
+
+echo ""
+echo "Setup complete! Run 'make start' to start the development environment."

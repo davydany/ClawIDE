@@ -1,0 +1,68 @@
+.PHONY: start up stop shutdown status ps logs bash shell sh requirements reqs test tests migrate migration
+
+# Docker Compose commands
+start:
+	docker compose up -d
+
+up: start
+
+stop:
+	docker compose down
+
+shutdown: stop
+
+status:
+	docker compose ps -a
+
+ps: status
+
+logs:
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+# Shell access
+bash:
+	docker compose exec web bash
+
+shell:
+	docker compose exec web python
+
+sh:
+	docker compose exec web sh
+
+# Dependencies
+requirements:
+	docker compose exec web uv pip compile requirements.in -o requirements.txt
+	docker compose exec web uv pip compile requirements.test.in -o requirements.test.txt
+	docker compose exec web uv pip install -r requirements.txt
+
+reqs: requirements
+
+# Testing
+test:
+	docker compose exec web python -m pytest $(ARGS)
+
+tests: test
+
+lint:
+	docker compose exec web ruff check app/ tests/
+
+format:
+	docker compose exec web ruff format app/ tests/
+
+# Database migrations (Alembic)
+migrate:
+	docker compose exec web alembic upgrade head
+
+migration:
+	docker compose exec web alembic revision --autogenerate -m "$(MSG)"
+
+downgrade:
+	docker compose exec web alembic downgrade -1
+
+# Development
+dev:
+	docker compose exec web uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

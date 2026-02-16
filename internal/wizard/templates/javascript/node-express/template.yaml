@@ -1,0 +1,25 @@
+id: node-express
+language: javascript
+name: Node.js / Express
+description: Backend web framework with Express.js, TypeScript, PostgreSQL, and Docker
+icon: "\U0001F7E9"
+category: web-framework
+version: "18"
+
+features:
+  - Express.js web framework
+  - TypeScript pre-configured
+  - PostgreSQL database (optional)
+  - Docker Compose local development
+  - Jest test suite
+  - ESLint + Prettier
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: node
+    version: ">=18"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

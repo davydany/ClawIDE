@@ -1,0 +1,68 @@
+.PHONY: help start up stop shutdown status ps logs bash build test clean run
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# Docker Compose
+start: ## Start the docker compose stack
+	docker compose up -d
+
+up: start ## Alias for start
+
+stop: ## Stop the docker compose stack
+	docker compose down
+
+shutdown: stop ## Alias for stop
+
+status: ## Show status of all containers
+	docker compose ps -a
+
+ps: status ## Alias for status
+
+logs: ## Show all logs and follow
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+bash: ## Open bash shell in the app container
+	docker compose exec app bash
+
+# Build
+build: ## Build the project
+	cargo build
+
+release: ## Build release binary
+	cargo build --release
+
+clean: ## Clean build artifacts
+	cargo clean
+
+check: ## Check code compiles without building
+	cargo check
+
+# Test
+test: ## Run all tests
+	cargo test
+
+tests: test ## Alias for test
+
+# Development
+run: ## Run the application locally
+	cargo run
+
+watch: ## Run with auto-reload (requires cargo-watch)
+	cargo watch -x run
+
+# Code Quality
+fmt: ## Format code
+	cargo fmt
+
+fmt-check: ## Check code formatting
+	cargo fmt -- --check
+
+clippy: ## Run clippy linter
+	cargo clippy -- -D warnings
+
+lint: fmt-check clippy ## Run all linters

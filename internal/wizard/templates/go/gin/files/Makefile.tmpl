@@ -1,0 +1,44 @@
+.PHONY: run build test clean docker-up docker-down fmt vet
+
+BINARY := server
+
+# Run the application
+run:
+	go run ./cmd/server
+
+# Build the binary
+build:
+	go build -o $(BINARY) ./cmd/server
+
+# Run tests
+test:
+	go test -race -v ./...
+
+# Run tests with coverage
+coverage:
+	go test -race -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+
+# Format code
+fmt:
+	go fmt ./...
+
+# Vet code
+vet:
+	go vet ./...
+
+# Start Docker services
+docker-up:
+	docker compose up -d
+
+# Stop Docker services
+docker-down:
+	docker compose down
+
+# Clean build artifacts
+clean:
+	rm -f $(BINARY) coverage.out
+
+# Tidy dependencies
+tidy:
+	go mod tidy

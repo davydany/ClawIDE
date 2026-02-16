@@ -1,0 +1,69 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Tech Stack
+
+- **Framework**: Flask 3.1
+- **Database**: PostgreSQL 17 with Flask-SQLAlchemy
+- **Migrations**: Flask-Migrate (Alembic)
+- **Cache**: Redis 7 with Flask-Caching
+- **Package Manager**: uv
+- **Testing**: pytest
+- **Formatting**: ruff
+
+## Project Structure
+
+- `app/` - Application package (factory pattern)
+- `app/__init__.py` - Application factory (`create_app`)
+- `app/extensions.py` - Flask extension instances
+- `app/blueprints/` - Route handlers organized by blueprint
+- `app/models/` - SQLAlchemy ORM models
+- `app/templates/` - Jinja2 HTML templates
+- `migrations/` - Database migrations (Flask-Migrate)
+- `tests/` - Test suite
+- `config.py` - Configuration classes (Development, Production, Testing)
+- `wsgi.py` - WSGI entry point
+- `docs/supporting/` - Supporting documentation
+
+## Development Commands
+
+```bash
+make start       # Start Docker Compose stack
+make stop        # Stop all services
+make bash        # Shell into web container
+make shell       # Flask interactive shell
+make test        # Run pytest suite
+make migrate     # Run database migrations
+make migration   # Create new migration (MSG="description")
+make lint        # Run ruff linter
+make format      # Auto-format with ruff
+make reqs        # Compile requirements
+```
+
+## Conventions
+
+- Application factory pattern in `app/__init__.py`
+- Use UUID primary keys for models exposed in URLs
+- Organize routes into blueprints in `app/blueprints/`
+- Configuration via classes in `config.py`
+- Tests go in `tests/` directory, not next to source files
+- Use `ruff` for code formatting
+- Use type hints for function signatures
+{{if .HasPRD}}
+## Product Requirements
+
+See `docs/supporting/prd.md` for the product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Specifications
+
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+
+See `docs/supporting/architecture.md` for the architecture document.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+
+See `docs/supporting/` for additional project documentation.
+{{end}}

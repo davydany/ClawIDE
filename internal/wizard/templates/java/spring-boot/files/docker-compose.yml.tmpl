@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: {{.ProjectName}}
+      POSTGRES_USER: {{.ProjectName}}
+      POSTGRES_PASSWORD: localdev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{.ProjectName}}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=local
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME={{.ProjectName}}
+      - DB_USER={{.ProjectName}}
+      - DB_PASSWORD=localdev
+    volumes:
+      - .:/app
+      - maven-cache:/root/.m2
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  maven-cache:

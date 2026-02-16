@@ -1,0 +1,199 @@
+# FastAPI project structure definition
+
+directories:
+  - app
+  - app/api
+  - app/api/v1
+  - app/core
+  - app/db
+  - app/models
+  - app/schemas
+  - app/services
+  - alembic
+  - alembic/versions
+  - tests
+  - tests/api
+  - docs
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: requirements.in
+    source: files/requirements.in.tmpl
+    type: template
+
+  - path: requirements.test.in
+    source: files/requirements.test.in.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: pyproject.toml
+    source: files/pyproject.toml.tmpl
+    type: template
+
+  - path: app/__init__.py
+    source: files/app_init.py.tmpl
+    type: template
+
+  - path: app/main.py
+    source: files/app_main.py.tmpl
+    type: template
+
+  - path: app/core/config.py
+    source: files/app_core_config.py.tmpl
+    type: template
+
+  - path: app/core/__init__.py
+    source: files/app_core_init.py.tmpl
+    type: template
+
+  - path: app/db/session.py
+    source: files/app_db_session.py.tmpl
+    type: template
+
+  - path: app/db/base.py
+    source: files/app_db_base.py.tmpl
+    type: template
+
+  - path: app/db/__init__.py
+    source: files/app_db_init.py.tmpl
+    type: template
+
+  - path: app/api/__init__.py
+    source: files/app_api_init.py.tmpl
+    type: template
+
+  - path: app/api/v1/__init__.py
+    source: files/app_api_v1_init.py.tmpl
+    type: template
+
+  - path: app/api/v1/router.py
+    source: files/app_api_v1_router.py.tmpl
+    type: template
+
+  - path: app/api/v1/health.py
+    source: files/app_api_v1_health.py.tmpl
+    type: template
+
+  - path: app/models/__init__.py
+    source: files/app_models_init.py.tmpl
+    type: template
+
+  - path: app/schemas/__init__.py
+    source: files/app_schemas_init.py.tmpl
+    type: template
+
+  - path: app/services/__init__.py
+    source: files/app_services_init.py.tmpl
+    type: template
+
+  - path: alembic.ini
+    source: files/alembic_ini.tmpl
+    type: template
+
+  - path: alembic/env.py
+    source: files/alembic_env.py.tmpl
+    type: template
+
+  - path: tests/__init__.py
+    source: files/tests_init.py.tmpl
+    type: template
+
+  - path: tests/api/__init__.py
+    source: files/tests_api_init.py.tmpl
+    type: template
+
+  - path: tests/conftest.py
+    source: files/tests_conftest.py.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Create virtualenv
+    cmd: uv venv .venv
+    work_dir: .
+    timeout: 60s
+    critical: true
+
+  - name: Compile requirements
+    cmd: uv pip compile requirements.in -o requirements.txt
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Compile test requirements
+    cmd: uv pip compile requirements.test.in -o requirements.test.txt
+    work_dir: .
+    timeout: 120s
+    critical: false
+
+  - name: Install dependencies
+    cmd: uv pip install -r requirements.txt
+    work_dir: .
+    timeout: 300s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

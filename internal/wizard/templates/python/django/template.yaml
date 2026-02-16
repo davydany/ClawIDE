@@ -1,0 +1,25 @@
+id: django
+language: python
+name: Django Web Application
+description: Full-featured Python web framework with PostgreSQL, Redis, and Docker
+icon: "\U0001F40D"
+category: web-framework
+version: "5.1"
+
+features:
+  - PostgreSQL database
+  - Redis caching
+  - Docker Compose local development
+  - Django admin interface
+  - pytest test suite
+  - uv package management
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: python
+    version: ">=3.12"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

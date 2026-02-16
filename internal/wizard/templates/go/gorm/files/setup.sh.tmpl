@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== {{.ProjectName}} Setup ==="
+
+# Check prerequisites
+command -v go >/dev/null 2>&1 || { echo "Go is required but not installed."; exit 1; }
+command -v docker >/dev/null 2>&1 || { echo "Docker is required but not installed."; exit 1; }
+
+# Start database
+echo "Starting PostgreSQL..."
+docker compose up -d
+
+# Wait for database
+echo "Waiting for database to be ready..."
+for i in $(seq 1 30); do
+    if docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1; then
+        echo "Database is ready."
+        break
+    fi
+    if [ "$i" -eq 30 ]; then
+        echo "Database failed to start within 30 seconds."
+        exit 1
+    fi
+    sleep 1
+done
+
+# Install dependencies
+echo "Installing Go dependencies..."
+go mod tidy
+
+# Run migrations
+echo "Running migrations..."
+go run ./cmd/migrate
+
+echo ""
+echo "Setup complete! Run 'make run' to start the server."

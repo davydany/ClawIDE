@@ -1,0 +1,70 @@
+.PHONY: start up stop shutdown status ps logs bash shell sh requirements reqs test tests migrate migration superuser supe user
+
+# Docker Compose commands
+start:
+	docker compose up -d
+
+up: start
+
+stop:
+	docker compose down
+
+shutdown: stop
+
+status:
+	docker compose ps -a
+
+ps: status
+
+logs:
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+# Shell access
+bash:
+	docker compose exec web bash
+
+shell:
+	docker compose exec web flask shell
+
+sh:
+	docker compose exec web sh
+
+# Dependencies
+requirements:
+	docker compose exec web uv pip compile requirements.in -o requirements.txt
+	docker compose exec web uv pip compile requirements.test.in -o requirements.test.txt
+	docker compose exec web uv pip install -r requirements.txt
+
+reqs: requirements
+
+# Testing
+test:
+	docker compose exec web python -m pytest $(ARGS)
+
+tests: test
+
+lint:
+	docker compose exec web ruff check app/ tests/
+
+format:
+	docker compose exec web ruff format app/ tests/
+
+# Database migrations (Flask-Migrate)
+migrate:
+	docker compose exec web flask db upgrade
+
+migration:
+	docker compose exec web flask db migrate -m "$(MSG)"
+
+downgrade:
+	docker compose exec web flask db downgrade
+
+# Users
+superuser:
+	docker compose exec web flask create-admin
+
+supe: superuser

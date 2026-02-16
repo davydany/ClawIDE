@@ -1,0 +1,53 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Tech Stack
+
+- **Language**: Go 1.21+
+- **Framework**: Gin (HTTP web framework)
+- **ORM**: GORM with PostgreSQL
+- **Dev Environment**: Docker Compose
+
+## Project Layout
+
+- `cmd/server/` - Application entrypoint with graceful shutdown
+- `internal/config/` - Environment-based configuration
+- `internal/database/` - GORM database connection and auto-migration
+- `internal/handlers/` - HTTP handlers with dependency injection
+- `internal/middleware/` - Logging, CORS middleware
+- `internal/models/` - GORM models with UUID primary keys
+
+## Development Commands
+
+```bash
+make docker-up    # Start PostgreSQL
+make run          # Run the server
+make test         # Run tests
+make build        # Build binary
+```
+
+## Conventions
+
+- UUID primary keys for all models
+- Dependency injection via handler structs
+- Environment variables for configuration (PORT, DATABASE_URL, ENVIRONMENT)
+- Graceful shutdown with signal handling
+- Standard Go project layout (cmd/, internal/, pkg/)
+{{if .HasPRD}}
+## Product Requirements
+
+See `docs/supporting/prd.md` for the product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Specifications
+
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+
+See `docs/supporting/` for additional project documentation.
+{{end}}

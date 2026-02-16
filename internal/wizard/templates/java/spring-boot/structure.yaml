@@ -1,0 +1,109 @@
+# Spring Boot project structure definition
+# Directories are created in order, files are rendered from templates
+
+directories:
+  - src/main/java/com/example/app
+  - src/main/java/com/example/app/controller
+  - src/main/java/com/example/app/model
+  - src/main/java/com/example/app/repository
+  - src/main/java/com/example/app/service
+  - src/main/resources
+  - src/main/resources/static
+  - src/main/resources/templates
+  - src/test/java/com/example/app
+  - docs
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: pom.xml
+    source: files/pom.xml.tmpl
+    type: template
+
+  - path: src/main/java/com/example/app/Application.java
+    source: files/Application.java.tmpl
+    type: template
+
+  - path: src/main/java/com/example/app/controller/HealthController.java
+    source: files/HealthController.java.tmpl
+    type: template
+
+  - path: src/main/resources/application.properties
+    source: files/application.properties.tmpl
+    type: template
+
+  - path: src/main/resources/application-local.properties
+    source: files/application-local.properties.tmpl
+    type: template
+
+  - path: src/test/java/com/example/app/ApplicationTests.java
+    source: files/ApplicationTests.java.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

@@ -1,0 +1,53 @@
+# {{.ProjectName}} - AI Development Guide
+
+## Project Overview
+{{.Description}}
+
+## Tech Stack
+- **Language**: Rust (2021 edition)
+- **Framework**: Axum 0.8
+- **Runtime**: Tokio async
+- **Database**: PostgreSQL 17 (via Docker)
+- **ORM/Query**: SQLx (compile-time checked)
+- **Serialization**: Serde + serde_json
+
+## Project Structure
+- `src/main.rs` - Entry point, router setup, server config
+- `src/handlers/` - Request handler functions
+- `src/models/` - Data structures and database models
+- `tests/` - Integration tests
+- `docs/supporting/` - Supporting documentation
+
+## Development Commands
+```bash
+make start    # Start Docker Compose stack
+make stop     # Stop all services
+make test     # Run tests
+make build    # Build project
+make run      # Run locally
+make check    # Check compilation
+make fmt      # Format code
+make clippy   # Run linter
+```
+
+## Conventions
+- Use Axum extractors for request parsing (Json, Path, Query)
+- Handlers return `impl IntoResponse`
+- Use SQLx for database queries (compile-time checked when possible)
+- Error handling with custom error types implementing `IntoResponse`
+- Logging via `tracing` crate
+- Configuration via environment variables (dotenvy)
+- Use `tower` middleware for cross-cutting concerns
+{{if .HasPRD}}
+## Product Requirements
+See `docs/supporting/prd.md` for product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Design
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+See `docs/supporting/` for additional project documentation.
+{{end}}

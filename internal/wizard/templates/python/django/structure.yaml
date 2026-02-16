@@ -1,0 +1,169 @@
+# Django project structure definition
+# Directories are created in order, files are rendered from templates
+
+directories:
+  - "{{ .ProjectName }}"
+  - "{{ .ProjectName }}/settings"
+  - "{{ .ProjectName }}/templates"
+  - apps
+  - static
+  - media
+  - tests
+  - docs
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: requirements.in
+    source: files/requirements.in.tmpl
+    type: template
+
+  - path: requirements.test.in
+    source: files/requirements.test.in.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: manage.py
+    source: files/manage.py.tmpl
+    type: template
+
+  - path: setup.cfg
+    source: files/setup.cfg.tmpl
+    type: template
+
+  - path: pyproject.toml
+    source: files/pyproject.toml.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/settings/__init__.py"
+    source: files/settings_init.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/settings/base.py"
+    source: files/settings_base.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/settings/local.py"
+    source: files/settings_local.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/urls.py"
+    source: files/urls.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/wsgi.py"
+    source: files/wsgi.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/asgi.py"
+    source: files/asgi.py.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}/__init__.py"
+    source: files/project_init.py.tmpl
+    type: template
+
+  - path: tests/conftest.py
+    source: files/conftest.py.tmpl
+    type: template
+
+  - path: tests/__init__.py
+    source: files/tests_init.py.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Make manage.py executable
+    cmd: chmod +x manage.py
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Create virtualenv
+    cmd: uv venv .venv
+    work_dir: .
+    timeout: 60s
+    critical: true
+
+  - name: Compile requirements
+    cmd: uv pip compile requirements.in -o requirements.txt
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Compile test requirements
+    cmd: uv pip compile requirements.test.in -o requirements.test.txt
+    work_dir: .
+    timeout: 120s
+    critical: false
+
+  - name: Install dependencies
+    cmd: uv pip install -r requirements.txt
+    work_dir: .
+    timeout: 300s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

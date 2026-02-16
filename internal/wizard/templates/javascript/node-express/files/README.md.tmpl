@@ -1,0 +1,64 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker and Docker Compose (for local development)
+
+### Local Development
+
+```bash
+# Start all services (app + PostgreSQL)
+make start
+
+# Or run without Docker
+npm install
+npm run dev
+```
+
+The server starts at [http://localhost:3000](http://localhost:3000).
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `make dev` | Run development server locally |
+| `make start` | Start Docker Compose stack |
+| `make stop` | Stop Docker Compose stack |
+| `make test` | Run test suite |
+| `make lint` | Run ESLint |
+| `make format` | Format code with Prettier |
+| `make build` | Build for production |
+| `make logs` | View container logs |
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check |
+
+### Project Structure
+
+```
+src/
+  index.ts          # Server entry point
+  app.ts            # Express app setup
+  routes/           # Route handlers
+  controllers/      # Business logic
+  services/         # External service integrations
+  middleware/        # Express middleware
+  models/           # Data models
+  types/            # TypeScript type definitions
+tests/
+  unit/             # Unit tests
+  integration/      # Integration tests
+```
+{{if .HasPRD}}
+## Documentation
+
+See `docs/supporting/` for project documentation including the PRD.
+{{end}}

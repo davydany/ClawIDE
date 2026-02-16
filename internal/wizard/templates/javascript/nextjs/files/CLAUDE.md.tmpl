@@ -1,0 +1,54 @@
+# {{.ProjectName}}
+
+## Project Overview
+
+{{.Description}}
+
+This is a Next.js full-stack application using the App Router pattern.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **UI Library**: React 19
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **Testing**: Vitest + React Testing Library
+
+## Commands
+
+```bash
+make dev          # Run Next.js dev server
+make start        # Start Docker Compose stack
+make stop         # Stop Docker Compose stack
+make build        # Production build
+make test         # Run tests
+make lint         # Run linter
+make format       # Format code
+```
+
+## Project Structure
+
+- `app/layout.tsx` - Root layout (wraps all pages)
+- `app/page.tsx` - Home page
+- `app/api/` - API route handlers
+- `components/` - Reusable React components
+- `lib/` - Utility functions and helpers
+- `types/` - TypeScript type definitions
+- `public/` - Static assets
+- `tests/` - Test files
+{{if .HasPRD}}
+## Supporting Documentation
+
+- `docs/supporting/` contains the project PRD and requirements
+{{end}}{{if .HasUIUX}}
+- `docs/supporting/` contains UI/UX design specifications
+{{end}}{{if .HasArchitecture}}
+- `docs/supporting/` contains architecture documentation
+{{end}}
+## Conventions
+
+- App Router pattern: pages in `app/`, API routes in `app/api/`
+- Server Components by default; add `'use client'` only when needed
+- Path alias `@/` maps to project root
+- Tailwind CSS for all styling
+- Shared components in `components/`, page-specific in `app/`

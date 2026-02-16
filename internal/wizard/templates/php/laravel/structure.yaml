@@ -1,0 +1,165 @@
+# Laravel project structure definition
+# Directories are created in order, files are rendered from templates
+
+directories:
+  - app
+  - app/Http
+  - app/Http/Controllers
+  - app/Models
+  - app/Providers
+  - bootstrap
+  - config
+  - database
+  - database/migrations
+  - database/seeders
+  - public
+  - resources
+  - resources/views
+  - routes
+  - storage
+  - storage/app
+  - storage/framework
+  - storage/framework/cache
+  - storage/framework/sessions
+  - storage/framework/views
+  - storage/logs
+  - tests
+  - tests/Feature
+  - tests/Unit
+  - docs
+  - docs/supporting
+  - docker
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: docker/nginx.conf
+    source: files/nginx.conf.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: composer.json
+    source: files/composer.json.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: artisan
+    source: files/artisan.tmpl
+    type: template
+
+  - path: public/index.php
+    source: files/index.php.tmpl
+    type: template
+
+  - path: routes/web.php
+    source: files/web.php.tmpl
+    type: template
+
+  - path: routes/api.php
+    source: files/api.php.tmpl
+    type: template
+
+  - path: app/Providers/AppServiceProvider.php
+    source: files/AppServiceProvider.php.tmpl
+    type: template
+
+  - path: app/Http/Controllers/Controller.php
+    source: files/Controller.php.tmpl
+    type: template
+
+  - path: app/Http/Controllers/HealthController.php
+    source: files/HealthController.php.tmpl
+    type: template
+
+  - path: config/app.php
+    source: files/app.php.tmpl
+    type: template
+
+  - path: config/database.php
+    source: files/database.php.tmpl
+    type: template
+
+  - path: bootstrap/app.php
+    source: files/bootstrap_app.php.tmpl
+    type: template
+
+  - path: phpunit.xml
+    source: files/phpunit.xml.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Make artisan executable
+    cmd: chmod +x artisan
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Install Composer dependencies
+    cmd: composer install --no-interaction
+    work_dir: .
+    timeout: 300s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

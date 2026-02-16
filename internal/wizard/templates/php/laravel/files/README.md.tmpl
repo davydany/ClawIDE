@@ -1,0 +1,94 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- PHP 8.3+
+- Composer 2.x
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PHP-FPM, Nginx, PostgreSQL) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the app container
+make shell       # Open Tinker (Laravel REPL)
+make test        # Run test suite
+make migrate     # Run database migrations
+make seed        # Run database seeders
+make fresh       # Fresh migrate and seed
+make install     # Install Composer dependencies
+make lint        # Run code style fixer
+make cache-clear # Clear all caches
+```
+
+### Manual Setup (without Docker)
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── app/
+│   ├── Http/Controllers/      # HTTP controllers
+│   ├── Models/                # Eloquent models
+│   └── Providers/             # Service providers
+├── bootstrap/                 # App bootstrapping
+├── config/                    # Configuration files
+├── database/
+│   ├── migrations/            # Database migrations
+│   └── seeders/               # Database seeders
+├── public/                    # Web root
+├── resources/views/           # Blade templates
+├── routes/
+│   ├── web.php                # Web routes
+│   └── api.php                # API routes
+├── storage/                   # Logs, cache, sessions
+├── tests/                     # Test suite
+│   ├── Feature/
+│   └── Unit/
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs
+├── docker/                    # Docker configs
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── composer.json
+└── CLAUDE.md
+```
+
+## API Endpoints
+
+| Method | Path        | Description        |
+|--------|-------------|--------------------|
+| GET    | /           | Project info       |
+| GET    | /api/health | Health check       |
+| GET    | /api/info   | App information    |
+| GET    | /up         | Laravel health     |
+
+## Testing
+
+```bash
+make test                                    # Run all tests
+docker compose exec app php artisan test --filter=TestClass  # Specific test
+```

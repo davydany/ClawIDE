@@ -1,0 +1,56 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker and Docker Compose (for local development)
+
+### Local Development
+
+```bash
+# Start with Docker
+make start
+
+# Or run locally
+npm install
+npm run dev
+```
+
+The dev server starts at [http://localhost:5173](http://localhost:5173).
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `make dev` | Run Vite development server |
+| `make start` | Start Docker Compose stack |
+| `make stop` | Stop Docker Compose stack |
+| `make build` | Production build |
+| `make test` | Run test suite |
+| `make lint` | Run ESLint |
+| `make format` | Format code with Prettier |
+| `make logs` | View container logs |
+
+### Project Structure
+
+```
+src/
+  main.ts            # Application entry point
+  App.vue            # Root component
+  assets/            # Static assets and global CSS
+  components/        # Reusable UI components
+  views/             # Page-level components (routes)
+  router/            # Vue Router configuration
+  composables/       # Composition API composables
+  types/             # TypeScript type definitions
+tests/               # Test files
+```
+{{if .HasPRD}}
+## Documentation
+
+See `docs/supporting/` for project documentation including the PRD.
+{{end}}

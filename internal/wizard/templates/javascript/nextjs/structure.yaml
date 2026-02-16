@@ -1,0 +1,129 @@
+directories:
+  - app
+  - app/api
+  - app/api/health
+  - components
+  - lib
+  - types
+  - public
+  - tests
+  - docs/supporting
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: package.json
+    source: files/package.json.tmpl
+    type: template
+
+  - path: tsconfig.json
+    source: files/tsconfig.json
+    type: static
+
+  - path: next.config.ts
+    source: files/next.config.ts
+    type: static
+
+  - path: app/globals.css
+    source: files/tailwind.css
+    type: static
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile
+    type: static
+
+  - path: .dockerignore
+    source: files/.dockerignore
+    type: static
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: .eslintrc.json
+    source: files/.eslintrc.json
+    type: static
+
+  - path: .prettierrc
+    source: files/.prettierrc
+    type: static
+
+  - path: vitest.config.ts
+    source: files/vitest.config.ts
+    type: static
+
+  - path: app/layout.tsx
+    source: files/app/layout.tsx.tmpl
+    type: template
+
+  - path: app/page.tsx
+    source: files/app/page.tsx
+    type: static
+
+  - path: app/api/health/route.ts
+    source: files/app/api/health/route.ts
+    type: static
+
+  - path: components/Header.tsx
+    source: files/components/Header.tsx
+    type: static
+
+  - path: tests/home.test.tsx
+    source: files/tests/home.test.tsx
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Install dependencies
+    cmd: npm install
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Stage all files
+    cmd: git add -A
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Initial commit
+    cmd: git commit -m "Initial commit"
+    work_dir: .
+    timeout: 30s
+    critical: true

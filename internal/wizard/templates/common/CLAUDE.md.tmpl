@@ -1,0 +1,27 @@
+# {{.ProjectName}}
+
+## Project Overview
+{{if .Description}}{{.Description}}{{else}}A {{.Framework}} project built with {{.Language}}.{{end}}
+
+## Technology Stack
+- **Language**: {{.Language}}
+- **Framework**: {{.Framework}}
+
+## Project Structure
+This project was scaffolded by ClawIDE's project wizard.
+{{if .HasPRD}}
+## Product Requirements
+See `docs/supporting/prd.md` for the full product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Design
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+See `docs/supporting/other.md` for additional project documentation.
+{{end}}
+## Development
+
+Refer to the README.md for setup and development instructions.

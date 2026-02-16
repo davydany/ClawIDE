@@ -1,0 +1,111 @@
+# ASP.NET Core project structure definition
+# Directories are created in order, files are rendered from templates
+
+directories:
+  - Controllers
+  - Models
+  - Data
+  - Services
+  - Properties
+  - docs
+  - docs/supporting
+  - scripts
+
+files:
+  - path: .gitignore
+    source: files/.gitignore
+    type: static
+
+  - path: README.md
+    source: files/README.md.tmpl
+    type: template
+
+  - path: CLAUDE.md
+    source: files/CLAUDE.md.tmpl
+    type: template
+
+  - path: docker-compose.yml
+    source: files/docker-compose.yml.tmpl
+    type: template
+
+  - path: Dockerfile
+    source: files/Dockerfile.tmpl
+    type: template
+
+  - path: Makefile
+    source: files/Makefile.tmpl
+    type: template
+
+  - path: "{{ .ProjectName }}.csproj"
+    source: files/project.csproj.tmpl
+    type: template
+
+  - path: Program.cs
+    source: files/Program.cs.tmpl
+    type: template
+
+  - path: appsettings.json
+    source: files/appsettings.json.tmpl
+    type: template
+
+  - path: appsettings.Development.json
+    source: files/appsettings.Development.json.tmpl
+    type: template
+
+  - path: Controllers/HealthController.cs
+    source: files/HealthController.cs.tmpl
+    type: template
+
+  - path: Data/AppDbContext.cs
+    source: files/AppDbContext.cs.tmpl
+    type: template
+
+  - path: .env.example
+    source: files/env.example.tmpl
+    type: template
+
+  - path: scripts/setup.sh
+    source: files/setup_script.sh.tmpl
+    type: template
+
+  # Supporting docs - only created if user provides them
+  - path: docs/supporting/PRD.md
+    type: supporting-doc
+    condition: has_prd
+
+  - path: docs/supporting/UI_UX_DESIGN.md
+    type: supporting-doc
+    condition: has_uiux
+
+  - path: docs/supporting/ARCHITECTURE.md
+    type: supporting-doc
+    condition: has_architecture
+
+  - path: docs/supporting/OTHER.md
+    type: supporting-doc
+    condition: has_other
+
+post_create_commands:
+  - name: Make setup script executable
+    cmd: chmod +x scripts/setup.sh
+    work_dir: .
+    timeout: 30s
+    critical: false
+
+  - name: Initialize git
+    cmd: git init
+    work_dir: .
+    timeout: 30s
+    critical: true
+
+  - name: Restore NuGet packages
+    cmd: dotnet restore
+    work_dir: .
+    timeout: 120s
+    critical: true
+
+  - name: Initial commit
+    cmd: git add -A && git commit -m 'Initial project setup from ClawIDE wizard'
+    work_dir: .
+    timeout: 30s
+    critical: false

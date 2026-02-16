@@ -1,0 +1,57 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Tech Stack
+
+- **Language**: Go 1.21+
+- **ORM**: GORM with PostgreSQL
+- **Dev Environment**: Docker Compose
+
+## Project Layout
+
+- `cmd/server/` - HTTP server with basic routes
+- `cmd/migrate/` - Database migration runner
+- `internal/config/` - Environment-based configuration
+- `internal/database/` - GORM connection with pooling
+- `internal/models/` - GORM models (User, Post) with UUID PKs
+- `internal/repository/` - Repository pattern with context support
+- `migrations/` - Reference SQL migration files
+
+## Development Commands
+
+```bash
+make docker-up    # Start PostgreSQL
+make migrate      # Run migrations
+make run          # Run the server
+make test         # Run tests
+make build        # Build binary
+```
+
+## Conventions
+
+- UUID primary keys for all models
+- Repository pattern for data access layer
+- Context propagation through all database operations
+- Soft deletes via GORM DeletedAt
+- GORM AutoMigrate for schema management
+- SQL files in migrations/ as schema documentation
+- Environment variables for configuration (PORT, DATABASE_URL, ENVIRONMENT)
+- Connection pool: 25 max open, 5 max idle, 5min lifetime
+{{if .HasPRD}}
+## Product Requirements
+
+See `docs/supporting/prd.md` for the product requirements document.
+{{end}}{{if .HasUIUX}}
+## UI/UX Specifications
+
+See `docs/supporting/uiux.md` for UI/UX design specifications.
+{{end}}{{if .HasArchitecture}}
+## Architecture
+
+See `docs/supporting/architecture.md` for architecture documentation.
+{{end}}{{if .HasOther}}
+## Additional Documentation
+
+See `docs/supporting/` for additional project documentation.
+{{end}}

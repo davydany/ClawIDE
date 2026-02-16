@@ -1,0 +1,62 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Go 1.21+
+- Docker & Docker Compose
+
+## Getting Started
+
+```bash
+# Start PostgreSQL
+make docker-up
+
+# Run the server
+make run
+
+# Run tests
+make test
+```
+
+The server starts at http://localhost:8080.
+
+## API Endpoints
+
+| Method | Path             | Description      |
+|--------|------------------|------------------|
+| GET    | /health          | Health check     |
+| GET    | /api/v1/items    | List all items   |
+| POST   | /api/v1/items    | Create an item   |
+| GET    | /api/v1/items/:id| Get an item      |
+| PUT    | /api/v1/items/:id| Update an item   |
+| DELETE | /api/v1/items/:id| Delete an item   |
+
+## Project Structure
+
+```
+cmd/server/         - Application entrypoint
+internal/config/    - Configuration loading
+internal/database/  - Database connection and migrations
+internal/handlers/  - HTTP request handlers
+internal/middleware/ - Echo middleware
+internal/models/    - GORM models
+pkg/                - Public library code
+docs/supporting/    - Project documentation
+```
+
+## Make Commands
+
+```bash
+make run          # Run the application
+make build        # Build binary
+make test         # Run tests
+make coverage     # Run tests with coverage
+make fmt          # Format code
+make vet          # Vet code
+make docker-up    # Start PostgreSQL
+make docker-down  # Stop PostgreSQL
+make tidy         # Tidy Go modules
+make clean        # Clean build artifacts
+```

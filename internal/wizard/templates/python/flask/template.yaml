@@ -1,0 +1,25 @@
+id: flask
+language: python
+name: Flask Web Application
+description: Lightweight Python web framework with PostgreSQL, Redis, and Docker
+icon: "\U0001F3FA"
+category: web-framework
+version: "3.1"
+
+features:
+  - PostgreSQL with Flask-SQLAlchemy
+  - Redis caching with Flask-Caching
+  - Flask-Migrate for database migrations
+  - Docker Compose local development
+  - pytest test suite
+  - uv package management
+  - Makefile commands
+  - CLAUDE.md for AI-assisted development
+
+requires:
+  - name: python
+    version: ">=3.12"
+  - name: docker
+    version: "*"
+
+supports_codegen: true

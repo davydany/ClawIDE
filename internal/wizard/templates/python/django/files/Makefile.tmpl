@@ -1,0 +1,74 @@
+.PHONY: start up stop shutdown status ps logs bash shell sh requirements reqs test tests migrate superuser supe user
+
+# Docker Compose commands
+start:
+	docker compose up -d
+
+up: start
+
+stop:
+	docker compose down
+
+shutdown: stop
+
+status:
+	docker compose ps -a
+
+ps: status
+
+logs:
+ifdef SERVICE
+	docker compose logs -f $(SERVICE)
+else
+	docker compose logs -f
+endif
+
+# Shell access
+bash:
+	docker compose exec web bash
+
+shell:
+	docker compose exec web python manage.py shell
+
+sh:
+	docker compose exec web sh
+
+# Dependencies
+requirements:
+	docker compose exec web uv pip compile requirements.in -o requirements.txt
+	docker compose exec web uv pip compile requirements.test.in -o requirements.test.txt
+	docker compose exec web uv pip install -r requirements.txt
+
+reqs: requirements
+
+# Testing
+test:
+	docker compose exec web python -m pytest $(ARGS)
+
+tests: test
+
+# Database
+migrate:
+	docker compose exec web python manage.py migrate
+
+makemigrations:
+	docker compose exec web python manage.py makemigrations $(ARGS)
+
+# Users
+superuser:
+	docker compose exec web python manage.py createsuperuser
+
+supe: superuser
+
+user:
+	@read -p "Username: " username; \
+	read -p "Email: " email; \
+	docker compose exec web python manage.py shell -c \
+		"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_user('$$username', '$$email', 'changeme')"
+
+# Utilities
+collectstatic:
+	docker compose exec web python manage.py collectstatic --noinput
+
+check:
+	docker compose exec web python manage.py check

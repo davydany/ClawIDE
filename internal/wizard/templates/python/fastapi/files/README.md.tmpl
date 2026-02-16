@@ -1,0 +1,85 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Redis, FastAPI) via Docker Compose.
+
+The API will be available at http://localhost:8000 with interactive docs at http://localhost:8000/docs.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the web container
+make shell       # Python interactive shell
+make test        # Run test suite
+make migrate     # Run Alembic migrations
+make migration   # Create new Alembic migration
+make reqs        # Compile requirements files
+```
+
+### Manual Setup (without Docker)
+
+```bash
+uv venv .venv
+source .venv/bin/activate
+uv pip compile requirements.in -o requirements.txt
+uv pip install -r requirements.txt
+cp .env.example .env  # Edit with your settings
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── app/
+│   ├── api/v1/              # API route handlers
+│   ├── core/                # Configuration and shared utilities
+│   ├── db/                  # Database session and base model
+│   ├── models/              # SQLAlchemy ORM models
+│   ├── schemas/             # Pydantic schemas
+│   ├── services/            # Business logic
+│   └── main.py              # FastAPI application entry point
+├── alembic/                 # Database migrations
+├── tests/                   # Test suite
+├── docs/                    # Documentation
+│   └── supporting/          # Supporting docs (PRD, UI/UX, etc.)
+├── scripts/                 # Utility scripts
+├── docker-compose.yml
+├── Dockerfile
+├── Makefile
+├── requirements.in
+└── CLAUDE.md
+```
+
+## API Documentation
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+- OpenAPI JSON: http://localhost:8000/openapi.json
+
+## Testing
+
+```bash
+make test                           # Run all tests
+make test ARGS="-k test_name"       # Run specific test
+make test ARGS="--cov=app"          # Run with coverage
+```

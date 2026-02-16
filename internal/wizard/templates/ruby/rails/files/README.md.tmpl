@@ -1,0 +1,91 @@
+# {{.ProjectName}}
+
+{{.Description}}
+
+## Prerequisites
+
+- Ruby 3.3+
+- Bundler 2.x
+- Docker and Docker Compose
+
+## Local Development
+
+### Quick Start
+
+```bash
+make start
+```
+
+This starts the full stack (PostgreSQL, Rails) via Docker Compose.
+
+### Common Commands
+
+```bash
+make start       # Start all services
+make stop        # Stop all services
+make logs        # Follow all service logs
+make bash        # Shell into the web container
+make shell       # Open Rails console
+make test        # Run test suite
+make migrate     # Run database migrations
+make seed        # Run database seeds
+make setup-db    # Create, migrate, and seed database
+make install     # Install Ruby dependencies
+make lint        # Run RuboCop linter
+make routes      # Show all routes
+```
+
+### Manual Setup (without Docker)
+
+```bash
+bundle install
+cp .env.example .env
+rails db:create
+rails db:migrate
+rails server
+```
+
+The app will be available at `http://localhost:3000`.
+
+## Project Structure
+
+```
+{{.ProjectName}}/
+├── app/
+│   ├── controllers/           # Controllers
+│   ├── models/                # Active Record models
+│   └── views/
+│       └── layouts/           # Layout templates
+├── config/
+│   ├── environments/          # Environment configs
+│   ├── initializers/          # App initializers
+│   ├── database.yml           # Database config
+│   ├── routes.rb              # Route definitions
+│   └── application.rb         # App config
+├── db/
+│   └── migrate/               # Database migrations
+├── test/                      # Test suite
+├── docs/                      # Documentation
+│   └── supporting/            # Supporting docs
+├── scripts/                   # Utility scripts
+├── docker-compose.yml
+├── Dockerfile
+├── Gemfile
+├── Makefile
+└── CLAUDE.md
+```
+
+## API Endpoints
+
+| Method | Path     | Description        |
+|--------|----------|--------------------|
+| GET    | /        | Project info       |
+| GET    | /health  | Health check       |
+| GET    | /up      | Rails health check |
+
+## Testing
+
+```bash
+make test                                    # Run all tests
+docker compose exec web rails test test/controllers  # Run controller tests
+```

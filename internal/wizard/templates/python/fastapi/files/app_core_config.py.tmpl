@@ -1,0 +1,19 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "{{.ProjectName}}"
+    DEBUG: bool = False
+    SECRET_KEY: str = "insecure-change-me"
+
+    DATABASE_URL: str = "postgresql+asyncpg://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}"
+    DATABASE_URL_SYNC: str = "postgresql://{{.ProjectName}}:localdev@db:5432/{{.ProjectName}}"
+
+    REDIS_URL: str = "redis://redis:6379/0"
+
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+
+settings = Settings()
