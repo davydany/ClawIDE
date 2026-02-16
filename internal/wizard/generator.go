@@ -140,6 +140,7 @@ func (g *Generator) copyTemplates(req WizardRequest, projectDir string) error {
 }
 
 // copyDocs copies supporting documentation files into docs/supporting/.
+// Supports both file paths and direct content pasted into textareas.
 func (g *Generator) copyDocs(req WizardRequest, projectDir string) error {
 	docsDir := filepath.Join(projectDir, "docs", "supporting")
 	if err := os.MkdirAll(docsDir, 0755); err != nil {
@@ -159,9 +160,20 @@ func (g *Generator) copyDocs(req WizardRequest, projectDir string) error {
 			continue
 		}
 
+		outputPath := filepath.Join(docsDir, destName)
+
+		// Check if srcPath is a file path or direct content
 		expanded := expandHomePath(srcPath)
-		if err := copyFile(expanded, filepath.Join(docsDir, destName)); err != nil {
-			return fmt.Errorf("copying %s: %w", destName, err)
+		if _, err := os.Stat(expanded); err == nil {
+			// File exists, copy it
+			if err := copyFile(expanded, outputPath); err != nil {
+				return fmt.Errorf("copying %s: %w", destName, err)
+			}
+		} else {
+			// Path doesn't exist, treat as direct content and write it
+			if err := os.WriteFile(outputPath, []byte(srcPath), 0644); err != nil {
+				return fmt.Errorf("writing %s: %w", destName, err)
+			}
 		}
 	}
 
