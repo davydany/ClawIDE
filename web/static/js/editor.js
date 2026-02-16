@@ -848,6 +848,22 @@
                 }
             }
         }
+
+        // Alt+Z: toggle word wrap
+        if (e.altKey && e.key === 'z' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+            e.preventDefault();
+            if (window.ClawIDECommands && window.ClawIDECommands.toggleWordWrap) {
+                window.ClawIDECommands.toggleWordWrap();
+            }
+        }
+
+        // Cmd+B / Ctrl+B: toggle sidebar collapse
+        if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+            e.preventDefault();
+            if (window.ClawIDESidebar && window.ClawIDESidebar.toggleCollapse) {
+                window.ClawIDESidebar.toggleCollapse();
+            }
+        }
     });
 
     // --- Expose to global scope ---
@@ -874,6 +890,17 @@
             if (!pid) return null;
             var tab = getActiveTab(pid);
             return tab ? tab.filePath : null;
+        },
+        getActiveEditorView: function() {
+            var pid = getFocusedPaneId();
+            if (!pid) return null;
+            var tab = getActiveTab(pid);
+            return tab ? tab.editorView : null;
+        },
+        getActiveTab: function() {
+            var pid = getFocusedPaneId();
+            if (!pid) return null;
+            return getActiveTab(pid);
         },
     };
 })();
