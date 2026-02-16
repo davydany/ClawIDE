@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/davydany/ClawIDE/internal/model"
 )
@@ -36,13 +37,15 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, e := range entries {
-				if !e.IsDir() || e.Name()[0] == '.' {
+				name := e.Name()
+				// Skip hidden files and directories, and directories ending with -worktrees
+				if !e.IsDir() || name[0] == '.' || strings.HasSuffix(name, "-worktrees") {
 					continue
 				}
-				fullPath := filepath.Join(h.cfg.ProjectsDir, e.Name())
+				fullPath := filepath.Join(h.cfg.ProjectsDir, name)
 				if !registered[fullPath] {
 					discovered = append(discovered, DirEntry{
-						Name: e.Name(),
+						Name: name,
 						Path: fullPath,
 					})
 				}

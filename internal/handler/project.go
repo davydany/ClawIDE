@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/git"
@@ -143,11 +144,13 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		currentBranch, _ = git.CurrentBranch(project.Path)
 	}
 
-	// Collect starred projects for quick-switch panel
-	var starredProjects []model.Project
+	// Collect starred and non-starred projects for quick-switch panel
+	var starredProjects, nonStarredProjects []model.Project
 	for _, p := range h.store.GetProjects() {
 		if p.Starred {
 			starredProjects = append(starredProjects, p)
+		} else {
+			nonStarredProjects = append(nonStarredProjects, p)
 		}
 	}
 
@@ -165,19 +168,20 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"Title":             project.Name + " - ClawIDE",
-		"Project":           project,
-		"Sessions":          sessions,
-		"Features":          features,
-		"ActiveTab":         "terminal",
-		"IsGitRepo":         isGitRepo,
-		"CurrentBranch":     currentBranch,
-		"StarredProjects":   starredProjects,
-		"StarredBookmarks":  starredBookmarkViews,
-		"StartTour":         !h.cfg.WorkspaceTourCompleted,
-		"ActiveFeatureID":   "",
-		"SidebarPosition":   h.cfg.SidebarPosition,
-		"SidebarWidth":      h.cfg.SidebarWidth,
+		"Title":              project.Name + " - ClawIDE",
+		"Project":            project,
+		"Sessions":           sessions,
+		"Features":           features,
+		"ActiveTab":          "terminal",
+		"IsGitRepo":          isGitRepo,
+		"CurrentBranch":      currentBranch,
+		"StarredProjects":    starredProjects,
+		"NonStarredProjects": nonStarredProjects,
+		"StarredBookmarks":   starredBookmarkViews,
+		"StartTour":          !h.cfg.WorkspaceTourCompleted,
+		"ActiveFeatureID":    "",
+		"SidebarPosition":    h.cfg.SidebarPosition,
+		"SidebarWidth":       h.cfg.SidebarWidth,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {
@@ -241,10 +245,12 @@ func (h *Handlers) ScanProjects(w http.ResponseWriter, r *http.Request) {
 
 	var dirs []DirEntry
 	for _, e := range entries {
-		if e.IsDir() && e.Name()[0] != '.' {
+		name := e.Name()
+		// Skip hidden files and directories, and directories ending with -worktrees
+		if e.IsDir() && name[0] != '.' && !strings.HasSuffix(name, "-worktrees") {
 			dirs = append(dirs, DirEntry{
-				Name: e.Name(),
-				Path: filepath.Join(h.cfg.ProjectsDir, e.Name()),
+				Name: name,
+				Path: filepath.Join(h.cfg.ProjectsDir, name),
 			})
 		}
 	}
