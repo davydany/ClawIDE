@@ -123,6 +123,10 @@ func (s *Server) setupRoutes() *chi.Mux {
 		})
 	})
 
+	// Scratchpad API (global)
+	r.Get("/api/scratchpad", s.handlers.GetScratchpad)
+	r.Put("/api/scratchpad", s.handlers.UpdateScratchpad)
+
 	// Snippets API (global, not project-scoped)
 	r.Route("/api/snippets", func(r chi.Router) {
 		r.Get("/", s.handlers.ListSnippets)

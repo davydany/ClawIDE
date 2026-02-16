@@ -63,6 +63,11 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load voicebox store: %v", err)
 	}
 
+	scratchpadStore, err := store.NewScratchpadStore(cfg.ScratchpadFilePath())
+	if err != nil {
+		log.Fatalf("failed to load scratchpad store: %v", err)
+	}
+
 	sseHub := sse.NewHub()
 
 	// Recover tmux sessions from previous run
@@ -75,7 +80,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, sseHub, upd),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, sseHub, upd),
 		updater:    upd,
 	}
 
