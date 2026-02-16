@@ -382,6 +382,19 @@
     margin: 0 auto;
 }
 
+/* File tree sidebar collapse */
+.file-tree-sidebar {
+    transition: width 200ms ease-in-out;
+}
+
+.file-tree-sidebar-expanded {
+    width: 16rem; /* w-64 */
+}
+
+.file-tree-sidebar-collapsed {
+    width: 40px;
+}
+
 /* Sidebar resize handle */
 .sidebar-resize-handle {
     width: 4px;
