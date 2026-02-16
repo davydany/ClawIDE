@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 type Config struct {
@@ -26,6 +28,7 @@ type Config struct {
 	SidebarPosition        string `json:"sidebar_position"`
 	SidebarWidth           int    `json:"sidebar_width"`
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
+	AISettings             *wizard.AIConfig `json:"ai_settings"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -196,6 +199,38 @@ func (c *Config) UpdateTempDir() string {
 
 func (c *Config) Addr() string {
 	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+}
+
+// GetAIConfig returns the current AI configuration
+func (c *Config) GetAIConfig() *wizard.AIConfig {
+	if c.AISettings == nil {
+		return wizard.DefaultAIConfig()
+	}
+	return c.AISettings
+}
+
+// SaveAIConfig persists AI configuration to disk
+func (c *Config) SaveAIConfig(aiCfg *wizard.AIConfig) error {
+	if aiCfg != nil {
+		if err := aiCfg.Validate(); err != nil {
+			return fmt.Errorf("invalid AI config: %w", err)
+		}
+		c.AISettings = aiCfg
+	}
+	return c.SaveFile()
+}
+
+// SaveFile writes the current configuration to disk
+func (c *Config) SaveFile() error {
+	path := filepath.Join(c.DataDir, "config.json")
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshaling config: %w", err)
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("writing config file: %w", err)
+	}
+	return nil
 }
 
 func expandHome(path string) string {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/version"
+	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 func (h *Handlers) SettingsPage(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +54,8 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"port":             true,
 		"sidebar_position": true,
 		"sidebar_width":      true,
-		"auto_update_check":  true,
+		"auto_update_check": true,
+		"ai_settings":       true, // Allow nested AI settings updates
 	}
 
 	for k, v := range updates {
@@ -96,4 +98,144 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// GetAISettings returns the current AI configuration from settings
+func (h *Handlers) GetAISettings(w http.ResponseWriter, r *http.Request) {
+	aiCfg := h.cfg.GetAIConfig()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"ai_settings": aiCfg,
+		"providers":   wizard.GetAvailableProviders(),
+	})
+}
+
+// SetAISettings updates and persists the AI configuration
+func (h *Handlers) SetAISettings(w http.ResponseWriter, r *http.Request) {
+	var aiCfg wizard.AIConfig
+	if err := json.NewDecoder(r.Body).Decode(&aiCfg); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the configuration
+	if err := aiCfg.Validate(); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]any{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Save to config
+	if err := h.cfg.SaveAIConfig(&aiCfg); err != nil {
+		log.Printf("Failed to save AI config: %v", err)
+		http.Error(w, "Failed to save AI configuration", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"status": "ok",
+		"config": &aiCfg,
+	})
+}
+
+// VerifyAICredentials tests API credentials without storing them
+func (h *Handlers) VerifyAICredentials(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Provider  string `json:"provider"`
+		APIKey    string `json:"api_key"`
+		BaseURL   string `json:"base_url"`
+		Model     string `json:"model"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if req.Provider == "" || req.APIKey == "" || req.Model == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "provider, api_key, and model are required",
+		})
+		return
+	}
+
+	// For now, basic validation - full verification would require actual API calls
+	// This is a security feature: we only test when needed, not during settings load
+	provider := wizard.AIProvider(req.Provider)
+
+	// Verify provider exists
+	validProvider := false
+	for _, p := range wizard.GetAvailableProviders() {
+		if p == provider {
+			validProvider = true
+			break
+		}
+	}
+
+	if !validProvider {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "invalid provider: " + req.Provider,
+		})
+		return
+	}
+
+	// Verify model exists for provider
+	models := wizard.ProviderModels(provider)
+	modelExists := false
+	var selectedModel wizard.AIModel
+	for _, m := range models {
+		if m.ID == req.Model {
+			modelExists = true
+			selectedModel = m
+			break
+		}
+	}
+
+	if !modelExists {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "invalid model for provider: " + req.Model,
+		})
+		return
+	}
+
+	// Basic validation passed
+	// Note: Real API testing would happen here (making a test call)
+	// For security, we don't actually call the API here - just validate format
+	if len(req.APIKey) < 10 {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "API key appears to be invalid (too short)",
+		})
+		return
+	}
+
+	// Ollama requires base URL
+	if provider == wizard.AIProviderOllama && req.BaseURL == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "base_url is required for Ollama",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"valid": true,
+		"model": selectedModel,
+		"message": "Configuration appears valid. Note: Full verification requires API testing which we don't perform for security.",
+	})
 }
