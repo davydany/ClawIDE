@@ -10,9 +10,13 @@
 <script src="/static/js/pane-layout.js"></script>
 <script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
+<script src="/static/js/new-file.js"></script>
+<script src="/static/js/editor-commands.js"></script>
 <script src="/static/js/docker.js"></script>
+<script src="/static/js/scratchpad.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
+<script src="/static/js/command-palette.js"></script>
 {{end}}
 
 {{define "body"}}
@@ -28,16 +32,23 @@
            style="width: {{.SidebarWidth}}px"
            :class="sidebarOpen ? 'translate-x-0' : '{{if eq .SidebarPosition "right"}}translate-x-full{{else}}-translate-x-full{{end}}'">
         <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800 flex-shrink-0">
-            <a href="/" hx-boost="false" class="flex items-center gap-2 text-lg font-semibold text-white">
+            <a href="/" hx-boost="false" class="sidebar-header-content flex items-center gap-2 text-lg font-semibold text-white">
                 <span class="text-xl">🦀</span>
                 ClawIDE
                 <span class="text-xs font-normal text-gray-500">{{version}}</span>
             </a>
-            <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-gray-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="flex items-center gap-1">
+                <button onclick="ClawIDESidebar.toggleCollapse()" class="sidebar-collapse-toggle flex items-center justify-center w-7 h-7 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Toggle sidebar (Cmd+B)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         <nav class="flex-1 overflow-y-auto p-3 space-y-1">
             <a href="/" hx-boost="false" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
@@ -73,6 +84,21 @@
                         </svg>
                         New Session
                     </button>
+                </div>
+            </div>
+
+            <!-- Scratchpad section -->
+            <div class="mt-4" x-data="{ scratchpadOpen: true }">
+                <button @click="scratchpadOpen = !scratchpadOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Scratchpad
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="scratchpadOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="scratchpadOpen" x-collapse>
+                    <div class="mt-1 px-1">
+                        <textarea id="scratchpad-content" placeholder="Jot something down..."
+                                  rows="6"
+                                  class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
+                    </div>
                 </div>
             </div>
 
@@ -225,16 +251,30 @@
                 </div>
             </div>
 
-            <!-- Settings link -->
-            <div class="mt-4 border-t border-gray-800 pt-4">
-                <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Settings
-                </a>
+            <!-- Keyboard Shortcuts (desktop only) -->
+            <div class="mt-4 hidden lg:block" x-data="{ shortcutsOpen: false }">
+                <button @click="shortcutsOpen = !shortcutsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Keyboard Shortcuts
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="shortcutsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="shortcutsOpen" x-collapse>
+                    <div class="mt-1 px-3 space-y-1">
+                        <table class="w-full text-xs">
+                            <tbody class="text-gray-400">
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+K</kbd></td><td class="py-1">Command Palette</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+Shift+P</kbd></td><td class="py-1">Command Palette</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+S</kbd></td><td class="py-1">Save File</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+W</kbd></td><td class="py-1">Close Tab</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Alt+Z</kbd></td><td class="py-1">Toggle Word Wrap</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+B</kbd></td><td class="py-1">Toggle Sidebar</td></tr>
+                                <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Ctrl+G</kbd></td><td class="py-1">Go to Line</td></tr>
+                                <tr><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+/</kbd></td><td class="py-1">Toggle Comment</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
         </nav>
 
         <!-- System Stats Box -->
@@ -352,6 +392,17 @@
                     </div>
                 </div>
             </template>
+        </div>
+
+        <!-- Settings link -->
+        <div class="flex-shrink-0 border-t border-gray-800 p-3">
+            <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Settings
+            </a>
         </div>
 
         <!-- Sidebar resize handle -->
@@ -529,6 +580,28 @@
                             <button @click="fetch('/projects/{{$pid}}/color', {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:''})}).then(()=>location.reload())" class="w-5 h-5 rounded-full border border-gray-600 hover:ring-2 ring-white/50 flex items-center justify-center" title="Clear color">
                                 <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+                {{if .NonStarredProjects}}
+                <div class="relative flex-shrink-0 ml-auto" x-data="{ projectsOpen: false }">
+                    <button @click="projectsOpen = !projectsOpen" class="flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-md text-gray-400 hover:text-white hover:bg-gray-800 border border-transparent transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m0-7l7-7 7 7"/>
+                        </svg>
+                        Projects
+                    </button>
+                    <div x-show="projectsOpen" x-cloak @click.away="projectsOpen = false"
+                         class="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+                        <div class="max-h-64 overflow-y-auto">
+                            {{range .NonStarredProjects}}
+                            <a href="/projects/{{.ID}}/" hx-boost="false"
+                               class="block px-3 py-2 text-xs text-gray-300 hover:bg-gray-800 hover:text-white transition-colors border-b border-gray-800 last:border-b-0">
+                                {{if .Color}}<span class="w-2 h-2 rounded-full inline-block mr-2 flex-shrink-0" style="background-color: {{.Color}}"></span>{{end}}
+                                {{.Name}}
+                            </a>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -734,13 +807,26 @@
 
                 <!-- Files panel -->
                 <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
-                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false }"
+                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false, fileTreeCollapsed: localStorage.getItem('editor.preferences.fileTreeCollapsed') === 'true' }"
                      x-effect="if (activeTab === 'files' && !loaded) { loaded = true; $nextTick(() => { window._clawIDELoadFileTree && window._clawIDELoadFileTree() }) }">
-                    <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
-                        <div class="p-2 border-b border-gray-800">
-                            <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                    <div class="file-tree-sidebar border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0"
+                         :class="fileTreeCollapsed ? 'file-tree-sidebar-collapsed' : 'file-tree-sidebar-expanded'">
+                        <div class="p-2 border-b border-gray-800 flex items-center justify-between">
+                            <h3 x-show="!fileTreeCollapsed" class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                            <div class="flex items-center gap-0.5">
+                                <button x-show="!fileTreeCollapsed" id="new-file-btn" class="p-0.5 rounded text-gray-500 hover:text-white hover:bg-gray-700 transition-colors" title="New File">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                                </button>
+                                <button @click="fileTreeCollapsed = !fileTreeCollapsed; localStorage.setItem('editor.preferences.fileTreeCollapsed', fileTreeCollapsed)"
+                                        class="flex items-center justify-center w-7 h-7 min-w-[28px] min-h-[28px] rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+                                        :title="fileTreeCollapsed ? 'Expand file tree' : 'Collapse file tree'">
+                                    <svg x-show="!fileTreeCollapsed" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+                                    <svg x-show="fileTreeCollapsed" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+                                </button>
+                            </div>
+                            </button>
                         </div>
-                        <div id="file-tree" class="p-1">
+                        <div x-show="!fileTreeCollapsed" id="file-tree" class="p-1">
                             <div class="text-gray-500 text-xs p-2">Click Files tab to load...</div>
                         </div>
                         <script>
@@ -787,6 +873,62 @@
                             window._clawIDELoadFileTree = function() {
                                 loadDir('', document.getElementById('file-tree'), 0);
                             };
+
+                            // Expose directory refresh for new-file module
+                            window._clawIDERefreshDir = function(dirPath) {
+                                if (!dirPath) {
+                                    // Reload root
+                                    loadDir('', document.getElementById('file-tree'), 0);
+                                    return;
+                                }
+                                // Find the children container for this dir and reload it
+                                var childrenEl = document.querySelector('[data-children="' + dirPath + '"]');
+                                if (childrenEl) {
+                                    var depth = 0;
+                                    var parts = dirPath.split('/');
+                                    depth = parts.length;
+                                    childrenEl.classList.remove('hidden');
+                                    childrenEl.dataset.loaded = 'true';
+                                    loadDir(dirPath, childrenEl, depth);
+                                    // Flip arrow to open
+                                    var dirItem = childrenEl.previousElementSibling;
+                                    if (dirItem) {
+                                        var arrow = dirItem.querySelector('span');
+                                        if (arrow) arrow.innerHTML = '&#9660;';
+                                    }
+                                } else {
+                                    // Directory not yet expanded; reload parent
+                                    var parentDir = dirPath.substring(0, dirPath.lastIndexOf('/'));
+                                    window._clawIDERefreshDir(parentDir);
+                                }
+                            };
+
+                            // Initialize new-file module
+                            if (typeof ClawIDENewFile !== 'undefined') {
+                                ClawIDENewFile.init({
+                                    projectID: projectID,
+                                    featureID: null,
+                                    filesAPI: '/projects/' + projectID + '/api/files',
+                                    fileAPI: '/projects/' + projectID + '/api/file',
+                                    mkdirAPI: '/projects/' + projectID + '/api/mkdir',
+                                    fileTreeId: 'file-tree',
+                                    onFileCreated: function(path) {
+                                        ClawIDEEditor.loadFile(projectID, path);
+                                    },
+                                    refreshDir: function(dirPath) {
+                                        window._clawIDERefreshDir(dirPath);
+                                    }
+                                });
+                            }
+
+                            // Wire up the "+" button
+                            var newFileBtn = document.getElementById('new-file-btn');
+                            if (newFileBtn) {
+                                newFileBtn.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    ClawIDENewFile.openModal('');
+                                });
+                            }
                         })();
                         </script>
                     </div>
@@ -1033,6 +1175,122 @@ function deleteSession(projectID, sessionID) {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Command Palette Modal -->
+<div x-data="window._clawIDECommandPaletteData()" @keydown.window="if (open) onKeydown($event)">
+    <!-- Backdrop -->
+    <div x-show="open" x-cloak
+         class="fixed inset-0 z-[60] bg-black/60"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="close()"></div>
+
+    <!-- Modal -->
+    <div x-show="open" x-cloak
+         class="fixed inset-x-0 top-0 z-[61] flex justify-center pt-[15vh] sm:pt-[20vh] px-4"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 -translate-y-2"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 -translate-y-2">
+        <div class="w-full max-w-lg bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden" @click.stop>
+            <!-- Search input -->
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
+                <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input id="command-palette-search"
+                       type="text"
+                       x-model="query"
+                       @input="onSearchInput()"
+                       placeholder="Type a command..."
+                       autocomplete="off"
+                       class="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+                       aria-label="Search commands">
+                <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-gray-500 bg-gray-800 border border-gray-700 rounded">Esc</kbd>
+            </div>
+
+            <!-- Command list -->
+            <div class="max-h-72 overflow-y-auto overscroll-contain" role="listbox" aria-label="Commands">
+                <template x-if="filteredCommands.length === 0">
+                    <div class="px-4 py-8 text-center text-sm text-gray-500">
+                        No commands found
+                    </div>
+                </template>
+
+                <!-- Recent commands header -->
+                <template x-if="!query.trim() && recentCommands.length > 0">
+                    <div class="px-3 pt-2 pb-1">
+                        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Recent</span>
+                    </div>
+                </template>
+
+                <template x-for="(cmd, index) in filteredCommands" :key="cmd.id">
+                    <div>
+                        <!-- Category separator for non-recent commands when showing all -->
+                        <template x-if="!query.trim() && recentCommands.length > 0 && index === recentCommands.length">
+                            <div class="px-3 pt-3 pb-1 border-t border-gray-800">
+                                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">All Commands</span>
+                            </div>
+                        </template>
+
+                        <button @click="executeCommand(cmd)"
+                                @mouseenter="selectedIndex = index"
+                                :data-palette-index="index"
+                                :class="selectedIndex === index ? 'bg-indigo-600/20 text-white' : 'text-gray-300 hover:bg-gray-800/50'"
+                                class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors"
+                                role="option"
+                                :aria-selected="selectedIndex === index">
+                            <!-- Command icon -->
+                            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-500" x-html="cmd.icon || ''"></span>
+                            <!-- Command name and category -->
+                            <div class="flex-1 min-w-0">
+                                <span x-text="cmd.name"></span>
+                            </div>
+                            <!-- Category badge -->
+                            <span x-show="cmd.category"
+                                  x-text="cmd.category"
+                                  class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-500"></span>
+                            <!-- Shortcut hint -->
+                            <span x-show="cmd.shortcut"
+                                  x-text="cmd.shortcut"
+                                  class="flex-shrink-0 text-[10px] font-mono text-gray-600"></span>
+                            <!-- Recent indicator -->
+                            <span x-show="isRecent(cmd)"
+                                  class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400"
+                                  title="Recently used"></span>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-between px-4 py-2 border-t border-gray-800 text-[10px] text-gray-600">
+                <div class="flex items-center gap-3">
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">↑↓</kbd> navigate</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">↵</kbd> select</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">esc</kbd> close</span>
+                </div>
+                <span x-text="filteredCommands.length + ' commands'"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile FAB button (hidden on desktop) -->
+    <button @click="openPalette()"
+            class="md:hidden fixed right-4 bottom-20 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 active:bg-indigo-500 transition-colors"
+            aria-label="Open command palette"
+            style="bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem)">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+        </svg>
+    </button>
 </div>
 
 {{if .StartTour}}
