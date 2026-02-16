@@ -60,7 +60,7 @@ func defaultSteps() []JobStep {
 	return []JobStep{
 		{Name: "validate", Status: JobStatusPending},
 		{Name: "create_directory", Status: JobStatusPending},
-		{Name: "copy_templates", Status: JobStatusPending},
+		{Name: "generate_files", Status: JobStatusPending},
 		{Name: "copy_docs", Status: JobStatusPending},
 		{Name: "generate_claude_md", Status: JobStatusPending},
 		{Name: "init_git", Status: JobStatusPending},

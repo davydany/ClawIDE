@@ -52,14 +52,34 @@ func (g *Generator) Generate(ctx context.Context, job *Job) error {
 	}
 	job.CompleteStep("create_directory", projectDir)
 
-	// Step 3: Copy templates
-	job.StartStep("copy_templates")
-	if err := g.copyTemplates(req, projectDir); err != nil {
-		job.FailStep("copy_templates", err)
-		g.rollback(projectDir, job)
-		return err
+	// Step 3: Generate project files (LLM or templates)
+	job.StartStep("generate_files")
+
+	// Try LLM generation if enabled
+	usedLLM := false
+	if req.AIEnabled && req.AIAPIKey != "" && req.AIModel != "" {
+		if err := g.generateWithLLM(ctx, req, projectDir); err != nil {
+			log.Printf("LLM generation failed, falling back to templates: %v", err)
+			// Fall back to templates
+		} else {
+			usedLLM = true
+		}
 	}
-	job.CompleteStep("copy_templates", "template files written")
+
+	// Fall back to templates if LLM wasn't used
+	if !usedLLM {
+		if err := g.copyTemplates(req, projectDir); err != nil {
+			job.FailStep("generate_files", err)
+			g.rollback(projectDir, job)
+			return err
+		}
+	}
+
+	if usedLLM {
+		job.CompleteStep("generate_files", "files generated using AI")
+	} else {
+		job.CompleteStep("generate_files", "files generated from templates")
+	}
 
 	// Step 4: Copy supporting docs
 	job.StartStep("copy_docs")
@@ -133,6 +153,63 @@ func (g *Generator) copyTemplates(req WizardRequest, projectDir string) error {
 
 		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
 			return fmt.Errorf("writing %s: %w", outPath, err)
+		}
+	}
+
+	return nil
+}
+
+// generateWithLLM generates project structure and files using the LLM
+func (g *Generator) generateWithLLM(ctx context.Context, req WizardRequest, projectDir string) error {
+	// Create LLM client
+	client := NewLLMClient(req.AIProvider, req.AIAPIKey, req.AIModel, req.AIBaseURL)
+	generator := NewLLMGenerator(client)
+
+	// Prepare docs for LLM context
+	docs := map[string]string{
+		"prd":          req.DocPRD,
+		"uiux":         req.DocUIUX,
+		"architecture": req.DocArchitecture,
+		"other":        req.DocOther,
+	}
+
+	// Generate directory structure
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	plan, err := generator.GenerateStructure(ctx, req.ProjectName, req.Language, req.Framework, req.Description, docs)
+	if err != nil {
+		return fmt.Errorf("structure generation failed: %w", err)
+	}
+
+	// Create directories
+	for _, dir := range plan.Directories {
+		dirPath := filepath.Join(projectDir, dir)
+		if err := os.MkdirAll(dirPath, 0755); err != nil {
+			return fmt.Errorf("creating directory %s: %w", dir, err)
+		}
+	}
+
+	// Generate files
+	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
+	files, err := generator.GenerateFiles(ctx, req.ProjectName, req.Language, req.Framework, req.Description, plan, docs)
+	if err != nil {
+		return fmt.Errorf("file generation failed: %w", err)
+	}
+
+	// Write generated files
+	for filePath, content := range files {
+		fullPath := filepath.Join(projectDir, filePath)
+
+		// Create parent directory if needed
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
+			return fmt.Errorf("creating directory for %s: %w", filePath, err)
+		}
+
+		if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("writing %s: %w", filePath, err)
 		}
 	}
 
