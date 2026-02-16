@@ -1,6 +1,7 @@
 #!/bin/bash
 # ClawIDE Installation Script
 # Usage: curl -fsSL https://raw.githubusercontent.com/davydany/ClawIDE/refs/heads/master/scripts/install.sh | bash
+# Pin a version: VERSION=1.2.3 curl -fsSL ... | bash
 
 set -e
 
@@ -40,17 +41,28 @@ esac
 
 echo -e "${BLUE}Detected system: ${OS_TYPE} ${ARCH_TYPE}${NC}"
 
-# Fetch latest release info
-echo -e "${BLUE}Fetching latest version...${NC}"
-API_RESPONSE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
-VERSION=$(echo "$API_RESPONSE" | grep '"tag_name"' | sed -E 's/.*"v?([^"]+)".*/\1/' | head -1)
-
-if [ -z "$VERSION" ]; then
-  echo -e "${RED}Error: Could not fetch latest version from GitHub${NC}"
-  exit 1
+# Determine version
+if [ -n "$VERSION" ]; then
+  # Strip leading 'v' if present
+  VERSION="${VERSION#v}"
+  echo -e "${BLUE}Checking requested version v$VERSION...${NC}"
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://api.github.com/repos/$REPO/releases/tags/v$VERSION")
+  if [ "$HTTP_CODE" != "200" ]; then
+    echo -e "${RED}Error: Version v$VERSION not found${NC}"
+    echo -e "${RED}Check available versions at: https://github.com/$REPO/releases${NC}"
+    exit 1
+  fi
+  echo -e "${GREEN}Requested version: v$VERSION${NC}"
+else
+  echo -e "${BLUE}Fetching latest version...${NC}"
+  API_RESPONSE=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
+  VERSION=$(echo "$API_RESPONSE" | grep '"tag_name"' | sed -E 's/.*"v?([^"]+)".*/\1/' | head -1)
+  if [ -z "$VERSION" ]; then
+    echo -e "${RED}Error: Could not fetch latest version from GitHub${NC}"
+    exit 1
+  fi
+  echo -e "${GREEN}Latest version: v$VERSION${NC}"
 fi
-
-echo -e "${GREEN}Latest version: v$VERSION${NC}"
 
 # Build filename and download URL
 FILENAME="clawide-v${VERSION}-${OS_TYPE}-${ARCH_TYPE}.tar.gz"
