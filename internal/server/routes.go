@@ -119,6 +119,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Post("/api/commit", s.handlers.FeatureGitCommit)
 				r.Post("/api/merge", s.handlers.FeatureMerge)
 				r.Post("/api/pull-main", s.handlers.FeaturePullMain)
+
+				// Feature merge review
+				r.Get("/api/review/files", s.handlers.FeatureReviewFiles)
+				r.Get("/api/review/file-content", s.handlers.FeatureReviewFileContent)
+				r.Get("/api/review/annotations", s.handlers.FeatureReviewAnnotations)
 			})
 		})
 	})

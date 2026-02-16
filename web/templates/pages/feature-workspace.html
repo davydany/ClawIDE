@@ -11,6 +11,7 @@
 <script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
 <script src="/static/js/new-file.js"></script>
+<script src="/static/js/merge-review.js"></script>
 <script src="/static/js/scratchpad.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
@@ -375,11 +376,17 @@
                     </button>
                     <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
                          class="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                        <!-- Merge to Main -->
-                        <button @click="if(confirm('Merge {{.Feature.BranchName}} into the main branch?')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; mobileMenu=false"
+                        <!-- Review & Merge -->
+                        <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') }); mobileMenu=false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-green-400 hover:bg-gray-800 transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Merge to Main
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            Review & Merge
+                        </button>
+                        <!-- Quick Merge -->
+                        <button @click="if(confirm('Quick merge {{.Feature.BranchName}} into the main branch?')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; mobileMenu=false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-yellow-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Quick Merge
                         </button>
                         <!-- Delete Feature -->
                         <button @click="if(confirm('Delete feature {{.Feature.Name}}? This cannot be undone.')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{.Project.ID}}/'}) }; mobileMenu=false"
@@ -474,10 +481,15 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Pull Latest from Main
                         </button>
-                        <button @click="if(confirm('Merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
+                        <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{$.Project.ID}}', '{{.ID}}') }); featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Merge to Main
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                            Review & Merge
+                        </button>
+                        <button @click="if(confirm('Quick merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-yellow-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Quick Merge
                         </button>
                         <button @click="if(confirm('Delete feature {{.Name}}? This cannot be undone.')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{$.Project.ID}}/'}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:bg-gray-800 transition-colors">
@@ -536,6 +548,11 @@
                         :class="activeTab === 'commit' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Commit
+                </button>
+                <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') })"
+                        :class="activeTab === 'review' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    Review
                 </button>
                 <!-- Starred Bookmarks (far right) -->
                 <div id="starred-bookmarks-bar" class="ml-auto flex items-center gap-1">
@@ -883,6 +900,85 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Review panel -->
+                <div x-show="activeTab === 'review'" x-cloak class="h-full flex flex-col"
+                     x-data="{ bottomPanelOpen: false }">
+
+                    <!-- Review header -->
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800 flex-shrink-0">
+                        <h3 class="text-sm font-medium text-white">Merge Review</h3>
+                        <div id="review-stats" class="ml-2"></div>
+                        <div class="ml-auto flex items-center gap-2">
+                            <button id="review-ai-btn"
+                                    data-command="{{.AIReviewCommand}}"
+                                    onclick="ClawIDEMergeReview.startAIReview()"
+                                    class="px-3 py-1 text-xs text-purple-400 hover:text-purple-300 hover:bg-gray-800 rounded border border-purple-800 transition-colors">
+                                AI Review
+                            </button>
+                            <button onclick="ClawIDEMergeReview.doQuickMerge()"
+                                    class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded border border-gray-700 transition-colors">
+                                Quick Merge
+                            </button>
+                            <button onclick="ClawIDEMergeReview.doMerge()"
+                                    class="px-3 py-1 text-xs text-green-400 hover:text-green-300 hover:bg-green-900/30 rounded border border-green-800 transition-colors">
+                                Merge Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Review body -->
+                    <div class="flex-1 flex min-h-0">
+                        <!-- File list sidebar -->
+                        <div class="w-60 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
+                            <div class="p-2 border-b border-gray-800">
+                                <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Changed Files</h3>
+                            </div>
+                            <div id="review-file-list" class="py-1">
+                                <div class="text-gray-500 text-xs p-2">Loading...</div>
+                            </div>
+                        </div>
+
+                        <!-- Diff + bottom panel -->
+                        <div class="flex-1 flex flex-col min-w-0">
+                            <!-- Diff viewer -->
+                            <div id="review-diff-container" class="flex-1 overflow-auto min-h-0">
+                                <div class="flex items-center justify-center h-full text-gray-500">
+                                    <div class="text-center">
+                                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                        </svg>
+                                        <p class="text-sm">Select a file to view changes</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom panel (AI terminal + annotations) -->
+                            <div id="review-bottom-panel" class="hidden border-t border-gray-800 flex-shrink-0" style="height: 200px;">
+                                <div class="flex h-full">
+                                    <!-- AI terminal output -->
+                                    <div class="flex-1 border-r border-gray-800 overflow-y-auto bg-gray-950">
+                                        <div class="p-2 border-b border-gray-800">
+                                            <h4 class="text-[10px] font-semibold text-gray-500 uppercase">AI Review Output</h4>
+                                        </div>
+                                        <div id="review-ai-terminal" class="p-2 font-mono text-xs text-gray-400">
+                                            <span class="text-gray-500">Click "AI Review" to start</span>
+                                        </div>
+                                    </div>
+                                    <!-- Annotations -->
+                                    <div class="w-80 overflow-y-auto bg-gray-900/50">
+                                        <div class="p-2 border-b border-gray-800">
+                                            <h4 class="text-[10px] font-semibold text-gray-500 uppercase">Annotations</h4>
+                                        </div>
+                                        <div id="review-annotations-list" class="p-1">
+                                            <div class="text-gray-500 text-xs p-2">No annotations yet</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -911,6 +1007,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <span class="text-[10px]">Commit</span>
+            </button>
+            <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') })"
+                    :class="activeTab === 'review' ? 'text-indigo-400' : 'text-gray-500'"
+                    class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <span class="text-[10px]">Review</span>
             </button>
         </div>
     </div>
