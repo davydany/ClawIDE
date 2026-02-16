@@ -106,8 +106,49 @@ function getLanguageExtension(filename) {
     return Promise.resolve([]);
 }
 
+// --- Word Wrap State ---
+var WRAP_STORAGE_KEY = 'editor.preferences.wordWrap';
+
+function loadWordWrapPreference() {
+    try {
+        var stored = localStorage.getItem(WRAP_STORAGE_KEY);
+        if (stored === null) return true; // default: enabled
+        return stored === 'true';
+    } catch (e) {
+        return true;
+    }
+}
+
+function saveWordWrapPreference(enabled) {
+    try {
+        localStorage.setItem(WRAP_STORAGE_KEY, String(enabled));
+    } catch (e) {
+        // localStorage unavailable
+    }
+}
+
+function toggleWordWrap(view) {
+    if (!view || !view._clawIDEWrapCompartment) return false;
+    var newState = !getWordWrapState(view);
+    view.dispatch({
+        effects: view._clawIDEWrapCompartment.reconfigure(
+            newState ? EditorView.lineWrapping : []
+        ),
+    });
+    view._clawIDEWordWrap = newState;
+    saveWordWrapPreference(newState);
+    return newState;
+}
+
+function getWordWrapState(view) {
+    if (!view || !view._clawIDEWrapCompartment) return false;
+    return !!view._clawIDEWordWrap;
+}
+
 function createEditor(container, content, filename, onDocChange, onSave) {
     var langCompartment = new Compartment();
+    var wrapCompartment = new Compartment();
+    var wordWrapEnabled = loadWordWrapPreference();
 
     var saveKeymap = onSave ? keymap.of([{
         key: 'Mod-s',
@@ -128,6 +169,7 @@ function createEditor(container, content, filename, onDocChange, onSave) {
         oneDark,
         search(),
         langCompartment.of([]),
+        wrapCompartment.of(wordWrapEnabled ? EditorView.lineWrapping : []),
         saveKeymap,
         updateListener,
         EditorView.theme({
@@ -147,8 +189,10 @@ function createEditor(container, content, filename, onDocChange, onSave) {
         parent: container,
     });
 
-    // Store compartment ref for language reconfiguration
+    // Store compartment refs for runtime reconfiguration
     view._clawIDELangCompartment = langCompartment;
+    view._clawIDEWrapCompartment = wrapCompartment;
+    view._clawIDEWordWrap = wordWrapEnabled;
 
     // Load language asynchronously
     getLanguageExtension(filename).then(function(langExt) {
@@ -199,4 +243,6 @@ window.ClawIDECodeMirror = {
     getContent: getContent,
     setContent: setContent,
     destroyEditor: destroyEditor,
+    toggleWordWrap: toggleWordWrap,
+    getWordWrapState: getWordWrapState,
 };

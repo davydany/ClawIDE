@@ -178,6 +178,10 @@ func (c *Config) VoiceBoxFilePath() string {
 	return filepath.Join(c.DataDir, "voicebox.json")
 }
 
+func (c *Config) ScratchpadFilePath() string {
+	return filepath.Join(c.DataDir, "scratchpad.json")
+}
+
 func (c *Config) HooksDir() string {
 	return filepath.Join(c.DataDir, "hooks")
 }

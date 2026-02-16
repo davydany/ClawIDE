@@ -84,6 +84,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
 			r.Put("/api/file", s.handlers.WriteFile)
+			r.Post("/api/mkdir", s.handlers.Mkdir)
 
 			// Docker API
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
@@ -118,6 +119,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Get("/api/files", s.handlers.FeatureListFiles)
 				r.Get("/api/file", s.handlers.FeatureReadFile)
 				r.Put("/api/file", s.handlers.FeatureWriteFile)
+				r.Post("/api/mkdir", s.handlers.FeatureMkdir)
 
 				// Feature git operations
 				r.Get("/api/status", s.handlers.FeatureGitStatus)
@@ -127,6 +129,10 @@ func (s *Server) setupRoutes() *chi.Mux {
 			})
 		})
 	})
+
+	// Scratchpad API (global)
+	r.Get("/api/scratchpad", s.handlers.GetScratchpad)
+	r.Put("/api/scratchpad", s.handlers.UpdateScratchpad)
 
 	// Snippets API (global, not project-scoped)
 	r.Route("/api/snippets", func(r chi.Router) {

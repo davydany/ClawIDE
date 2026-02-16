@@ -20,13 +20,14 @@ type Handlers struct {
 	noteStore         *store.NoteStore
 	bookmarkStore     *store.BookmarkStore
 	voiceBoxStore     *store.VoiceBoxStore
+	scratchpadStore   *store.ScratchpadStore
 	sseHub            *sse.Hub
 	updater           *updater.Updater
 	wizardJobs        *wizard.JobTracker
 	wizardGenerator   *wizard.Generator
 }
 
-func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, hub *sse.Hub, upd *updater.Updater, wizJobs *wizard.JobTracker, wizGen *wizard.Generator) *Handlers {
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, scratchpadSt *store.ScratchpadStore, hub *sse.Hub, upd *updater.Updater, wizJobs *wizard.JobTracker, wizGen *wizard.Generator) *Handlers {
 	return &Handlers{
 		cfg:               cfg,
 		store:             st,
@@ -37,6 +38,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		noteStore:         noteSt,
 		bookmarkStore:     bookmarkSt,
 		voiceBoxStore:     voiceBoxSt,
+		scratchpadStore:   scratchpadSt,
 		sseHub:            hub,
 		updater:           upd,
 		wizardJobs:        wizJobs,

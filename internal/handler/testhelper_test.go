@@ -77,11 +77,17 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	bookmarkSt, err := store.NewBookmarkStore(filepath.Join(storeDir, "bookmarks.json"))
 	require.NoError(t, err)
 
+	voiceBoxSt, err := store.NewVoiceBoxStore(filepath.Join(storeDir, "voicebox.json"), 50)
+	require.NoError(t, err)
+
+	scratchpadSt, err := store.NewScratchpadStore(filepath.Join(storeDir, "scratchpad.json"))
+	require.NoError(t, err)
+
 	wizJobs := wizard.NewJobTracker()
 	wizReg, err := wizard.NewTemplateRegistry(wizard.TemplatesFS)
 	require.NoError(t, err)
 	wizGen := wizard.NewGenerator(wizReg, wizJobs)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, nil, sse.NewHub(), nil, wizJobs, wizGen)
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, voiceBoxSt, scratchpadSt, sse.NewHub(), nil, wizJobs, wizGen)
 	return h, st
 }

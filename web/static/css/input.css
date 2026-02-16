@@ -357,6 +357,44 @@
     pointer-events: none;
 }
 
+/* Sidebar collapse transition */
+#app-sidebar {
+    transition: width 300ms ease-in-out;
+}
+
+#app-sidebar.collapsed .sidebar-collapse-hide {
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+}
+
+#app-sidebar.collapsed nav,
+#app-sidebar.collapsed .sidebar-stats,
+#app-sidebar.collapsed .sidebar-collapse-hide {
+    display: none;
+}
+
+#app-sidebar.collapsed .sidebar-header-content {
+    display: none;
+}
+
+#app-sidebar.collapsed .sidebar-collapse-toggle {
+    margin: 0 auto;
+}
+
+/* File tree sidebar collapse */
+.file-tree-sidebar {
+    transition: width 200ms ease-in-out;
+}
+
+.file-tree-sidebar-expanded {
+    width: 16rem; /* w-64 */
+}
+
+.file-tree-sidebar-collapsed {
+    width: 40px;
+}
+
 /* Sidebar resize handle */
 .sidebar-resize-handle {
     width: 4px;
@@ -510,4 +548,83 @@ dialog::backdrop {
 .toast.active {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* File tree context menu */
+.file-tree-context-menu {
+    position: fixed;
+    z-index: 9999;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 4px 0;
+    min-width: 140px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.file-tree-context-menu-item {
+    @apply px-3 py-1.5 text-xs text-gray-300 cursor-pointer transition-colors;
+}
+
+.file-tree-context-menu-item:hover {
+    @apply bg-gray-700 text-white;
+}
+
+/* New file modal */
+.new-file-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20vh;
+}
+
+.new-file-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.new-file-card {
+    position: relative;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 10px;
+    padding: 16px;
+    width: 400px;
+    max-width: 90vw;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.new-file-input {
+    @apply w-full px-3 py-2 text-sm text-white bg-gray-800 border border-gray-600 rounded font-mono;
+    outline: none;
+}
+
+.new-file-input:focus {
+    @apply border-indigo-500 ring-1 ring-indigo-500;
+}
+
+.new-file-autocomplete {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 0 0 6px 6px;
+    max-height: 160px;
+    overflow-y: auto;
+    margin-top: -1px;
+}
+
+.new-file-suggestion {
+    @apply px-3 py-1.5 text-xs text-gray-300 cursor-pointer font-mono transition-colors;
+}
+
+.new-file-suggestion:hover,
+.new-file-suggestion.selected {
+    @apply bg-gray-700 text-white;
+}
+
+.new-file-error {
+    @apply text-xs text-red-400 mt-2;
 }
