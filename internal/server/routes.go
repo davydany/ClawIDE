@@ -41,6 +41,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Get("/settings", s.handlers.SettingsPage)
 	r.Put("/api/settings", s.handlers.UpdateSettings)
 
+	// AI Settings
+	r.Get("/api/settings/ai", s.handlers.GetAISettings)
+	r.Put("/api/settings/ai", s.handlers.SetAISettings)
+	r.Post("/api/settings/ai/verify", s.handlers.VerifyAICredentials)
+
 	// Onboarding
 	r.Post("/api/onboarding/complete", s.handlers.CompleteOnboarding)
 	r.Post("/api/onboarding/workspace-tour-complete", s.handlers.CompleteWorkspaceTour)
