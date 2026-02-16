@@ -211,7 +211,8 @@
 
         var content = window.ClawIDECodeMirror.getContent(tab.editorView);
 
-        fetch('/projects/' + (pid || projectID) + '/api/file?path=' + encodeURIComponent(tab.filePath), {
+        var saveURL = tab.saveURL || ('/projects/' + (pid || projectID) + '/api/file?path=' + encodeURIComponent(tab.filePath));
+        fetch(saveURL, {
             method: 'PUT',
             headers: { 'Content-Type': 'text/plain' },
             body: content,
@@ -866,9 +867,72 @@
         }
     });
 
+    // --- Load file using explicit URLs (for feature workspaces) ---
+    function loadFileFromURL(fetchURL, filePath, saveBaseURL) {
+        if (!rootContainer) {
+            rootContainer = document.getElementById('editor-pane-root');
+            if (rootContainer && rootContainer.dataset.projectId) {
+                projectID = rootContainer.dataset.projectId;
+            }
+        }
+
+        highlightFileInTree(filePath);
+
+        var targetPaneId = getFocusedPaneId();
+
+        if (!targetPaneId) {
+            targetPaneId = nextPaneId();
+            editorPanes[targetPaneId] = {
+                tabs: [],
+                activeTabId: null,
+                container: null,
+                tabBarEl: null,
+                editorContainer: null,
+            };
+            editorLayout = makeLeaf(targetPaneId);
+            renderRoot();
+        }
+
+        var existingTab = findTabByPath(targetPaneId, filePath);
+        if (existingTab) {
+            switchToTab(targetPaneId, existingTab.id);
+            setFocusedPane(targetPaneId);
+            return;
+        }
+
+        fetch(fetchURL)
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('Failed to load file (HTTP ' + resp.status + ')');
+                return resp.text();
+            })
+            .then(function(content) {
+                var activeTab = getActiveTab(targetPaneId);
+
+                if (activeTab && !activeTab.modified && activeTab.filePath) {
+                    reuseTab(targetPaneId, activeTab, filePath, content);
+                } else if (activeTab && !activeTab.filePath) {
+                    reuseTab(targetPaneId, activeTab, filePath, content);
+                } else {
+                    openNewTab(targetPaneId, filePath, content);
+                }
+
+                // Store saveBaseURL on the tab so saveTab can use the correct URL
+                var tab = getActiveTab(targetPaneId);
+                if (tab && saveBaseURL) {
+                    tab.saveURL = saveBaseURL;
+                }
+            })
+            .catch(function(err) {
+                console.error('Failed to load file:', err);
+            });
+
+        setFocusedPane(targetPaneId);
+    }
+
     // --- Expose to global scope ---
     window.ClawIDEEditor = {
         loadFile: loadFile,
+        loadFileFromURL: loadFileFromURL,
         saveFile: function(pid) {
             var pid2 = getFocusedPaneId();
             if (pid2) saveActiveTab(pid, pid2);

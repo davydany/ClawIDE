@@ -481,5 +481,13 @@
         selectAll: selectAll,
         selectLine: selectLine,
         selectWord: selectWord,
+
+        // File Operations
+        newFile: function() {
+            if (window.ClawIDENewFile) window.ClawIDENewFile.openModal('');
+        },
+        newFolder: function() {
+            if (window.ClawIDENewFile) window.ClawIDENewFile.openFolderModal('');
+        },
     };
 })();

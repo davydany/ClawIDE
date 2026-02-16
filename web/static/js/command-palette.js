@@ -53,6 +53,10 @@
         // Navigation
         { id: 'goToLine', name: 'Go to Line...', category: 'Navigation', icon: makeIcon('navigate'), shortcut: 'Ctrl+G', handler: 'goToLine' },
 
+        // File Operations
+        { id: 'newFile', name: 'New File', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'newFile' },
+        { id: 'newFolder', name: 'New Folder', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'newFolder' },
+
         // File Info
         { id: 'copyFilePath', name: 'Copy File Path', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'copyFilePath' },
         { id: 'copyRelativePath', name: 'Copy Relative Path', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'copyRelativePath' },

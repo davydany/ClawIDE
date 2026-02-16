@@ -10,6 +10,7 @@
 <script src="/static/js/pane-layout.js"></script>
 <script src="/static/dist/codemirror-bundle.js"></script>
 <script src="/static/js/editor.js"></script>
+<script src="/static/js/new-file.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
 {{end}}
@@ -621,8 +622,11 @@
 
                     <!-- File tree sidebar -->
                     <div class="w-64 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
-                        <div class="p-2 border-b border-gray-800">
+                        <div class="p-2 border-b border-gray-800 flex items-center justify-between">
                             <h3 class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
+                            <button id="feature-new-file-btn" class="p-0.5 rounded text-gray-500 hover:text-white hover:bg-gray-700 transition-colors" title="New File">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            </button>
                         </div>
                         <div id="feature-file-tree" class="p-1">
                             <div class="text-gray-500 text-xs p-2">Loading...</div>
@@ -675,6 +679,56 @@
                                 }
                             };
                             loadDir('', document.getElementById('feature-file-tree'), 0);
+
+                            // Expose directory refresh for new-file module
+                            window._clawIDERefreshDir = function(dirPath) {
+                                if (!dirPath) {
+                                    loadDir('', document.getElementById('feature-file-tree'), 0);
+                                    return;
+                                }
+                                var childrenEl = document.querySelector('[data-children="' + dirPath + '"]');
+                                if (childrenEl) {
+                                    var depth = dirPath.split('/').length;
+                                    childrenEl.classList.remove('hidden');
+                                    childrenEl.dataset.loaded = 'true';
+                                    loadDir(dirPath, childrenEl, depth);
+                                    var dirItem = childrenEl.previousElementSibling;
+                                    if (dirItem) {
+                                        var arrow = dirItem.querySelector('span');
+                                        if (arrow) arrow.innerHTML = '&#9660;';
+                                    }
+                                } else {
+                                    var parentDir = dirPath.substring(0, dirPath.lastIndexOf('/'));
+                                    window._clawIDERefreshDir(parentDir);
+                                }
+                            };
+
+                            // Initialize new-file module
+                            if (typeof ClawIDENewFile !== 'undefined') {
+                                ClawIDENewFile.init({
+                                    projectID: projectID,
+                                    featureID: featureID,
+                                    filesAPI: baseURL + '/api/files',
+                                    fileAPI: baseURL + '/api/file',
+                                    mkdirAPI: baseURL + '/api/mkdir',
+                                    fileTreeId: 'feature-file-tree',
+                                    onFileCreated: function(path) {
+                                        window.featureLoadFile(path);
+                                    },
+                                    refreshDir: function(dirPath) {
+                                        window._clawIDERefreshDir(dirPath);
+                                    }
+                                });
+                            }
+
+                            // Wire up the "+" button
+                            var newFileBtn = document.getElementById('feature-new-file-btn');
+                            if (newFileBtn) {
+                                newFileBtn.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    ClawIDENewFile.openModal('');
+                                });
+                            }
                         })();
                         </script>
                     </div>
