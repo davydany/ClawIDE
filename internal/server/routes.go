@@ -77,6 +77,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
 			r.Put("/api/file", s.handlers.WriteFile)
+			r.Post("/api/mkdir", s.handlers.Mkdir)
 
 			// Docker API
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
@@ -111,6 +112,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Get("/api/files", s.handlers.FeatureListFiles)
 				r.Get("/api/file", s.handlers.FeatureReadFile)
 				r.Put("/api/file", s.handlers.FeatureWriteFile)
+				r.Post("/api/mkdir", s.handlers.FeatureMkdir)
 
 				// Feature git operations
 				r.Get("/api/status", s.handlers.FeatureGitStatus)
