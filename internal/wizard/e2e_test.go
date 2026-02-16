@@ -561,7 +561,7 @@ func TestE2E_JobStepProgression(t *testing.T) {
 	expectedSteps := []string{
 		"validate",
 		"create_directory",
-		"copy_templates",
+		"generate_files",
 		"copy_docs",
 		"generate_claude_md",
 		"init_git",
