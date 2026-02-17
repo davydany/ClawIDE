@@ -159,11 +159,16 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	// Collect starred and non-starred projects for quick-switch panel
 	starredProjects, nonStarredProjects := splitAndSortProjects(h.store.GetProjects())
 
-	// Build starred bookmark views for tab bar
-	starredBookmarks := h.bookmarkStore.GetStarredByProject(project.ID)
-	var starredBookmarkViews []StarredBookmarkView
-	for _, bm := range starredBookmarks {
-		starredBookmarkViews = append(starredBookmarkViews, StarredBookmarkView{
+	// Build bar bookmark views for tab bar (project-scoped or global fallback)
+	var barBookmarks []model.Bookmark
+	if ps, err := h.getProjectBookmarkStore(project.ID); err == nil {
+		barBookmarks = ps.GetRootBookmarks()
+	} else {
+		barBookmarks = h.bookmarkStore.GetRootByProject(project.ID)
+	}
+	var barBookmarkViews []BookmarkBarView
+	for _, bm := range barBookmarks {
+		barBookmarkViews = append(barBookmarkViews, BookmarkBarView{
 			ID:         bm.ID,
 			Name:       bm.Name,
 			URL:        bm.URL,
@@ -182,7 +187,7 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"CurrentBranch":      currentBranch,
 		"StarredProjects":    starredProjects,
 		"NonStarredProjects": nonStarredProjects,
-		"StarredBookmarks":   starredBookmarkViews,
+		"BarBookmarks":       barBookmarkViews,
 		"StartTour":          !h.cfg.WorkspaceTourCompleted,
 		"ActiveFeatureID":    "",
 		"SidebarPosition":    h.cfg.SidebarPosition,
