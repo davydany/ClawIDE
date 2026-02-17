@@ -119,13 +119,8 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	sessions := h.store.GetFeatureSessions(featureID)
 
-	// Collect starred projects for quick-switch panel
-	var starredProjects []model.Project
-	for _, p := range h.store.GetProjects() {
-		if p.Starred {
-			starredProjects = append(starredProjects, p)
-		}
-	}
+	// Collect starred and non-starred projects for quick-switch panel
+	starredProjects, nonStarredProjects := splitAndSortProjects(h.store.GetProjects())
 
 	features := h.store.GetFeatures(project.ID)
 
@@ -149,7 +144,8 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 		"Features":          features,
 		"Sessions":          sessions,
 		"ActiveTab":         "terminal",
-		"StarredProjects":   starredProjects,
+		"StarredProjects":    starredProjects,
+		"NonStarredProjects": nonStarredProjects,
 		"StarredBookmarks":  starredBookmarkViews,
 		"ActiveFeatureID":   featureID,
 		"IsGitRepo":         true,

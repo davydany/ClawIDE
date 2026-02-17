@@ -50,6 +50,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Route("/projects", func(r chi.Router) {
 		r.Get("/", s.handlers.ListProjects)
 		r.Post("/", s.handlers.CreateProject)
+		r.Post("/reorder", s.handlers.ReorderProjects)
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
