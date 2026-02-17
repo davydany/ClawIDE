@@ -37,7 +37,7 @@ func DefaultConfig() *Config {
 		Host:           "0.0.0.0",
 		Port:           9800,
 		ProjectsDir:    filepath.Join(home, "projects"),
-		MaxSessions:    10,
+		MaxSessions:    20,
 		ScrollbackSize: 65536,
 		AgentCommand:   "claude",
 		LogLevel:         "info",
