@@ -63,9 +63,53 @@
                                 <label class="block text-sm text-gray-400 mb-1">Projects Directory</label>
                                 <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.ProjectsDir}}</p>
                             </div>
-                            <div>
-                                <label class="block text-sm text-gray-400 mb-1">Max Sessions</label>
-                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.MaxSessions}}</p>
+                            <div x-data="{
+                                maxSessions: {{.Config.MaxSessions}},
+                                saving: false,
+                                saved: false,
+                                error: '',
+                                save() {
+                                    var self = this;
+                                    var val = parseInt(this.maxSessions);
+                                    if (isNaN(val) || val < 10 || val > 100) {
+                                        self.error = 'Max sessions must be a number between 10 and 100';
+                                        return;
+                                    }
+                                    self.saving = true;
+                                    self.error = '';
+                                    self.saved = false;
+                                    fetch('/api/settings', {
+                                        method: 'PUT',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({max_sessions: val})
+                                    }).then(function(r) {
+                                        if (r.ok) {
+                                            self.saved = true;
+                                            setTimeout(function(){ self.saved = false; }, 2000);
+                                        } else {
+                                            return r.text().then(function(text) { self.error = text; });
+                                        }
+                                    }).catch(function(e) {
+                                        self.error = 'Failed to save settings';
+                                    }).finally(function() { self.saving = false; });
+                                }
+                            }">
+                                <label class="block text-sm text-gray-400 mb-2">Max Sessions</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" x-model="maxSessions" min="10" max="100"
+                                           class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+                                           @change="save()">
+                                    <button @click="save()" :disabled="saving"
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                        <span x-show="!saving && !saved">Save</span>
+                                        <span x-show="saving">Saving...</span>
+                                        <span x-show="saved" class="text-green-300">✓ Saved</span>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Minimum: 10, Maximum: 100</p>
+                                <template x-if="error">
+                                    <p class="text-xs text-red-400 mt-1" x-text="error"></p>
+                                </template>
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-1">Listen Address</label>
