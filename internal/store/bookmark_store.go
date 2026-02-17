@@ -155,11 +155,13 @@ func (s *BookmarkStore) save() error {
 	return os.WriteFile(s.filePath, data, 0644)
 }
 
-// sortBookmarks sorts starred first, then alphabetical by name.
+// sortBookmarks sorts starred/in-bar first, then alphabetical by name.
 func sortBookmarks(bookmarks []model.Bookmark) {
 	sort.Slice(bookmarks, func(i, j int) bool {
-		if bookmarks[i].Starred != bookmarks[j].Starred {
-			return bookmarks[i].Starred
+		iBar := bookmarks[i].Starred || bookmarks[i].InBar
+		jBar := bookmarks[j].Starred || bookmarks[j].InBar
+		if iBar != jBar {
+			return iBar
 		}
 		return strings.ToLower(bookmarks[i].Name) < strings.ToLower(bookmarks[j].Name)
 	})

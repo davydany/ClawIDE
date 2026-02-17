@@ -9,6 +9,7 @@
     var editingID = null;
     var scope = 'project'; // 'project' or 'global'
     var projectID = '';
+    var gitStatusLoaded = false;
 
     // DOM references
     var container, list, searchInput, form, titleInput, contentInput;
@@ -61,8 +62,50 @@
             previewToggle.addEventListener('click', togglePreview);
         }
 
+        // Listen for git status updates
+        document.addEventListener('clawide-git-status-update', function(e) {
+            if (e.detail && e.detail.type === 'notes') {
+                renderGitUI();
+                renderList(); // re-render with badges
+            }
+        });
+
         // Initial load
         loadNotes();
+        loadGitStatus();
+    }
+
+    function loadGitStatus() {
+        if (!projectID || !window.ClawIDEGit) return;
+        window.ClawIDEGit.fetchStatus('notes', projectID).then(function() {
+            gitStatusLoaded = true;
+            renderGitUI();
+            renderList(); // re-render with badges
+        });
+    }
+
+    function renderGitUI() {
+        if (!window.ClawIDEGit) return;
+
+        // Render warning banner
+        var bannerEl = document.getElementById('notes-git-banner');
+        if (bannerEl) {
+            bannerEl.innerHTML = window.ClawIDEGit.renderWarningBanner('notes');
+        }
+
+        // Render git toolbar (refresh + commit button)
+        var toolbarEl = document.getElementById('notes-git-toolbar');
+        if (toolbarEl) {
+            var status = window.ClawIDEGit.getCachedStatus('notes');
+            if (status && status.is_git_repo && !status.is_ignored) {
+                toolbarEl.innerHTML = window.ClawIDEGit.renderRefreshButton('notes') +
+                    window.ClawIDEGit.renderCommitButton('notes');
+                toolbarEl.style.display = '';
+            } else {
+                toolbarEl.innerHTML = '';
+                toolbarEl.style.display = 'none';
+            }
+        }
     }
 
     function setScope(newScope) {
@@ -126,6 +169,14 @@
             html += '  <div class="flex items-center justify-between gap-2">';
             html += '    <span class="text-xs text-white font-medium truncate">' + escapeHTML(note.title) + '</span>';
             html += '    <div class="flex items-center gap-1 flex-shrink-0">';
+            // Git status badge
+            if (gitStatusLoaded && window.ClawIDEGit) {
+                var notePath = '.clawide/notes/' + note.id + '.md';
+                var gitSt = window.ClawIDEGit.getFileStatus('notes', notePath);
+                if (gitSt) {
+                    html += '      ' + window.ClawIDEGit.renderBadge(gitSt);
+                }
+            }
             html += '      <button class="p-0.5 rounded text-gray-500 hover:text-white transition-colors" title="Edit" data-note-edit="' + note.id + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
             html += '      </button>';
@@ -293,6 +344,7 @@
     // Expose for external use
     window.ClawIDENotes = {
         setScope: setScope,
-        reload: loadNotes
+        reload: loadNotes,
+        refreshGitStatus: loadGitStatus
     };
 })();
