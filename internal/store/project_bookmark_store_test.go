@@ -27,7 +27,6 @@ func TestProjectBookmarkStore_CRUD(t *testing.T) {
 		ProjectID: "proj-1",
 		Name:      "Google",
 		URL:       "https://google.com",
-		InBar:     true,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -39,18 +38,15 @@ func TestProjectBookmarkStore_CRUD(t *testing.T) {
 	got, ok := s.Get("bm-1")
 	require.True(t, ok)
 	assert.Equal(t, "Google", got.Name)
-	assert.True(t, got.InBar)
 
 	// GetAll
 	all := s.GetAll()
 	assert.Len(t, all, 1)
 
-	// GetInBar
-	bar := s.GetInBar()
-	assert.Len(t, bar, 1)
-
-	// CountInBar
-	assert.Equal(t, 1, s.CountInBar())
+	// GetRootBookmarks (root bookmark with FolderID == "")
+	root := s.GetRootBookmarks()
+	assert.Len(t, root, 1)
+	assert.Equal(t, "bm-1", root[0].ID)
 
 	// Update
 	bm.Name = "Google Search"
@@ -62,6 +58,29 @@ func TestProjectBookmarkStore_CRUD(t *testing.T) {
 	require.NoError(t, s.Delete("bm-1"))
 	_, ok = s.Get("bm-1")
 	assert.False(t, ok)
+}
+
+func TestProjectBookmarkStore_GetRootBookmarks(t *testing.T) {
+	s := newTestProjectBookmarkStore(t)
+	now := time.Now()
+
+	// Create a folder and add bookmarks at root and in folder
+	require.NoError(t, s.CreateFolder(model.Folder{ID: "f1", Name: "Work", CreatedAt: now, UpdatedAt: now}))
+	require.NoError(t, s.Add(model.Bookmark{ID: "b1", Name: "Root BM", URL: "https://root.com", Order: 1, CreatedAt: now, UpdatedAt: now}))
+	require.NoError(t, s.Add(model.Bookmark{ID: "b2", Name: "Folder BM", URL: "https://folder.com", FolderID: "f1", Order: 0, CreatedAt: now, UpdatedAt: now}))
+	require.NoError(t, s.Add(model.Bookmark{ID: "b3", Name: "Another Root", URL: "https://another.com", Order: 0, CreatedAt: now, UpdatedAt: now}))
+
+	root := s.GetRootBookmarks()
+	assert.Len(t, root, 2, "only root bookmarks should be returned")
+
+	// Should be sorted by order (b3 order=0 first, b1 order=1 second)
+	assert.Equal(t, "b3", root[0].ID)
+	assert.Equal(t, "b1", root[1].ID)
+
+	// Folder bookmark should not appear
+	for _, bm := range root {
+		assert.Empty(t, bm.FolderID, "root bookmarks should have empty FolderID")
+	}
 }
 
 func TestProjectBookmarkStore_FolderCRUD(t *testing.T) {
@@ -182,7 +201,7 @@ func TestProjectBookmarkStore_Reorder(t *testing.T) {
 	require.NoError(t, s.Reorder([]string{"b3", "b1", "b2"}))
 
 	all := s.GetAll()
-	// After reorder: b3=0, b1=1, b2=2 — but sorted by InBar then Order
+	// After reorder: b3=0, b1=1, b2=2 — sorted by Order
 	assert.Equal(t, "b3", all[0].ID)
 	assert.Equal(t, "b1", all[1].ID)
 	assert.Equal(t, "b2", all[2].ID)
@@ -200,7 +219,6 @@ func TestProjectBookmarkStore_Persistence(t *testing.T) {
 		ProjectID: "p1",
 		Name:      "Persisted",
 		URL:       "https://persisted.com",
-		InBar:     true,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}))
@@ -218,7 +236,6 @@ func TestProjectBookmarkStore_Persistence(t *testing.T) {
 	got, ok := s2.Get("b1")
 	require.True(t, ok)
 	assert.Equal(t, "Persisted", got.Name)
-	assert.True(t, got.InBar)
 
 	folders := s2.GetFolders()
 	assert.Len(t, folders, 1)

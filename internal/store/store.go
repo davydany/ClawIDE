@@ -87,6 +87,21 @@ func (s *Store) ToggleProjectStar(id string) (bool, error) {
 	return false, fmt.Errorf("project %s not found", id)
 }
 
+func (s *Store) ReorderProjects(ids []string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	idToOrder := make(map[string]int, len(ids))
+	for i, id := range ids {
+		idToOrder[id] = i
+	}
+	for i, p := range s.state.Projects {
+		if order, ok := idToOrder[p.ID]; ok {
+			s.state.Projects[i].SortOrder = order
+		}
+	}
+	return s.save()
+}
+
 func (s *Store) DeleteProject(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -285,6 +300,22 @@ func (s *Store) load() error {
 			changed = true
 		}
 	}
+
+	// Migration: backfill SortOrder for projects that have none (all zero)
+	allZero := true
+	for _, p := range s.state.Projects {
+		if p.SortOrder != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero && len(s.state.Projects) > 0 {
+		for i := range s.state.Projects {
+			s.state.Projects[i].SortOrder = i
+		}
+		changed = true
+	}
+
 	if changed {
 		return s.save()
 	}

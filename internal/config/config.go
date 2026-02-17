@@ -26,6 +26,7 @@ type Config struct {
 	SidebarPosition        string `json:"sidebar_position"`
 	SidebarWidth           int    `json:"sidebar_width"`
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
+	AIReviewCommand        string `json:"ai_review_command"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -36,7 +37,7 @@ func DefaultConfig() *Config {
 		Host:           "0.0.0.0",
 		Port:           9800,
 		ProjectsDir:    filepath.Join(home, "projects"),
-		MaxSessions:    10,
+		MaxSessions:    20,
 		ScrollbackSize: 65536,
 		AgentCommand:   "claude",
 		LogLevel:         "info",
@@ -176,6 +177,10 @@ func (c *Config) BookmarksFilePath() string {
 
 func (c *Config) VoiceBoxFilePath() string {
 	return filepath.Join(c.DataDir, "voicebox.json")
+}
+
+func (c *Config) ScratchpadFilePath() string {
+	return filepath.Join(c.DataDir, "scratchpad.json")
 }
 
 func (c *Config) HooksDir() string {
