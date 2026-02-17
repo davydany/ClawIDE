@@ -9,7 +9,7 @@ type Bookmark struct {
 	Name      string    `json:"name"`
 	URL       string    `json:"url"`
 	Emoji     string    `json:"emoji,omitempty"`
-	InBar     bool      `json:"in_bar"`
+	InBar     bool      `json:"in_bar,omitempty"`
 	Order     int       `json:"order"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

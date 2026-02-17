@@ -66,31 +66,18 @@ func (s *ProjectBookmarkStore) GetByFolder(folderID string) []model.Bookmark {
 	return out
 }
 
-func (s *ProjectBookmarkStore) GetInBar() []model.Bookmark {
+// GetRootBookmarks returns bookmarks at root level (FolderID == ""), sorted by Order.
+func (s *ProjectBookmarkStore) GetRootBookmarks() []model.Bookmark {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var out []model.Bookmark
 	for _, b := range s.data.Bookmarks {
-		if b.InBar {
+		if b.FolderID == "" {
 			out = append(out, b)
 		}
 	}
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].Order < out[j].Order
-	})
+	sortProjectBookmarks(out)
 	return out
-}
-
-func (s *ProjectBookmarkStore) CountInBar() int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	count := 0
-	for _, b := range s.data.Bookmarks {
-		if b.InBar {
-			count++
-		}
-	}
-	return count
 }
 
 func (s *ProjectBookmarkStore) Search(query string) []model.Bookmark {
@@ -269,12 +256,9 @@ func (s *ProjectBookmarkStore) save() error {
 	return os.WriteFile(s.filePath(), data, 0644)
 }
 
-// sortProjectBookmarks sorts by InBar first (bar items on top), then by order, then alphabetical.
+// sortProjectBookmarks sorts by order, then alphabetical by name.
 func sortProjectBookmarks(bookmarks []model.Bookmark) {
 	sort.Slice(bookmarks, func(i, j int) bool {
-		if bookmarks[i].InBar != bookmarks[j].InBar {
-			return bookmarks[i].InBar
-		}
 		if bookmarks[i].Order != bookmarks[j].Order {
 			return bookmarks[i].Order < bookmarks[j].Order
 		}

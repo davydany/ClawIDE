@@ -12,10 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-const maxInBarPerProject = 5
-
-// StarredBookmarkView is the template-friendly representation of a bar bookmark.
-type StarredBookmarkView struct {
+// BookmarkBarView is the template-friendly representation of a bar bookmark.
+type BookmarkBarView struct {
 	ID         string
 	Name       string
 	URL        string
@@ -74,8 +72,6 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 		Name      string `json:"name"`
 		URL       string `json:"url"`
 		Emoji     string `json:"emoji"`
-		InBar     bool   `json:"in_bar"`
-		Starred   bool   `json:"starred"` // backward compat
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -94,9 +90,6 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Accept either in_bar or starred
-	inBar := body.InBar || body.Starred
-
 	now := time.Now()
 	b := model.Bookmark{
 		ID:        uuid.New().String(),
@@ -105,7 +98,6 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 		Name:      body.Name,
 		URL:       body.URL,
 		Emoji:     body.Emoji,
-		InBar:     inBar,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -115,27 +107,12 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("bookmark create project store error: %v", err)
 		// fallback to global
-		if inBar {
-			count := h.bookmarkStore.CountStarredByProject(body.ProjectID)
-			if count >= maxInBarPerProject {
-				http.Error(w, "maximum of 5 bar bookmarks per project", http.StatusBadRequest)
-				return
-			}
-		}
-		b.Starred = inBar // keep backward compat for global store
 		if err := h.bookmarkStore.Add(b); err != nil {
 			log.Printf("bookmark create error: %v", err)
 			http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
 			return
 		}
 	} else {
-		if inBar {
-			count := ps.CountInBar()
-			if count >= maxInBarPerProject {
-				http.Error(w, "maximum of 5 bar bookmarks per project", http.StatusBadRequest)
-				return
-			}
-		}
 		if err := ps.Add(b); err != nil {
 			log.Printf("bookmark create error: %v", err)
 			http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
@@ -158,8 +135,6 @@ func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 		Name      string  `json:"name"`
 		URL       string  `json:"url"`
 		Emoji     string  `json:"emoji"`
-		InBar     *bool   `json:"in_bar"`
-		Starred   *bool   `json:"starred"` // backward compat
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -190,30 +165,6 @@ func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 			if body.FolderID != nil {
 				existing.FolderID = *body.FolderID
 			}
-
-			// Handle InBar or Starred toggle
-			if body.InBar != nil && *body.InBar != existing.InBar {
-				if *body.InBar {
-					count := ps.CountInBar()
-					if count >= maxInBarPerProject {
-						http.Error(w, "maximum of 5 bar bookmarks per project", http.StatusBadRequest)
-						return
-					}
-				}
-				existing.InBar = *body.InBar
-			} else if body.Starred != nil {
-				newVal := *body.Starred
-				if newVal != existing.InBar {
-					if newVal {
-						count := ps.CountInBar()
-						if count >= maxInBarPerProject {
-							http.Error(w, "maximum of 5 bar bookmarks per project", http.StatusBadRequest)
-							return
-						}
-					}
-					existing.InBar = newVal
-				}
-			}
 			existing.UpdatedAt = time.Now()
 
 			if err := ps.Update(existing); err != nil {
@@ -240,17 +191,6 @@ func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 		existing.URL = body.URL
 	}
 	existing.Emoji = body.Emoji
-
-	if body.Starred != nil && *body.Starred != existing.Starred {
-		if *body.Starred {
-			count := h.bookmarkStore.CountStarredByProject(existing.ProjectID)
-			if count >= maxInBarPerProject {
-				http.Error(w, "maximum of 5 starred bookmarks per project", http.StatusBadRequest)
-				return
-			}
-		}
-		existing.Starred = *body.Starred
-	}
 	existing.UpdatedAt = time.Now()
 
 	if err := h.bookmarkStore.Update(existing); err != nil {
@@ -283,64 +223,6 @@ func (h *Handlers) DeleteBookmark(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Handlers) ToggleBookmarkStar(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "bookmarkID")
-	projectID := r.URL.Query().Get("project_id")
-
-	if projectID != "" {
-		ps, err := h.getProjectBookmarkStore(projectID)
-		if err == nil {
-			existing, ok := ps.Get(id)
-			if !ok {
-				http.Error(w, "bookmark not found", http.StatusNotFound)
-				return
-			}
-			if !existing.InBar {
-				count := ps.CountInBar()
-				if count >= maxInBarPerProject {
-					http.Error(w, "maximum of 5 bar bookmarks per project", http.StatusBadRequest)
-					return
-				}
-			}
-			existing.InBar = !existing.InBar
-			existing.UpdatedAt = time.Now()
-
-			if err := ps.Update(existing); err != nil {
-				log.Printf("bookmark bar toggle error: %v", err)
-				http.Error(w, "failed to toggle bar", http.StatusInternalServerError)
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(existing)
-			return
-		}
-	}
-
-	// Global fallback
-	existing, ok := h.bookmarkStore.Get(id)
-	if !ok {
-		http.Error(w, "bookmark not found", http.StatusNotFound)
-		return
-	}
-	if !existing.Starred {
-		count := h.bookmarkStore.CountStarredByProject(existing.ProjectID)
-		if count >= maxInBarPerProject {
-			http.Error(w, "maximum of 5 starred bookmarks per project", http.StatusBadRequest)
-			return
-		}
-	}
-	existing.Starred = !existing.Starred
-	existing.UpdatedAt = time.Now()
-
-	if err := h.bookmarkStore.Update(existing); err != nil {
-		log.Printf("bookmark star toggle error: %v", err)
-		http.Error(w, "failed to toggle star", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existing)
 }
 
 // --------------- Bookmark Folder Endpoints ---------------

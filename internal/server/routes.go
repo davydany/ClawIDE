@@ -50,6 +50,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Route("/projects", func(r chi.Router) {
 		r.Get("/", s.handlers.ListProjects)
 		r.Post("/", s.handlers.CreateProject)
+		r.Post("/reorder", s.handlers.ReorderProjects)
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
@@ -77,6 +78,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
 			r.Put("/api/file", s.handlers.WriteFile)
+			r.Post("/api/mkdir", s.handlers.Mkdir)
 
 			// Docker API
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
@@ -111,15 +113,25 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Get("/api/files", s.handlers.FeatureListFiles)
 				r.Get("/api/file", s.handlers.FeatureReadFile)
 				r.Put("/api/file", s.handlers.FeatureWriteFile)
+				r.Post("/api/mkdir", s.handlers.FeatureMkdir)
 
 				// Feature git operations
 				r.Get("/api/status", s.handlers.FeatureGitStatus)
 				r.Post("/api/commit", s.handlers.FeatureGitCommit)
 				r.Post("/api/merge", s.handlers.FeatureMerge)
 				r.Post("/api/pull-main", s.handlers.FeaturePullMain)
+
+				// Feature merge review
+				r.Get("/api/review/files", s.handlers.FeatureReviewFiles)
+				r.Get("/api/review/file-content", s.handlers.FeatureReviewFileContent)
+				r.Get("/api/review/annotations", s.handlers.FeatureReviewAnnotations)
 			})
 		})
 	})
+
+	// Scratchpad API (global)
+	r.Get("/api/scratchpad", s.handlers.GetScratchpad)
+	r.Put("/api/scratchpad", s.handlers.UpdateScratchpad)
 
 	// Snippets API (global, not project-scoped)
 	r.Route("/api/snippets", func(r chi.Router) {
@@ -156,7 +168,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Post("/", s.handlers.CreateBookmark)
 		r.Put("/{bookmarkID}", s.handlers.UpdateBookmark)
 		r.Delete("/{bookmarkID}", s.handlers.DeleteBookmark)
-		r.Patch("/{bookmarkID}/star", s.handlers.ToggleBookmarkStar)
 		r.Post("/reorder", s.handlers.ReorderBookmarks)
 
 		// Bookmark git operations

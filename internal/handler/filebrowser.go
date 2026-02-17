@@ -215,6 +215,29 @@ func writeFileToRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// mkdirForRoot is the shared implementation for creating a directory under a
+// given root path. It creates all intermediate directories as needed.
+func mkdirForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
+	requestedPath := r.URL.Query().Get("path")
+	if requestedPath == "" {
+		http.Error(w, "path parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	absPath, ok := resolveAndValidatePath(rootPath, requestedPath)
+	if !ok {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+
+	if err := os.MkdirAll(absPath, 0755); err != nil {
+		http.Error(w, "failed to create directory", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 // ListFiles handles GET /projects/{id}/api/files?path=...
 func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
@@ -243,6 +266,16 @@ func (h *Handlers) WriteFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeFileToRoot(w, r, project.Path)
+}
+
+// Mkdir handles POST /projects/{id}/api/mkdir?path=...
+func (h *Handlers) Mkdir(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	mkdirForRoot(w, r, project.Path)
 }
 
 // detectContentType determines whether content is text or binary.

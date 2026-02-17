@@ -371,23 +371,6 @@
         }
     }
 
-    function toggleInBar(id) {
-        var url = API_BASE + '/' + id + '/star';
-        if (projectID) url += '?project_id=' + encodeURIComponent(projectID);
-
-        fetch(url, { method: 'PATCH' })
-            .then(function(r) {
-                if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
-                return r.json();
-            })
-            .then(function() {
-                loadBookmarks();
-            })
-            .catch(function(err) {
-                console.error('Failed to toggle bar:', err);
-            });
-    }
-
     function resetForm() {
         editingID = null;
         if (nameInput) nameInput.value = '';
@@ -421,17 +404,9 @@
             var bm = bookmarks[i];
             var domain = getDomain(bm.url);
             var faviconUrl = getFaviconUrl(bm.url);
-            var inBar = bm.in_bar || bm.starred;
-            var barClass = inBar ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400';
-            var barFill = inBar ? 'currentColor' : 'none';
 
             html += '<div class="bookmark-item group" data-id="' + escapeAttr(bm.id) + '" draggable="true">';
             html += '  <div class="flex items-center gap-2">';
-
-            // Bar toggle (star icon)
-            html += '    <button class="flex-shrink-0 p-0.5 rounded transition-colors ' + barClass + '" title="' + (inBar ? 'Remove from bar' : 'Add to bar') + '" data-bookmark-bar="' + escapeAttr(bm.id) + '">';
-            html += '      <svg class="w-3 h-3" fill="' + barFill + '" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>';
-            html += '    </button>';
 
             // Favicon or emoji
             if (bm.emoji) {
@@ -472,15 +447,6 @@
 
     function bindListEvents() {
         if (!list) return;
-
-        // Bar toggle (star)
-        var barBtns = list.querySelectorAll('[data-bookmark-bar]');
-        for (var i = 0; i < barBtns.length; i++) {
-            barBtns[i].addEventListener('click', function(e) {
-                e.preventDefault();
-                toggleInBar(this.getAttribute('data-bookmark-bar'));
-            });
-        }
 
         // Edit
         var editBtns = list.querySelectorAll('[data-bookmark-edit]');
@@ -616,34 +582,28 @@
     function updateBookmarkBar() {
         if (!bookmarkBarContent) return;
 
-        var barItems = [];
-        for (var i = 0; i < bookmarks.length; i++) {
-            if (bookmarks[i].in_bar || bookmarks[i].starred) {
-                barItems.push(bookmarks[i]);
-            }
-        }
-
-        // Also fetch all bookmarks to get bar items from other folders
+        // When viewing a subfolder, fetch root bookmarks separately for the bar
         if (selectedFolderID) {
-            fetchAllBarBookmarks();
+            fetchRootBookmarks();
             return;
         }
 
+        // Current view is root — bar items are bookmarks with no folder
+        var barItems = [];
+        for (var i = 0; i < bookmarks.length; i++) {
+            if (!bookmarks[i].folder_id) {
+                barItems.push(bookmarks[i]);
+            }
+        }
         renderBarItems(barItems);
     }
 
-    function fetchAllBarBookmarks() {
-        var url = API_BASE + '?project_id=' + encodeURIComponent(projectID);
+    function fetchRootBookmarks() {
+        var url = API_BASE + '?project_id=' + encodeURIComponent(projectID) + '&folder_id=';
         fetch(url)
             .then(function(r) { return r.json(); })
             .then(function(data) {
-                var barItems = [];
-                for (var i = 0; i < (data || []).length; i++) {
-                    if (data[i].in_bar || data[i].starred) {
-                        barItems.push(data[i]);
-                    }
-                }
-                renderBarItems(barItems);
+                renderBarItems(data || []);
             })
             .catch(function() {});
     }
@@ -728,12 +688,9 @@
         var bm = findBookmark(bookmarkID);
         if (!bm || !contextMenuEl) return;
 
-        var inBar = bm.in_bar || bm.starred;
         var items = [
             { label: 'Open in new tab', icon: 'external', action: function() { window.open(bm.url, '_blank'); } },
             { label: 'Edit', icon: 'edit', action: function() { startEdit(bookmarkID); } },
-            { separator: true },
-            { label: inBar ? 'Remove from bar' : 'Add to bar', icon: 'star', action: function() { toggleInBar(bookmarkID); } },
             { separator: true },
             { label: 'Delete', icon: 'delete', danger: true, action: function() { deleteBookmark(bookmarkID); } }
         ];
