@@ -142,11 +142,89 @@ func DeleteBranch(repoPath, branch string) error {
 	return nil
 }
 
+// StatusForPath returns the working tree status for files under subPath
+// (relative to repoPath). Only entries whose path starts with subPath are
+// returned. The returned FileStatus paths are relative to the repo root.
+func StatusForPath(repoPath, subPath string) ([]FileStatus, error) {
+	// Normalise subPath to have a trailing slash for prefix matching
+	prefix := strings.TrimSuffix(subPath, "/") + "/"
+
+	cmd := exec.Command("git", "status", "--porcelain", "--", subPath)
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git status for %s: %w", subPath, err)
+	}
+
+	var files []FileStatus
+	for _, line := range strings.Split(string(out), "\n") {
+		if len(line) < 4 {
+			continue
+		}
+
+		indexStatus := line[0]
+		workTreeStatus := line[1]
+		path := strings.TrimSpace(line[3:])
+
+		// Handle renames: "R  old -> new"
+		if idx := strings.Index(path, " -> "); idx >= 0 {
+			path = path[idx+4:]
+		}
+
+		// Filter to subPath
+		if !strings.HasPrefix(path, prefix) && path != strings.TrimSuffix(subPath, "/") {
+			continue
+		}
+
+		if indexStatus != ' ' && indexStatus != '?' {
+			files = append(files, FileStatus{
+				Path:   path,
+				Status: string(indexStatus),
+				Staged: true,
+			})
+		}
+
+		if workTreeStatus != ' ' {
+			status := string(workTreeStatus)
+			if workTreeStatus == '?' {
+				status = "?"
+			}
+			files = append(files, FileStatus{
+				Path:   path,
+				Status: status,
+				Staged: false,
+			})
+		}
+	}
+
+	return files, nil
+}
+
+// IsPathIgnored checks whether the given path is ignored by git (e.g.
+// listed in .gitignore). Returns true if the path is ignored.
+func IsPathIgnored(repoPath, path string) bool {
+	cmd := exec.Command("git", "check-ignore", "-q", path)
+	cmd.Dir = repoPath
+	return cmd.Run() == nil
+}
+
+// LastCommitHash returns the short hash of the most recent commit in the
+// repository at repoPath.
+func LastCommitHash(repoPath string) (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("git rev-parse: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // DiffEntry represents a changed file between two refs.
 type DiffEntry struct {
-	Status  string `json:"status"`               // M, A, D, R, C
+	Status  string `json:"status"`            // M, A, D, R, C
 	Path    string `json:"path"`
-	OldPath string `json:"old_path,omitempty"`    // for renames
+	OldPath string `json:"old_path,omitempty"` // for renames
 }
 
 // DiffStatResult holds aggregate diff statistics.

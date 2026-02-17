@@ -12,10 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-const maxStarredPerProject = 5
-
-// StarredBookmarkView is the template-friendly representation of a starred bookmark.
-type StarredBookmarkView struct {
+// BookmarkBarView is the template-friendly representation of a bar bookmark.
+type BookmarkBarView struct {
 	ID         string
 	Name       string
 	URL        string
@@ -34,15 +32,30 @@ func bookmarkFaviconURL(bookmarkURL string) string {
 func (h *Handlers) ListBookmarks(w http.ResponseWriter, r *http.Request) {
 	projectID := r.URL.Query().Get("project_id")
 	q := r.URL.Query().Get("q")
+	folderID := r.URL.Query().Get("folder_id")
 
 	var bookmarks []model.Bookmark
-	if q != "" && projectID != "" {
+
+	if projectID != "" {
+		ps, err := h.getProjectBookmarkStore(projectID)
+		if err != nil {
+			log.Printf("bookmark list project store error: %v", err)
+			bookmarks = h.bookmarkStore.GetByProject(projectID)
+		} else if q != "" {
+			bookmarks = ps.Search(q)
+		} else if folderID != "" || r.URL.Query().Has("folder_id") {
+			bookmarks = ps.GetByFolder(folderID)
+		} else {
+			bookmarks = ps.GetAll()
+		}
+	} else if q != "" && projectID != "" {
 		bookmarks = h.bookmarkStore.Search(projectID, q)
 	} else if projectID != "" {
 		bookmarks = h.bookmarkStore.GetByProject(projectID)
 	} else {
 		bookmarks = h.bookmarkStore.GetAll()
 	}
+
 	if bookmarks == nil {
 		bookmarks = []model.Bookmark{}
 	}
@@ -55,10 +68,10 @@ func (h *Handlers) ListBookmarks(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		ProjectID string `json:"project_id"`
+		FolderID  string `json:"folder_id"`
 		Name      string `json:"name"`
 		URL       string `json:"url"`
 		Emoji     string `json:"emoji"`
-		Starred   bool   `json:"starred"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -77,31 +90,34 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Enforce max starred
-	if body.Starred {
-		count := h.bookmarkStore.CountStarredByProject(body.ProjectID)
-		if count >= maxStarredPerProject {
-			http.Error(w, "maximum of 5 starred bookmarks per project", http.StatusBadRequest)
-			return
-		}
-	}
-
 	now := time.Now()
 	b := model.Bookmark{
 		ID:        uuid.New().String(),
 		ProjectID: body.ProjectID,
+		FolderID:  body.FolderID,
 		Name:      body.Name,
 		URL:       body.URL,
 		Emoji:     body.Emoji,
-		Starred:   body.Starred,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	if err := h.bookmarkStore.Add(b); err != nil {
-		log.Printf("bookmark create error: %v", err)
-		http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
-		return
+	// Try project store first
+	ps, err := h.getProjectBookmarkStore(body.ProjectID)
+	if err != nil {
+		log.Printf("bookmark create project store error: %v", err)
+		// fallback to global
+		if err := h.bookmarkStore.Add(b); err != nil {
+			log.Printf("bookmark create error: %v", err)
+			http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		if err := ps.Add(b); err != nil {
+			log.Printf("bookmark create error: %v", err)
+			http.Error(w, "failed to create bookmark", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -111,18 +127,196 @@ func (h *Handlers) CreateBookmark(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "bookmarkID")
+	projectID := r.URL.Query().Get("project_id")
 
+	var body struct {
+		ProjectID string  `json:"project_id"`
+		FolderID  *string `json:"folder_id"`
+		Name      string  `json:"name"`
+		URL       string  `json:"url"`
+		Emoji     string  `json:"emoji"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Use project_id from body or query param
+	pid := body.ProjectID
+	if pid == "" {
+		pid = projectID
+	}
+
+	if pid != "" {
+		ps, err := h.getProjectBookmarkStore(pid)
+		if err == nil {
+			existing, ok := ps.Get(id)
+			if !ok {
+				http.Error(w, "bookmark not found", http.StatusNotFound)
+				return
+			}
+			if body.Name != "" {
+				existing.Name = body.Name
+			}
+			if body.URL != "" {
+				existing.URL = body.URL
+			}
+			existing.Emoji = body.Emoji
+			if body.FolderID != nil {
+				existing.FolderID = *body.FolderID
+			}
+			existing.UpdatedAt = time.Now()
+
+			if err := ps.Update(existing); err != nil {
+				log.Printf("bookmark update error: %v", err)
+				http.Error(w, "failed to update bookmark", http.StatusInternalServerError)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(existing)
+			return
+		}
+	}
+
+	// Global store fallback
 	existing, ok := h.bookmarkStore.Get(id)
 	if !ok {
 		http.Error(w, "bookmark not found", http.StatusNotFound)
 		return
 	}
+	if body.Name != "" {
+		existing.Name = body.Name
+	}
+	if body.URL != "" {
+		existing.URL = body.URL
+	}
+	existing.Emoji = body.Emoji
+	existing.UpdatedAt = time.Now()
+
+	if err := h.bookmarkStore.Update(existing); err != nil {
+		log.Printf("bookmark update error: %v", err)
+		http.Error(w, "failed to update bookmark", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(existing)
+}
+
+func (h *Handlers) DeleteBookmark(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "bookmarkID")
+	projectID := r.URL.Query().Get("project_id")
+
+	if projectID != "" {
+		ps, err := h.getProjectBookmarkStore(projectID)
+		if err == nil {
+			if err := ps.Delete(id); err != nil {
+				http.Error(w, "bookmark not found", http.StatusNotFound)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+
+	if err := h.bookmarkStore.Delete(id); err != nil {
+		http.Error(w, "bookmark not found", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// --------------- Bookmark Folder Endpoints ---------------
+
+func (h *Handlers) ListBookmarkFolders(w http.ResponseWriter, r *http.Request) {
+	projectID := r.URL.Query().Get("project_id")
+	if projectID == "" {
+		http.Error(w, "project_id is required", http.StatusBadRequest)
+		return
+	}
+
+	ps, err := h.getProjectBookmarkStore(projectID)
+	if err != nil {
+		http.Error(w, "failed to access project store", http.StatusInternalServerError)
+		return
+	}
+
+	folders := ps.GetFolders()
+	if folders == nil {
+		folders = []model.Folder{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(folders)
+}
+
+func (h *Handlers) CreateBookmarkFolder(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ProjectID string `json:"project_id"`
+		Name      string `json:"name"`
+		ParentID  string `json:"parent_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if body.Name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+	if body.ProjectID == "" {
+		http.Error(w, "project_id is required", http.StatusBadRequest)
+		return
+	}
+
+	ps, err := h.getProjectBookmarkStore(body.ProjectID)
+	if err != nil {
+		http.Error(w, "failed to access project store", http.StatusInternalServerError)
+		return
+	}
+
+	now := time.Now()
+	f := model.Folder{
+		ID:        uuid.New().String(),
+		Name:      body.Name,
+		ParentID:  body.ParentID,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := ps.CreateFolder(f); err != nil {
+		log.Printf("bookmark folder create error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(f)
+}
+
+func (h *Handlers) UpdateBookmarkFolder(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "folderID")
+	projectID := r.URL.Query().Get("project_id")
+	if projectID == "" {
+		http.Error(w, "project_id is required", http.StatusBadRequest)
+		return
+	}
+
+	ps, err := h.getProjectBookmarkStore(projectID)
+	if err != nil {
+		http.Error(w, "failed to access project store", http.StatusInternalServerError)
+		return
+	}
+
+	existing, ok := ps.GetFolder(id)
+	if !ok {
+		http.Error(w, "folder not found", http.StatusNotFound)
+		return
+	}
 
 	var body struct {
-		Name    string `json:"name"`
-		URL     string `json:"url"`
-		Emoji   string `json:"emoji"`
-		Starred *bool  `json:"starred"`
+		Name     string  `json:"name"`
+		ParentID *string `json:"parent_id"`
+		Order    *int    `json:"order"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -132,28 +326,17 @@ func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 	if body.Name != "" {
 		existing.Name = body.Name
 	}
-	if body.URL != "" {
-		existing.URL = body.URL
+	if body.ParentID != nil {
+		existing.ParentID = *body.ParentID
 	}
-	// Emoji can be cleared explicitly
-	existing.Emoji = body.Emoji
-
-	if body.Starred != nil && *body.Starred != existing.Starred {
-		if *body.Starred {
-			count := h.bookmarkStore.CountStarredByProject(existing.ProjectID)
-			if count >= maxStarredPerProject {
-				http.Error(w, "maximum of 5 starred bookmarks per project", http.StatusBadRequest)
-				return
-			}
-		}
-		existing.Starred = *body.Starred
+	if body.Order != nil {
+		existing.Order = *body.Order
 	}
-
 	existing.UpdatedAt = time.Now()
 
-	if err := h.bookmarkStore.Update(existing); err != nil {
-		log.Printf("bookmark update error: %v", err)
-		http.Error(w, "failed to update bookmark", http.StatusInternalServerError)
+	if err := ps.UpdateFolder(existing); err != nil {
+		log.Printf("bookmark folder update error: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -161,43 +344,51 @@ func (h *Handlers) UpdateBookmark(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(existing)
 }
 
-func (h *Handlers) DeleteBookmark(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "bookmarkID")
-
-	if err := h.bookmarkStore.Delete(id); err != nil {
-		http.Error(w, "bookmark not found", http.StatusNotFound)
+func (h *Handlers) DeleteBookmarkFolder(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "folderID")
+	projectID := r.URL.Query().Get("project_id")
+	if projectID == "" {
+		http.Error(w, "project_id is required", http.StatusBadRequest)
 		return
 	}
 
+	ps, err := h.getProjectBookmarkStore(projectID)
+	if err != nil {
+		http.Error(w, "failed to access project store", http.StatusInternalServerError)
+		return
+	}
+
+	if err := ps.DeleteFolder(id); err != nil {
+		http.Error(w, "folder not found", http.StatusNotFound)
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handlers) ToggleBookmarkStar(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "bookmarkID")
-
-	existing, ok := h.bookmarkStore.Get(id)
-	if !ok {
-		http.Error(w, "bookmark not found", http.StatusNotFound)
+func (h *Handlers) ReorderBookmarks(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ProjectID   string   `json:"project_id"`
+		BookmarkIDs []string `json:"bookmark_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if body.ProjectID == "" {
+		http.Error(w, "project_id is required", http.StatusBadRequest)
 		return
 	}
 
-	if !existing.Starred {
-		count := h.bookmarkStore.CountStarredByProject(existing.ProjectID)
-		if count >= maxStarredPerProject {
-			http.Error(w, "maximum of 5 starred bookmarks per project", http.StatusBadRequest)
-			return
-		}
-	}
-
-	existing.Starred = !existing.Starred
-	existing.UpdatedAt = time.Now()
-
-	if err := h.bookmarkStore.Update(existing); err != nil {
-		log.Printf("bookmark star toggle error: %v", err)
-		http.Error(w, "failed to toggle star", http.StatusInternalServerError)
+	ps, err := h.getProjectBookmarkStore(body.ProjectID)
+	if err != nil {
+		http.Error(w, "failed to access project store", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existing)
+	if err := ps.Reorder(body.BookmarkIDs); err != nil {
+		log.Printf("bookmark reorder error: %v", err)
+		http.Error(w, "failed to reorder bookmarks", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
