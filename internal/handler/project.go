@@ -154,10 +154,15 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Build starred bookmark views for tab bar
-	starredBookmarks := h.bookmarkStore.GetStarredByProject(project.ID)
+	// Build bar bookmark views for tab bar (project-scoped or global fallback)
+	var barBookmarks []model.Bookmark
+	if ps, err := h.getProjectBookmarkStore(project.ID); err == nil {
+		barBookmarks = ps.GetInBar()
+	} else {
+		barBookmarks = h.bookmarkStore.GetStarredByProject(project.ID)
+	}
 	var starredBookmarkViews []StarredBookmarkView
-	for _, bm := range starredBookmarks {
+	for _, bm := range barBookmarks {
 		starredBookmarkViews = append(starredBookmarkViews, StarredBookmarkView{
 			ID:         bm.ID,
 			Name:       bm.Name,

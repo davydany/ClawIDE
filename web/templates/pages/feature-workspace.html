@@ -110,109 +110,6 @@
                 </div>
             </div>
 
-            <!-- Notes section -->
-            <div class="mt-4" x-data="{ notesOpen: false }">
-                <button @click="notesOpen = !notesOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Notes
-                    <svg class="w-3.5 h-3.5 transition-transform" :class="notesOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="notesOpen" x-collapse>
-                    <div id="notes-container" data-project-id="{{.Project.ID}}">
-                        <div class="flex items-center gap-1 mt-1 px-1">
-                            <button id="notes-tab-project" class="flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300" onclick="ClawIDENotes.setScope('project')">Project</button>
-                            <button id="notes-tab-global" class="flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800" onclick="ClawIDENotes.setScope('global')">Global</button>
-                        </div>
-                        <div class="mt-1.5 px-1">
-                            <input id="notes-search" type="text" placeholder="Search notes..."
-                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div class="px-1 py-2">
-                            <h4 id="notes-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Note</h4>
-                            <form id="notes-form" class="space-y-1.5">
-                                <input id="notes-title" type="text" placeholder="Note title" required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <textarea id="notes-content" placeholder="Note content (markdown)..." rows="3"
-                                          class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
-                                <div id="notes-preview" class="hidden note-markdown-preview px-2 py-1.5 text-xs text-gray-300 bg-gray-800/50 rounded border border-gray-700 max-h-32 overflow-y-auto"></div>
-                                <div class="flex items-center gap-2">
-                                    <button type="submit"
-                                            class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                                        Save
-                                    </button>
-                                    <button type="button" id="notes-preview-toggle"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Preview
-                                    </button>
-                                    <button type="button" id="notes-cancel" style="display:none"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                        <div id="notes-list" class="max-h-64 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bookmarks section -->
-            <div class="mt-4" x-data="{ bookmarksOpen: false }">
-                <button @click="bookmarksOpen = !bookmarksOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Bookmarks
-                    <svg class="w-3.5 h-3.5 transition-transform" :class="bookmarksOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="bookmarksOpen" x-collapse>
-                    <div id="bookmarks-container" data-project-id="{{.Project.ID}}">
-                        <!-- Bookmarks search -->
-                        <div class="mt-1 px-1">
-                            <input id="bookmarks-search" type="text" placeholder="Search bookmarks..."
-                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                        </div>
-
-                        <!-- Bookmarks create/edit form -->
-                        <div class="px-1 py-2">
-                            <h4 id="bookmarks-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Bookmark</h4>
-                            <form id="bookmarks-form" class="space-y-1.5">
-                                <input id="bookmarks-name" type="text" placeholder="Bookmark name" required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <input id="bookmarks-url" type="url" placeholder="https://..." required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <div class="flex items-center gap-1.5">
-                                    <input id="bookmarks-emoji" type="text" placeholder="Emoji" maxlength="2" readonly
-                                           class="w-12 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 cursor-pointer">
-                                    <button type="button" id="bookmarks-emoji-btn"
-                                            class="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded border border-gray-700 transition-colors"
-                                            title="Pick emoji">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </button>
-                                    <button type="button" onclick="document.getElementById('bookmarks-emoji').value=''"
-                                            class="px-1.5 py-1.5 text-xs text-gray-500 hover:text-white rounded transition-colors" title="Clear emoji">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                                <!-- Emoji picker (hidden by default) -->
-                                <div class="relative">
-                                    <emoji-picker id="bookmarks-emoji-picker" style="display:none; position:absolute; z-index:50; bottom:100%; left:0;" class="light"></emoji-picker>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button type="submit"
-                                            class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                                        Save
-                                    </button>
-                                    <button type="button" id="bookmarks-cancel" style="display:none"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Bookmarks list -->
-                        <div id="bookmarks-list" class="max-h-64 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Settings link -->
             <div class="mt-4 border-t border-gray-800 pt-4">
                 <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
@@ -326,7 +223,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -502,6 +399,13 @@
                 </div>
             </div>
 
+            <!-- Bookmark bar (persistent, toggleable) -->
+            <div x-show="showBookmarkBar" x-collapse class="hidden lg:flex items-center gap-1 px-4 py-1.5 border-b border-gray-800 bg-gray-900/50 overflow-x-auto">
+                <div id="bookmarks-bar-content" class="flex items-center gap-1">
+                    <span class="text-xs text-gray-500">Starred bookmarks appear here</span>
+                </div>
+            </div>
+
             <!-- Desktop tab bar -->
             <div class="hidden lg:flex items-center gap-1 px-4 border-b border-gray-800 bg-gray-900/30">
                 <button @click="activeTab = 'terminal'"
@@ -518,6 +422,31 @@
                         :class="activeTab === 'commit' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Commit
+                </button>
+                <!-- Spacer between system tabs and content tabs -->
+                <div class="flex-grow"></div>
+                <!-- Notes tab -->
+                <button @click="activeTab = 'notes'"
+                        :class="activeTab === 'notes' ? 'text-white border-amber-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Notes
+                </button>
+                <!-- Bookmarks tab -->
+                <button @click="activeTab = 'bookmarks'"
+                        :class="activeTab === 'bookmarks' ? 'text-white border-blue-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    Bookmarks
+                </button>
+                <!-- Bookmark bar toggle button -->
+                <button @click="showBookmarkBar = !showBookmarkBar; localStorage.setItem('clawide-bookmark-bar', showBookmarkBar)"
+                        :class="showBookmarkBar ? 'text-white bg-gray-800' : 'text-gray-400 hover:text-white hover:bg-gray-800'"
+                        class="p-2 rounded transition-colors"
+                        title="Toggle Bookmark Bar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
                 </button>
                 <!-- Starred Bookmarks (far right) -->
                 <div id="starred-bookmarks-bar" class="ml-auto flex items-center gap-1">
@@ -812,6 +741,246 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Notes panel -->
+                <div x-show="activeTab === 'notes'" x-cloak class="h-full flex flex-col"
+                     x-effect="if (activeTab === 'notes' && !notesLoaded) { notesLoaded = true; $nextTick(() => { if (typeof ClawIDENotes !== 'undefined') ClawIDENotes.reload() }) }">
+                    <!-- Notes toolbar -->
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
+                        <h3 class="text-sm font-medium text-white flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            Notes
+                        </h3>
+                        <div class="flex items-center gap-1 ml-2">
+                            <button @click="notesEditMode = true; if (typeof ClawIDENotes !== 'undefined') ClawIDENotes.onModeChange(true)"
+                                    :class="notesEditMode ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'"
+                                    class="px-2.5 py-1 text-xs rounded transition-colors">
+                                Edit
+                            </button>
+                            <button @click="notesEditMode = false; if (typeof ClawIDENotes !== 'undefined') ClawIDENotes.onModeChange(false)"
+                                    :class="!notesEditMode ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800'"
+                                    class="px-2.5 py-1 text-xs rounded transition-colors">
+                                Preview
+                            </button>
+                        </div>
+                        <!-- Markdown toolbar (visible in edit mode only) -->
+                        <div class="flex items-center gap-0.5 ml-2" x-show="notesEditMode" x-cloak>
+                            <span class="text-gray-600 mr-1">|</span>
+                            <button type="button" id="notes-toolbar-bold"
+                                    class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Bold">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"/><path d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"/></svg>
+                            </button>
+                            <button type="button" id="notes-toolbar-italic"
+                                    class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Italic">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                            </button>
+                            <button type="button" id="notes-toolbar-link"
+                                    class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Insert Link">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                            </button>
+                            <button type="button" id="notes-toolbar-mermaid"
+                                    class="p-1.5 text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors" title="Insert Mermaid Diagram">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="8" y="14" width="7" height="7" rx="1"/><line x1="6.5" y1="10" x2="11.5" y2="14"/><line x1="17.5" y1="10" x2="12.5" y2="14"/></svg>
+                            </button>
+                        </div>
+                        <!-- Save indicator -->
+                        <span id="notes-save-indicator" class="ml-2" style="display:none"></span>
+                        <div class="ml-auto flex gap-1">
+                            <button id="notes-new-btn"
+                                    class="px-3 py-1 text-xs text-indigo-400 hover:text-white hover:bg-gray-800 rounded transition-colors flex items-center gap-1"
+                                    title="New note">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                New
+                            </button>
+                            <button id="notes-delete-btn" style="display:none"
+                                    class="px-3 py-1 text-xs text-red-400 hover:text-white hover:bg-red-900/50 rounded transition-colors flex items-center gap-1"
+                                    title="Delete note">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                            </button>
+                            <button onclick="if (typeof ClawIDENotes !== 'undefined') ClawIDENotes.reload()"
+                                    class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                                    title="Refresh notes">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                            <span id="notes-git-toolbar" class="flex items-center gap-1" style="display:none"></span>
+                            <button onclick="if (typeof ClawIDEGit !== 'undefined') { var pid = (document.getElementById('notes-container') || {}).getAttribute && document.getElementById('notes-container').getAttribute('data-project-id'); if (pid) ClawIDEGit.showCommitModal('notes', pid); }"
+                                    class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors flex items-center gap-1"
+                                    title="Commit notes changes">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Commit
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Notes git banner -->
+                    <div id="notes-git-banner" class="px-4"></div>
+                    <!-- Notes split layout -->
+                    <div class="flex-1 flex min-h-0">
+                        <!-- Notes folder tree (25%) -->
+                        <div class="w-1/4 border-r border-gray-800 flex flex-col bg-gray-900/50 flex-shrink-0">
+                            <div class="p-2 border-b border-gray-800 flex-shrink-0">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-semibold text-gray-500 uppercase px-2">Folders</h4>
+                                    <button id="notes-new-folder-btn" class="p-1 text-gray-500 hover:text-white rounded transition-colors" title="New folder">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="notes-container" data-project-id="{{.Project.ID}}" class="flex flex-col flex-1 min-h-0">
+                                <!-- Notes search -->
+                                <div class="px-2 py-2 flex-shrink-0">
+                                    <input id="notes-search" type="text" placeholder="Search notes..."
+                                           class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <!-- Folder + file tree -->
+                                <div id="notes-folder-tree" class="flex-1 overflow-y-auto px-1">
+                                    <div id="notes-folder-tree-inner"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Notes editor (75%) -->
+                        <div class="flex-1 flex flex-col min-w-0">
+                            <div class="flex-1 flex flex-col p-3">
+                                <form id="notes-form" class="flex-1 flex flex-col gap-2">
+                                    <input id="notes-title" type="text" placeholder="Note title" required
+                                           class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                    <div x-show="notesEditMode" class="flex-1 flex flex-col min-h-0">
+                                        <textarea id="notes-content" placeholder="Write your note in markdown..."
+                                                  class="flex-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-none"
+                                                  style="min-height: 200px"></textarea>
+                                    </div>
+                                    <div x-show="!notesEditMode" class="flex-1 min-h-0">
+                                        <div id="notes-preview" class="note-markdown-preview h-full px-3 py-2 text-sm text-gray-300 bg-gray-800/50 rounded border border-gray-700 overflow-y-auto prose prose-invert prose-sm max-w-none" style="min-height: 200px">
+                                            <span class="text-gray-500 italic">Nothing to preview</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <button type="submit"
+                                                class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
+                                            Save
+                                        </button>
+                                        <button type="button" id="notes-cancel" style="display:none"
+                                                class="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                            Cancel
+                                        </button>
+                                        <span id="notes-form-title" class="text-xs text-gray-500 ml-auto">New Note</span>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Notes commit modal (managed by ClawIDEGit) -->
+                </div>
+
+                <!-- Bookmarks panel -->
+                <div x-show="activeTab === 'bookmarks'" x-cloak class="h-full flex flex-col"
+                     x-effect="if (activeTab === 'bookmarks' && !bookmarksLoaded) { bookmarksLoaded = true; $nextTick(() => { if (typeof ClawIDEBookmarks !== 'undefined') ClawIDEBookmarks.reload() }) }">
+                    <!-- Bookmarks toolbar -->
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
+                        <h3 class="text-sm font-medium text-white flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                            Bookmarks
+                        </h3>
+                        <div class="ml-auto flex gap-1">
+                            <button class="px-3 py-1 text-xs text-indigo-400 hover:text-white hover:bg-gray-800 rounded transition-colors flex items-center gap-1"
+                                    title="New bookmark"
+                                    onclick="document.getElementById('bookmarks-name').focus()">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                New
+                            </button>
+                            <button class="px-3 py-1 text-xs text-indigo-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                                    title="New folder"
+                                    onclick="if (typeof ClawIDEBookmarks !== 'undefined') ClawIDEBookmarks.promptNewFolder('')">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                            </button>
+                            <button onclick="if (typeof ClawIDEBookmarks !== 'undefined') ClawIDEBookmarks.reload()"
+                                    class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors"
+                                    title="Refresh bookmarks">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                            <span id="bookmarks-git-toolbar" class="flex items-center gap-1" style="display:none"></span>
+                            <button onclick="if (typeof ClawIDEGit !== 'undefined') { var pid = (document.getElementById('bookmarks-container') || {}).getAttribute && document.getElementById('bookmarks-container').getAttribute('data-project-id'); if (pid) ClawIDEGit.showCommitModal('bookmarks', pid); }"
+                                    class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors flex items-center gap-1"
+                                    title="Commit bookmarks changes">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Commit
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Bookmarks git banner -->
+                    <div id="bookmarks-git-banner" class="px-4"></div>
+                    <!-- Bookmarks split layout -->
+                    <div class="flex-1 flex min-h-0">
+                        <!-- Bookmarks folder tree (33%) -->
+                        <div class="w-1/3 border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0">
+                            <div class="p-2 border-b border-gray-800">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-semibold text-gray-500 uppercase px-2">Folders</h4>
+                                </div>
+                            </div>
+                            <div id="bookmarks-folder-tree" class="p-1"
+                                 oncontextmenu="(function(e){e.preventDefault();var n=e.target.closest('.folder-tree-node');if(n){var fid=n.getAttribute('data-folder-id');if(fid&&typeof ClawIDEBookmarks!=='undefined')ClawIDEBookmarks.showFolderContextMenu(e,fid)}})(event)">
+                                <div id="bookmarks-container" data-project-id="{{.Project.ID}}">
+                                    <!-- Bookmarks search -->
+                                    <div class="p-2">
+                                        <input id="bookmarks-search" type="text" placeholder="Search bookmarks..."
+                                               class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <!-- Bookmarks list -->
+                                    <div id="bookmarks-list" class="overflow-y-auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Bookmarks detail / create form (67%) -->
+                        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+                            <div class="p-4">
+                                <h4 id="bookmarks-form-title" class="text-sm font-semibold text-gray-400 mb-3">New Bookmark</h4>
+                                <form id="bookmarks-form" class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Name</label>
+                                        <input id="bookmarks-name" type="text" placeholder="Bookmark name" required
+                                               class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">URL</label>
+                                        <input id="bookmarks-url" type="url" placeholder="https://..." required
+                                               class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-500 mb-1">Emoji</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <input id="bookmarks-emoji" type="text" placeholder="Emoji" maxlength="2" readonly
+                                                   class="w-14 bg-gray-800 border border-gray-700 rounded px-2.5 py-2 text-sm text-white text-center focus:outline-none focus:border-indigo-500 cursor-pointer">
+                                            <button type="button" id="bookmarks-emoji-btn"
+                                                    class="px-2.5 py-2 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded border border-gray-700 transition-colors"
+                                                    title="Pick emoji">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </button>
+                                            <button type="button" onclick="document.getElementById('bookmarks-emoji').value=''"
+                                                    class="px-2 py-2 text-xs text-gray-500 hover:text-white rounded transition-colors" title="Clear emoji">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                        <!-- Emoji picker (hidden by default) -->
+                                        <div class="relative">
+                                            <emoji-picker id="bookmarks-emoji-picker" style="display:none; position:absolute; z-index:50; bottom:100%; left:0;" class="light"></emoji-picker>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 pt-1">
+                                        <button type="submit"
+                                                class="px-4 py-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
+                                            Save
+                                        </button>
+                                        <button type="button" id="bookmarks-cancel" style="display:none"
+                                                class="px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bookmarks commit modal (managed by ClawIDEGit) -->
+                </div>
             </div>
         </div>
 
@@ -840,6 +1009,14 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <span class="text-[10px]">Commit</span>
+            </button>
+            <button @click="activeTab = 'notes'" :class="activeTab === 'notes' ? 'text-amber-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                <span class="text-[10px]">Notes</span>
+            </button>
+            <button @click="activeTab = 'bookmarks'" :class="activeTab === 'bookmarks' ? 'text-blue-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                <span class="text-[10px]">Bookmarks</span>
             </button>
         </div>
     </div>
