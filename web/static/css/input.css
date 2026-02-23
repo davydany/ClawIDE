@@ -462,12 +462,65 @@
 
 /* Note markdown preview */
 .note-markdown-preview {
-    line-height: 1.5;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.note-markdown-preview h1 {
+    @apply text-lg font-bold text-white mt-4 mb-2 pb-1 border-b border-gray-700;
+}
+
+.note-markdown-preview h2 {
+    @apply text-base font-semibold text-white mt-3 mb-2;
+}
+
+.note-markdown-preview h3 {
+    @apply text-sm font-semibold text-white mt-3 mb-1;
+}
+
+.note-markdown-preview h4,
+.note-markdown-preview h5,
+.note-markdown-preview h6 {
+    @apply text-xs font-semibold text-gray-200 mt-2 mb-1;
+}
+
+.note-markdown-preview p {
+    @apply mb-2;
+}
+
+.note-markdown-preview ul,
+.note-markdown-preview ol {
+    @apply pl-5 mb-2;
+}
+
+.note-markdown-preview ul {
+    list-style-type: disc;
+}
+
+.note-markdown-preview ol {
+    list-style-type: decimal;
+}
+
+.note-markdown-preview li {
+    @apply mb-0.5;
 }
 
 .note-markdown-preview code {
-    @apply bg-gray-700 px-1 rounded;
-    font-size: 0.65rem;
+    @apply bg-gray-700 px-1 py-0.5 rounded text-amber-300;
+    font-size: 0.8em;
+}
+
+.note-markdown-preview pre {
+    @apply bg-gray-800 rounded-lg p-3 mb-3 overflow-x-auto border border-gray-700;
+}
+
+.note-markdown-preview pre code {
+    @apply bg-transparent p-0 text-gray-300;
+    font-size: 0.8rem;
+}
+
+.note-markdown-preview blockquote {
+    @apply border-l-2 border-gray-600 pl-3 ml-0 my-2 text-gray-400 italic;
 }
 
 .note-markdown-preview a {
@@ -476,6 +529,35 @@
 
 .note-markdown-preview a:hover {
     text-decoration: underline;
+}
+
+.note-markdown-preview hr {
+    @apply border-gray-700 my-4;
+}
+
+.note-markdown-preview table {
+    @apply w-full border-collapse mb-3;
+}
+
+.note-markdown-preview th {
+    @apply bg-gray-800 px-3 py-1.5 text-left text-xs font-semibold text-gray-300 border border-gray-700;
+}
+
+.note-markdown-preview td {
+    @apply px-3 py-1.5 text-xs border border-gray-700;
+}
+
+.note-markdown-preview img {
+    @apply max-w-full rounded my-2;
+}
+
+.note-markdown-preview .mermaid-diagram {
+    @apply my-3 p-2 bg-gray-800/50 rounded-lg border border-gray-700;
+}
+
+.note-markdown-preview .mermaid-diagram svg {
+    max-width: 100%;
+    height: auto;
 }
 
 /* Feature tab active indicator */
@@ -548,6 +630,101 @@ dialog::backdrop {
 .toast.active {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════
+   Folder Tree
+   ═══════════════════════════════════════════════════ */
+.folder-tree-node {
+    @apply rounded cursor-pointer transition-colors;
+}
+
+.folder-tree-node:hover {
+    @apply bg-gray-800/50;
+}
+
+.folder-tree-selected {
+    @apply bg-gray-800 text-white;
+}
+
+.folder-tree-label {
+    @apply flex items-center gap-1.5 py-1 pr-2 text-gray-300;
+    min-height: 28px;
+}
+
+.folder-tree-toggle {
+    @apply flex-shrink-0 p-0 bg-transparent border-none text-gray-500 hover:text-white cursor-pointer;
+    line-height: 0;
+}
+
+.folder-tree-drop-target {
+    outline: 2px solid #6366f1;
+    outline-offset: -2px;
+    @apply bg-indigo-500/10 rounded;
+}
+
+.folder-tree-dragging {
+    opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════
+   Drag and Drop Indicators
+   ═══════════════════════════════════════════════════ */
+.bookmark-dragging {
+    opacity: 0.4;
+}
+
+.bookmark-drop-above {
+    border-top: 2px solid #6366f1 !important;
+}
+
+.bookmark-drop-below {
+    border-bottom: 2px solid #6366f1 !important;
+}
+
+.bookmark-item[draggable="true"] {
+    cursor: grab;
+}
+
+.bookmark-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* ═══════════════════════════════════════════════════
+   Bookmark Bar
+   ═══════════════════════════════════════════════════ */
+.bookmark-bar-item {
+    @apply flex-shrink-0;
+    max-width: 140px;
+}
+
+/* ═══════════════════════════════════════════════════
+   Context Menu
+   ═══════════════════════════════════════════════════ */
+.context-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 160px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 4px 0;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.context-menu-item {
+    @apply flex items-center gap-2 w-full px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors cursor-pointer;
+    border: none;
+    background: none;
+    text-align: left;
+}
+
+.context-menu-danger {
+    @apply text-red-400 hover:text-red-300 hover:bg-red-900/30;
+}
+
+.context-menu-separator {
+    @apply my-1 border-t border-gray-700;
 }
 
 /* File tree context menu */

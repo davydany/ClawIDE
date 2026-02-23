@@ -50,33 +50,18 @@ func (s *BookmarkStore) GetByProject(projectID string) []model.Bookmark {
 	return out
 }
 
-// GetStarredByProject returns only starred bookmarks for a project, alphabetical by name.
-func (s *BookmarkStore) GetStarredByProject(projectID string) []model.Bookmark {
+// GetRootByProject returns root-level bookmarks (FolderID == "") for a project, sorted by order then name.
+func (s *BookmarkStore) GetRootByProject(projectID string) []model.Bookmark {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	var out []model.Bookmark
 	for _, b := range s.bookmarks {
-		if b.ProjectID == projectID && b.Starred {
+		if b.ProjectID == projectID && b.FolderID == "" {
 			out = append(out, b)
 		}
 	}
-	sort.Slice(out, func(i, j int) bool {
-		return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name)
-	})
+	sortBookmarks(out)
 	return out
-}
-
-// CountStarredByProject returns the number of starred bookmarks for a project.
-func (s *BookmarkStore) CountStarredByProject(projectID string) int {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	count := 0
-	for _, b := range s.bookmarks {
-		if b.ProjectID == projectID && b.Starred {
-			count++
-		}
-	}
-	return count
 }
 
 // Search performs case-insensitive search on name and URL within a project.
@@ -155,11 +140,11 @@ func (s *BookmarkStore) save() error {
 	return os.WriteFile(s.filePath, data, 0644)
 }
 
-// sortBookmarks sorts starred first, then alphabetical by name.
+// sortBookmarks sorts by order, then alphabetical by name.
 func sortBookmarks(bookmarks []model.Bookmark) {
 	sort.Slice(bookmarks, func(i, j int) bool {
-		if bookmarks[i].Starred != bookmarks[j].Starred {
-			return bookmarks[i].Starred
+		if bookmarks[i].Order != bookmarks[j].Order {
+			return bookmarks[i].Order < bookmarks[j].Order
 		}
 		return strings.ToLower(bookmarks[i].Name) < strings.ToLower(bookmarks[j].Name)
 	})

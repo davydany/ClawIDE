@@ -119,21 +119,21 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	sessions := h.store.GetFeatureSessions(featureID)
 
-	// Collect starred projects for quick-switch panel
-	var starredProjects []model.Project
-	for _, p := range h.store.GetProjects() {
-		if p.Starred {
-			starredProjects = append(starredProjects, p)
-		}
-	}
+	// Collect starred and non-starred projects for quick-switch panel
+	starredProjects, nonStarredProjects := splitAndSortProjects(h.store.GetProjects())
 
 	features := h.store.GetFeatures(project.ID)
 
-	// Build starred bookmark views for tab bar
-	starredBookmarks := h.bookmarkStore.GetStarredByProject(project.ID)
-	var starredBookmarkViews []StarredBookmarkView
-	for _, bm := range starredBookmarks {
-		starredBookmarkViews = append(starredBookmarkViews, StarredBookmarkView{
+	// Build bar bookmark views for tab bar (project-scoped or global fallback)
+	var barBookmarks []model.Bookmark
+	if ps, err := h.getProjectBookmarkStore(project.ID); err == nil {
+		barBookmarks = ps.GetRootBookmarks()
+	} else {
+		barBookmarks = h.bookmarkStore.GetRootByProject(project.ID)
+	}
+	var barBookmarkViews []BookmarkBarView
+	for _, bm := range barBookmarks {
+		barBookmarkViews = append(barBookmarkViews, BookmarkBarView{
 			ID:         bm.ID,
 			Name:       bm.Name,
 			URL:        bm.URL,
@@ -143,18 +143,20 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"Title":             feature.Name + " - " + project.Name + " - ClawIDE",
-		"Project":           project,
-		"Feature":           feature,
-		"Features":          features,
-		"Sessions":          sessions,
-		"ActiveTab":         "terminal",
-		"StarredProjects":   starredProjects,
-		"StarredBookmarks":  starredBookmarkViews,
-		"ActiveFeatureID":   featureID,
-		"IsGitRepo":         true,
-		"SidebarPosition":   h.cfg.SidebarPosition,
-		"SidebarWidth":      h.cfg.SidebarWidth,
+		"Title":              feature.Name + " - " + project.Name + " - ClawIDE",
+		"Project":            project,
+		"Feature":            feature,
+		"Features":           features,
+		"Sessions":           sessions,
+		"ActiveTab":          "terminal",
+		"StarredProjects":    starredProjects,
+		"NonStarredProjects": nonStarredProjects,
+		"BarBookmarks":       barBookmarkViews,
+		"ActiveFeatureID":    featureID,
+		"IsGitRepo":          true,
+		"SidebarPosition":    h.cfg.SidebarPosition,
+		"SidebarWidth":       h.cfg.SidebarWidth,
+		"AIReviewCommand":    h.cfg.AIReviewCommand,
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "feature-workspace", "feature-workspace", data); err != nil {

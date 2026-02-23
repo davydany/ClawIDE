@@ -24,3 +24,6 @@
 
 {{/* Favicon */}}
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦀</text></svg>'>
+
+{{/* Analytics - only injected when HUGO_GOOGLE_ANALYTICS_ID env var is set at build time */}}
+{{ partial "analytics.html" . }}

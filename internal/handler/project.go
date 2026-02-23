@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -16,16 +17,27 @@ import (
 	"github.com/google/uuid"
 )
 
-func (h *Handlers) ListProjects(w http.ResponseWriter, r *http.Request) {
-	projects := h.store.GetProjects()
-	var starredProjects, unstarredProjects []model.Project
+// splitAndSortProjects splits projects into starred and non-starred groups,
+// each sorted by SortOrder.
+func splitAndSortProjects(projects []model.Project) (starred, nonStarred []model.Project) {
 	for _, p := range projects {
 		if p.Starred {
-			starredProjects = append(starredProjects, p)
+			starred = append(starred, p)
 		} else {
-			unstarredProjects = append(unstarredProjects, p)
+			nonStarred = append(nonStarred, p)
 		}
 	}
+	sort.Slice(starred, func(i, j int) bool {
+		return starred[i].SortOrder < starred[j].SortOrder
+	})
+	sort.Slice(nonStarred, func(i, j int) bool {
+		return nonStarred[i].SortOrder < nonStarred[j].SortOrder
+	})
+	return
+}
+
+func (h *Handlers) ListProjects(w http.ResponseWriter, r *http.Request) {
+	starredProjects, unstarredProjects := splitAndSortProjects(h.store.GetProjects())
 	data := map[string]any{
 		"Title":           "ClawIDE - Projects",
 		"StarredProjects": starredProjects,
@@ -145,20 +157,18 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Collect starred and non-starred projects for quick-switch panel
-	var starredProjects, nonStarredProjects []model.Project
-	for _, p := range h.store.GetProjects() {
-		if p.Starred {
-			starredProjects = append(starredProjects, p)
-		} else {
-			nonStarredProjects = append(nonStarredProjects, p)
-		}
-	}
+	starredProjects, nonStarredProjects := splitAndSortProjects(h.store.GetProjects())
 
-	// Build starred bookmark views for tab bar
-	starredBookmarks := h.bookmarkStore.GetStarredByProject(project.ID)
-	var starredBookmarkViews []StarredBookmarkView
-	for _, bm := range starredBookmarks {
-		starredBookmarkViews = append(starredBookmarkViews, StarredBookmarkView{
+	// Build bar bookmark views for tab bar (project-scoped or global fallback)
+	var barBookmarks []model.Bookmark
+	if ps, err := h.getProjectBookmarkStore(project.ID); err == nil {
+		barBookmarks = ps.GetRootBookmarks()
+	} else {
+		barBookmarks = h.bookmarkStore.GetRootByProject(project.ID)
+	}
+	var barBookmarkViews []BookmarkBarView
+	for _, bm := range barBookmarks {
+		barBookmarkViews = append(barBookmarkViews, BookmarkBarView{
 			ID:         bm.ID,
 			Name:       bm.Name,
 			URL:        bm.URL,
@@ -177,7 +187,7 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"CurrentBranch":      currentBranch,
 		"StarredProjects":    starredProjects,
 		"NonStarredProjects": nonStarredProjects,
-		"StarredBookmarks":   starredBookmarkViews,
+		"BarBookmarks":       barBookmarkViews,
 		"StartTour":          !h.cfg.WorkspaceTourCompleted,
 		"ActiveFeatureID":    "",
 		"SidebarPosition":    h.cfg.SidebarPosition,
@@ -207,6 +217,27 @@ func (h *Handlers) ToggleStar(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error rendering star button: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
+}
+
+func (h *Handlers) ReorderProjects(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	if len(body.IDs) == 0 {
+		http.Error(w, "ids required", http.StatusBadRequest)
+		return
+	}
+	if err := h.store.ReorderProjects(body.IDs); err != nil {
+		log.Printf("Error reordering projects: %v", err)
+		http.Error(w, "Failed to reorder projects", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("HX-Trigger", "projectStarred")
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handlers) DeleteProject(w http.ResponseWriter, r *http.Request) {

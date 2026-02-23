@@ -29,6 +29,7 @@ type Config struct {
 	SidebarWidth           int    `json:"sidebar_width"`
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
 	AISettings             *wizard.AIConfig `json:"ai_settings"`
+	AIReviewCommand        string `json:"ai_review_command"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
@@ -39,7 +40,7 @@ func DefaultConfig() *Config {
 		Host:           "0.0.0.0",
 		Port:           9800,
 		ProjectsDir:    filepath.Join(home, "projects"),
-		MaxSessions:    10,
+		MaxSessions:    20,
 		ScrollbackSize: 65536,
 		AgentCommand:   "claude",
 		LogLevel:         "info",

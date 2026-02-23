@@ -60,8 +60,21 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 
 	for k, v := range updates {
 		if allowedFields[k] {
-			// Map old claude_command key to agent_command
-			if k == "claude_command" {
+			// Validate max_sessions
+			if k == "max_sessions" {
+				if val, ok := v.(float64); ok {
+					sessions := int(val)
+					if sessions < 10 || sessions > 100 {
+						http.Error(w, "max_sessions must be between 10 and 100", http.StatusBadRequest)
+						return
+					}
+					existing[k] = sessions
+				} else {
+					http.Error(w, "max_sessions must be a number", http.StatusBadRequest)
+					return
+				}
+			} else if k == "claude_command" {
+				// Map old claude_command key to agent_command
 				existing["agent_command"] = v
 			} else {
 				existing[k] = v

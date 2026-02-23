@@ -10,6 +10,7 @@
     var projectID = '';
     var emojiPickerVisible = false;
     var emojiPickerLoaded = false;
+    var gitStatusLoaded = false;
 
     // DOM references
     var container, list, searchInput, form, nameInput, urlInput, emojiInput;
@@ -88,8 +89,48 @@
             }
         });
 
+        // Listen for git status updates
+        document.addEventListener('clawide-git-status-update', function(e) {
+            if (e.detail && e.detail.type === 'bookmarks') {
+                renderGitUI();
+            }
+        });
+
         // Initial load
         loadBookmarks();
+        loadGitStatus();
+    }
+
+    function loadGitStatus() {
+        if (!projectID || !window.ClawIDEGit) return;
+        window.ClawIDEGit.fetchStatus('bookmarks', projectID).then(function() {
+            gitStatusLoaded = true;
+            renderGitUI();
+        });
+    }
+
+    function renderGitUI() {
+        if (!window.ClawIDEGit) return;
+
+        // Render warning banner
+        var bannerEl = document.getElementById('bookmarks-git-banner');
+        if (bannerEl) {
+            bannerEl.innerHTML = window.ClawIDEGit.renderWarningBanner('bookmarks');
+        }
+
+        // Render git toolbar (refresh + commit button)
+        var toolbarEl = document.getElementById('bookmarks-git-toolbar');
+        if (toolbarEl) {
+            var status = window.ClawIDEGit.getCachedStatus('bookmarks');
+            if (status && status.is_git_repo && !status.is_ignored) {
+                toolbarEl.innerHTML = window.ClawIDEGit.renderRefreshButton('bookmarks') +
+                    window.ClawIDEGit.renderCommitButton('bookmarks');
+                toolbarEl.style.display = '';
+            } else {
+                toolbarEl.innerHTML = '';
+                toolbarEl.style.display = 'none';
+            }
+        }
     }
 
     function toggleEmojiPicker() {
@@ -409,6 +450,7 @@
     // Expose for external use
     window.ClawIDEBookmarks = {
         reload: loadBookmarks,
-        updateTabBar: updateTabBar
+        updateTabBar: updateTabBar,
+        refreshGitStatus: loadGitStatus
     };
 })();
