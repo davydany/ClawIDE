@@ -333,3 +333,56 @@ func TestValidate_TildeInOutputDir(t *testing.T) {
 	assert.Contains(t, errMap, "output_dir")
 	_ = home // used only for context
 }
+
+func TestValidate_EmptyProject_SkipsLanguageFramework(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "empty-proj",
+		EmptyProject: true,
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	assert.True(t, result.IsValid(), "empty project should not require language/framework, got errors: %v", result.Errors)
+}
+
+func TestValidate_EmptyProject_StillRequiresName(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		EmptyProject: true,
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	assert.False(t, result.IsValid())
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "project_name")
+	assert.NotContains(t, errMap, "language")
+	assert.NotContains(t, errMap, "framework")
+}
+
+func TestValidate_EmptyProject_StillRequiresOutputDir(t *testing.T) {
+	req := WizardRequest{
+		ProjectName:  "test",
+		EmptyProject: true,
+	}
+	result := Validate(req)
+	assert.False(t, result.IsValid())
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "output_dir")
+	assert.NotContains(t, errMap, "language")
+	assert.NotContains(t, errMap, "framework")
+}
+
+func TestValidate_EmptyProject_StillValidatesDocs(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "test",
+		EmptyProject: true,
+		OutputDir:    outDir,
+		DocPRD:       "/nonexistent/file.md",
+	}
+	result := Validate(req)
+	assert.False(t, result.IsValid())
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "doc_prd")
+	assert.NotContains(t, errMap, "language")
+}

@@ -620,3 +620,99 @@ func TestWizardFlow_CreateThenPollStatus(t *testing.T) {
 	assert.NotEqual(t, wizard.JobStatusPending, statusResp2.Status,
 		"job should have started after 3 seconds")
 }
+
+// ---------------------------------------------------------------------------
+// Empty Project tests
+// ---------------------------------------------------------------------------
+
+func TestCreateProjectFromWizard_EmptyProject_Valid(t *testing.T) {
+	h, _ := setupHandlerWithRenderer(t)
+
+	body := `{
+		"project_name": "empty-test-project",
+		"empty_project": true,
+		"description": "An empty project"
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/projects/wizard/create", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.CreateProjectFromWizard(w, req)
+
+	assert.Equal(t, http.StatusAccepted, w.Code)
+
+	var resp map[string]string
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+	assert.NotEmpty(t, resp["job_id"], "response should contain job_id")
+
+	// Allow async goroutine to finish before TempDir cleanup
+	time.Sleep(500 * time.Millisecond)
+}
+
+func TestCreateProjectFromWizard_EmptyProject_MissingName(t *testing.T) {
+	h, _ := setupHandlerWithRenderer(t)
+
+	body := `{
+		"empty_project": true
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/projects/wizard/create", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.CreateProjectFromWizard(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	var resp map[string]any
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+	errors, ok := resp["errors"].(map[string]any)
+	require.True(t, ok, "response should contain errors map")
+	assert.Contains(t, errors, "project_name")
+	// Should NOT contain language/framework errors for empty projects
+	assert.NotContains(t, errors, "language")
+	assert.NotContains(t, errors, "framework")
+}
+
+func TestCreateProjectFromWizard_EmptyProject_NoLanguageRequired(t *testing.T) {
+	h, _ := setupHandlerWithRenderer(t)
+
+	// Empty project should not require language/framework
+	body := `{
+		"project_name": "bare-project",
+		"empty_project": true
+	}`
+	req := httptest.NewRequest(http.MethodPost, "/projects/wizard/create", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	h.CreateProjectFromWizard(w, req)
+
+	// Should be accepted since empty projects don't need language/framework
+	assert.Equal(t, http.StatusAccepted, w.Code)
+
+	time.Sleep(500 * time.Millisecond)
+}
+
+func TestGetWizardStatus_EmptyProject_Steps(t *testing.T) {
+	h, _ := setupHandlerWithRenderer(t)
+
+	wizReq := wizard.WizardRequest{
+		ProjectName:  "empty-status-test",
+		EmptyProject: true,
+	}
+	job := h.wizardJobs.Add(wizReq)
+
+	req := httptest.NewRequest(http.MethodGet, "/projects/wizard/status/"+job.ID, nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("jobID", job.ID)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+
+	h.GetWizardStatus(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp wizardStatusResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&resp))
+	assert.Len(t, resp.Steps, 5, "empty project should have 5 steps")
+}

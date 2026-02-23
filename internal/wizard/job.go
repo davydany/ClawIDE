@@ -45,13 +45,28 @@ type Job struct {
 // NewJob creates a new pending job for the given request.
 func NewJob(req WizardRequest) *Job {
 	now := time.Now()
+	steps := defaultSteps()
+	if req.EmptyProject {
+		steps = emptyProjectSteps()
+	}
 	return &Job{
 		ID:        uuid.New().String(),
 		Request:   req,
 		Status:    JobStatusPending,
-		Steps:     defaultSteps(),
+		Steps:     steps,
 		CreatedAt: now,
 		UpdatedAt: now,
+	}
+}
+
+// emptyProjectSteps returns the steps for an empty project (no template/deps).
+func emptyProjectSteps() []JobStep {
+	return []JobStep{
+		{Name: "validate", Status: JobStatusPending},
+		{Name: "create_directory", Status: JobStatusPending},
+		{Name: "copy_docs", Status: JobStatusPending},
+		{Name: "generate_claude_md", Status: JobStatusPending},
+		{Name: "init_git", Status: JobStatusPending},
 	}
 }
 

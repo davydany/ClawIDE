@@ -408,6 +408,160 @@ func TestNewGenerator_SetsDefaultTimeout(t *testing.T) {
 	assert.NotNil(t, gen.executor)
 }
 
+// ---------------------------------------------------------------------------
+// Empty project generation
+// ---------------------------------------------------------------------------
+
+func TestGenerator_GenerateEmpty_Success(t *testing.T) {
+	gen, tracker := setupGenerator(t)
+	outDir := t.TempDir()
+
+	req := WizardRequest{
+		ProjectName:  "empty-app",
+		EmptyProject: true,
+		OutputDir:    outDir,
+		Description:  "An empty project",
+	}
+
+	job := tracker.Add(req)
+	err := gen.Generate(context.Background(), job)
+	require.NoError(t, err)
+
+	snap := job.Snapshot()
+	assert.Equal(t, JobStatusCompleted, snap.Status)
+	assert.Equal(t, filepath.Join(outDir, "empty-app"), snap.OutputDir)
+
+	projectDir := filepath.Join(outDir, "empty-app")
+
+	// Verify CLAUDE.md exists and has correct content
+	claudeContent, err := os.ReadFile(filepath.Join(projectDir, "CLAUDE.md"))
+	require.NoError(t, err)
+	assert.Contains(t, string(claudeContent), "# empty-app")
+	assert.Contains(t, string(claudeContent), "An empty project")
+
+	// Verify NO template files (no README.md, no .gitignore from templates, no requirements.in, no Dockerfile)
+	_, err = os.Stat(filepath.Join(projectDir, "README.md"))
+	assert.True(t, os.IsNotExist(err), "empty project should NOT have README.md from templates")
+
+	_, err = os.Stat(filepath.Join(projectDir, "requirements.in"))
+	assert.True(t, os.IsNotExist(err), "empty project should NOT have requirements.in")
+
+	_, err = os.Stat(filepath.Join(projectDir, "Dockerfile"))
+	assert.True(t, os.IsNotExist(err), "empty project should NOT have Dockerfile")
+
+	// Verify git was initialized
+	assertFileExists(t, filepath.Join(projectDir, ".git"))
+
+	// Verify docs/supporting/ directory exists
+	info, err := os.Stat(filepath.Join(projectDir, "docs", "supporting"))
+	require.NoError(t, err)
+	assert.True(t, info.IsDir())
+}
+
+func TestGenerator_GenerateEmpty_WithDocs(t *testing.T) {
+	gen, tracker := setupGenerator(t)
+	outDir := t.TempDir()
+
+	// Create a doc file
+	docDir := t.TempDir()
+	prdFile := filepath.Join(docDir, "prd.md")
+	require.NoError(t, os.WriteFile(prdFile, []byte("# Product Requirements\nDetails here."), 0644))
+
+	req := WizardRequest{
+		ProjectName:  "empty-with-docs",
+		EmptyProject: true,
+		OutputDir:    outDir,
+		Description:  "Empty project with docs",
+		DocPRD:       prdFile,
+	}
+
+	job := tracker.Add(req)
+	err := gen.Generate(context.Background(), job)
+	require.NoError(t, err)
+
+	projectDir := filepath.Join(outDir, "empty-with-docs")
+
+	// Verify docs were copied
+	copiedPRD := filepath.Join(projectDir, "docs", "supporting", "prd.md")
+	assertFileExists(t, copiedPRD)
+	content, err := os.ReadFile(copiedPRD)
+	require.NoError(t, err)
+	assert.Equal(t, "# Product Requirements\nDetails here.", string(content))
+
+	// Verify CLAUDE.md references the doc
+	claudeContent, err := os.ReadFile(filepath.Join(projectDir, "CLAUDE.md"))
+	require.NoError(t, err)
+	assert.Contains(t, string(claudeContent), "prd.md")
+	assert.Contains(t, string(claudeContent), "docs/supporting/")
+}
+
+func TestGenerator_GenerateEmpty_StepsTracking(t *testing.T) {
+	gen, tracker := setupGenerator(t)
+	outDir := t.TempDir()
+
+	req := WizardRequest{
+		ProjectName:  "step-track-empty",
+		EmptyProject: true,
+		OutputDir:    outDir,
+	}
+
+	job := tracker.Add(req)
+	err := gen.Generate(context.Background(), job)
+	require.NoError(t, err)
+
+	snap := job.Snapshot()
+	expectedSteps := []string{"validate", "create_directory", "copy_docs", "generate_claude_md", "init_git"}
+	require.Len(t, snap.Steps, len(expectedSteps))
+
+	for i, expected := range expectedSteps {
+		assert.Equal(t, expected, snap.Steps[i].Name)
+		assert.Equal(t, JobStatusCompleted, snap.Steps[i].Status,
+			"step %s should be completed", expected)
+	}
+}
+
+func TestGenerator_GenerateEmpty_ValidationFailure(t *testing.T) {
+	gen, tracker := setupGenerator(t)
+
+	req := WizardRequest{
+		ProjectName:  "",
+		EmptyProject: true,
+	}
+
+	job := tracker.Add(req)
+	err := gen.Generate(context.Background(), job)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "validation failed")
+
+	snap := job.Snapshot()
+	assert.Equal(t, JobStatusFailed, snap.Status)
+}
+
+func TestGenerator_GenerateEmpty_ClaudeMdNoDocs(t *testing.T) {
+	gen, tracker := setupGenerator(t)
+	outDir := t.TempDir()
+
+	req := WizardRequest{
+		ProjectName:  "no-docs-empty",
+		EmptyProject: true,
+		OutputDir:    outDir,
+		Description:  "Project without docs",
+	}
+
+	job := tracker.Add(req)
+	err := gen.Generate(context.Background(), job)
+	require.NoError(t, err)
+
+	projectDir := filepath.Join(outDir, "no-docs-empty")
+	claudeContent, err := os.ReadFile(filepath.Join(projectDir, "CLAUDE.md"))
+	require.NoError(t, err)
+
+	content := string(claudeContent)
+	assert.Contains(t, content, "# no-docs-empty")
+	assert.Contains(t, content, "Project without docs")
+	assert.NotContains(t, content, "Supporting Documentation", "should not have doc section when no docs provided")
+}
+
 func assertFileExists(t *testing.T, path string) {
 	t.Helper()
 	_, err := os.Stat(path)
