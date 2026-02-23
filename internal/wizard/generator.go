@@ -30,6 +30,10 @@ func NewGenerator(registry *TemplateRegistry, tracker *JobTracker) *Generator {
 // Generate runs the full project generation pipeline for a wizard request.
 // It tracks progress through the job system and handles rollback on failure.
 func (g *Generator) Generate(ctx context.Context, job *Job) error {
+	if job.Request.EmptyProject {
+		return g.generateEmpty(ctx, job)
+	}
+
 	req := job.Request
 	projectDir := filepath.Join(expandHomePath(req.OutputDir), strings.TrimSpace(req.ProjectName))
 
@@ -112,6 +116,98 @@ func (g *Generator) Generate(ctx context.Context, job *Job) error {
 		job.CompleteStep("install_deps", fmt.Sprintf("skipped: %v", err))
 	} else {
 		job.CompleteStep("install_deps", "dependencies installed")
+	}
+
+	job.Complete(projectDir)
+	return nil
+}
+
+// generateEmptyClaudeMd writes a basic CLAUDE.md for an empty project
+// containing only the project name, description, and doc references.
+func (g *Generator) generateEmptyClaudeMd(req WizardRequest, projectDir string) error {
+	var sb strings.Builder
+	sb.WriteString("# " + strings.TrimSpace(req.ProjectName) + "\n\n")
+
+	if desc := strings.TrimSpace(req.Description); desc != "" {
+		sb.WriteString(desc + "\n\n")
+	}
+
+	// Document references
+	hasDocs := false
+	docRefs := []struct {
+		field string
+		name  string
+	}{
+		{req.DocPRD, "prd.md"},
+		{req.DocUIUX, "uiux.md"},
+		{req.DocArchitecture, "architecture.md"},
+		{req.DocOther, "other.md"},
+	}
+
+	for _, doc := range docRefs {
+		if strings.TrimSpace(doc.field) != "" {
+			if !hasDocs {
+				sb.WriteString("## Supporting Documentation\n\n")
+				sb.WriteString("Reference documents are located in `docs/supporting/`:\n\n")
+				hasDocs = true
+			}
+			sb.WriteString("- `docs/supporting/" + doc.name + "`\n")
+		}
+	}
+
+	claudePath := filepath.Join(projectDir, "CLAUDE.md")
+	return os.WriteFile(claudePath, []byte(sb.String()), 0644)
+}
+
+// generateEmpty runs the empty project generation pipeline (no templates, no deps).
+func (g *Generator) generateEmpty(ctx context.Context, job *Job) error {
+	req := job.Request
+	projectDir := filepath.Join(expandHomePath(req.OutputDir), strings.TrimSpace(req.ProjectName))
+
+	// Step 1: Validate
+	job.StartStep("validate")
+	result := Validate(req)
+	if !result.IsValid() {
+		err := fmt.Errorf("validation failed: %v", result.Errors)
+		job.FailStep("validate", err)
+		return err
+	}
+	job.CompleteStep("validate", "all checks passed")
+
+	// Step 2: Create directory
+	job.StartStep("create_directory")
+	if err := os.MkdirAll(projectDir, 0755); err != nil {
+		err = fmt.Errorf("creating project directory: %w", err)
+		job.FailStep("create_directory", err)
+		return err
+	}
+	job.CompleteStep("create_directory", projectDir)
+
+	// Step 3: Copy supporting docs
+	job.StartStep("copy_docs")
+	if err := g.copyDocs(req, projectDir); err != nil {
+		job.FailStep("copy_docs", err)
+		g.rollback(projectDir, job)
+		return err
+	}
+	job.CompleteStep("copy_docs", "supporting docs copied")
+
+	// Step 4: Generate CLAUDE.md
+	job.StartStep("generate_claude_md")
+	if err := g.generateEmptyClaudeMd(req, projectDir); err != nil {
+		job.FailStep("generate_claude_md", err)
+		g.rollback(projectDir, job)
+		return err
+	}
+	job.CompleteStep("generate_claude_md", "CLAUDE.md generated")
+
+	// Step 5: Initialize git
+	job.StartStep("init_git")
+	if err := g.initGit(ctx, projectDir); err != nil {
+		job.FailStep("init_git", err)
+		log.Printf("Warning: git init failed for %s: %v", projectDir, err)
+	} else {
+		job.CompleteStep("init_git", "git repository initialized")
 	}
 
 	job.Complete(projectDir)

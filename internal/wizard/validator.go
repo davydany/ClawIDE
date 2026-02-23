@@ -64,21 +64,22 @@ func Validate(req WizardRequest) ValidationResult {
 		result.Add("project_name", "Project name must start with a letter or number and contain only letters, numbers, hyphens, underscores, or dots (max 64 chars)")
 	}
 
-	// Language
-	lang := strings.TrimSpace(req.Language)
-	if lang == "" {
-		result.Add("language", "Language is required")
-	} else if _, ok := FindLanguage(lang); !ok {
-		result.Add("language", fmt.Sprintf("Unsupported language: %s", lang))
-	}
+	// Language & Framework (not required for empty projects)
+	if !req.EmptyProject {
+		lang := strings.TrimSpace(req.Language)
+		if lang == "" {
+			result.Add("language", "Language is required")
+		} else if _, ok := FindLanguage(lang); !ok {
+			result.Add("language", fmt.Sprintf("Unsupported language: %s", lang))
+		}
 
-	// Framework
-	fw := strings.TrimSpace(req.Framework)
-	if fw == "" {
-		result.Add("framework", "Framework is required")
-	} else if lang != "" {
-		if _, ok := FindFramework(lang, fw); !ok {
-			result.Add("framework", fmt.Sprintf("Unsupported framework %q for language %q", fw, lang))
+		fw := strings.TrimSpace(req.Framework)
+		if fw == "" {
+			result.Add("framework", "Framework is required")
+		} else if lang != "" {
+			if _, ok := FindFramework(lang, fw); !ok {
+				result.Add("framework", fmt.Sprintf("Unsupported framework %q for language %q", fw, lang))
+			}
 		}
 	}
 

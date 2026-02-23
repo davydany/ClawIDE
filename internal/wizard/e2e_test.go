@@ -581,3 +581,166 @@ func TestE2E_JobStepProgression(t *testing.T) {
 			"step %s should have an end time", expected)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Empty Project E2E Tests
+// ---------------------------------------------------------------------------
+
+func TestE2E_EmptyProject_FullFlow(t *testing.T) {
+	gen, tracker := setupE2E(t)
+	outputDir := t.TempDir()
+
+	prdContent := "# Product Requirements\n\nThis is the PRD for the empty project."
+	prdPath := createDocFile(t, "prd.md", prdContent)
+
+	req := WizardRequest{
+		ProjectName:  "empty-e2e",
+		EmptyProject: true,
+		OutputDir:    outputDir,
+		Description:  "An empty project for E2E testing",
+		DocPRD:       prdPath,
+	}
+
+	job := tracker.Add(req)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	err := gen.Generate(ctx, job)
+	require.NoError(t, err, "empty project generation should succeed")
+
+	projectDir := filepath.Join(outputDir, "empty-e2e")
+
+	// --- Verify job status ---
+	snap := job.Snapshot()
+	assert.Equal(t, JobStatusCompleted, snap.Status, "job status should be completed")
+	assert.Equal(t, projectDir, snap.OutputDir, "output dir should match")
+
+	// --- Verify 5 steps, all completed ---
+	expectedSteps := []string{
+		"validate",
+		"create_directory",
+		"copy_docs",
+		"generate_claude_md",
+		"init_git",
+	}
+	require.Len(t, snap.Steps, len(expectedSteps), "empty project should have %d steps", len(expectedSteps))
+	for i, expected := range expectedSteps {
+		assert.Equal(t, expected, snap.Steps[i].Name, "step %d name mismatch", i)
+		assert.Equal(t, JobStatusCompleted, snap.Steps[i].Status,
+			"step %s should be completed", expected)
+	}
+
+	// --- Verify directory structure ---
+	e2eAssertDir(t, projectDir)
+	e2eAssertDir(t, filepath.Join(projectDir, "docs", "supporting"))
+
+	// --- Verify CLAUDE.md ---
+	claudeContent := e2eReadFile(t, filepath.Join(projectDir, "CLAUDE.md"))
+	assert.Contains(t, claudeContent, "# empty-e2e", "CLAUDE.md should have project name as title")
+	assert.Contains(t, claudeContent, "An empty project for E2E testing", "CLAUDE.md should contain description")
+	assert.Contains(t, claudeContent, "prd.md", "CLAUDE.md should reference PRD doc")
+	assert.Contains(t, claudeContent, "docs/supporting/", "CLAUDE.md should reference docs directory")
+
+	// --- Verify NO template files ---
+	for _, templateFile := range []string{"README.md", ".gitignore", "requirements.in", "Dockerfile", "package.json"} {
+		_, err := os.Stat(filepath.Join(projectDir, templateFile))
+		assert.True(t, os.IsNotExist(err),
+			"empty project should NOT have template file %s", templateFile)
+	}
+
+	// --- Verify NO files/ subdirectory from templates ---
+	_, err = os.Stat(filepath.Join(projectDir, "files"))
+	assert.True(t, os.IsNotExist(err), "empty project should NOT have files/ subdirectory")
+
+	// --- Verify supporting docs copied ---
+	prdDest := filepath.Join(projectDir, "docs", "supporting", "prd.md")
+	e2eAssertContains(t, prdDest, "Product Requirements")
+
+	// --- Verify git was initialized ---
+	e2eAssertDir(t, filepath.Join(projectDir, ".git"))
+}
+
+func TestE2E_EmptyProject_NoDocs(t *testing.T) {
+	gen, tracker := setupE2E(t)
+	outputDir := t.TempDir()
+
+	req := WizardRequest{
+		ProjectName:  "bare-empty",
+		EmptyProject: true,
+		OutputDir:    outputDir,
+		Description:  "Bare empty project",
+	}
+
+	job := tracker.Add(req)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	err := gen.Generate(ctx, job)
+	require.NoError(t, err, "bare empty project should succeed")
+
+	projectDir := filepath.Join(outputDir, "bare-empty")
+
+	// --- Verify only CLAUDE.md, docs/supporting/, and .git exist ---
+	e2eAssertDir(t, projectDir)
+	e2eReadFile(t, filepath.Join(projectDir, "CLAUDE.md"))
+	e2eAssertDir(t, filepath.Join(projectDir, "docs", "supporting"))
+	e2eAssertDir(t, filepath.Join(projectDir, ".git"))
+
+	// --- CLAUDE.md should NOT have doc references section ---
+	claudeContent := e2eReadFile(t, filepath.Join(projectDir, "CLAUDE.md"))
+	assert.Contains(t, claudeContent, "# bare-empty")
+	assert.Contains(t, claudeContent, "Bare empty project")
+	assert.NotContains(t, claudeContent, "Supporting Documentation",
+		"CLAUDE.md should not have doc section when no docs provided")
+
+	// --- No doc files should exist ---
+	for _, docFile := range []string{"prd.md", "uiux.md", "architecture.md", "other.md"} {
+		_, err := os.Stat(filepath.Join(projectDir, "docs", "supporting", docFile))
+		assert.True(t, os.IsNotExist(err),
+			"%s should not exist when no docs provided", docFile)
+	}
+}
+
+func TestE2E_EmptyProject_AllFourDocs(t *testing.T) {
+	gen, tracker := setupE2E(t)
+	outputDir := t.TempDir()
+
+	prdPath := createDocFile(t, "prd.md", "# PRD\nEmpty project PRD.")
+	uiuxPath := createDocFile(t, "uiux.md", "# UI/UX\nEmpty project design.")
+	archPath := createDocFile(t, "arch.md", "# Architecture\nEmpty project arch.")
+	otherPath := createDocFile(t, "other.md", "# Other\nMisc docs.")
+
+	req := WizardRequest{
+		ProjectName:     "empty-all-docs",
+		EmptyProject:    true,
+		OutputDir:       outputDir,
+		Description:     "Empty project with all docs",
+		DocPRD:          prdPath,
+		DocUIUX:         uiuxPath,
+		DocArchitecture: archPath,
+		DocOther:        otherPath,
+	}
+
+	job := tracker.Add(req)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	err := gen.Generate(ctx, job)
+	require.NoError(t, err, "empty project with all docs should succeed")
+
+	projectDir := filepath.Join(outputDir, "empty-all-docs")
+	docsDir := filepath.Join(projectDir, "docs", "supporting")
+
+	// All 4 docs should be copied
+	e2eAssertContains(t, filepath.Join(docsDir, "prd.md"), "Empty project PRD")
+	e2eAssertContains(t, filepath.Join(docsDir, "uiux.md"), "Empty project design")
+	e2eAssertContains(t, filepath.Join(docsDir, "architecture.md"), "Empty project arch")
+	e2eAssertContains(t, filepath.Join(docsDir, "other.md"), "Misc docs")
+
+	// CLAUDE.md should reference all 4
+	claudeContent := e2eReadFile(t, filepath.Join(projectDir, "CLAUDE.md"))
+	assert.Contains(t, claudeContent, "prd.md")
+	assert.Contains(t, claudeContent, "uiux.md")
+	assert.Contains(t, claudeContent, "architecture.md")
+	assert.Contains(t, claudeContent, "other.md")
+}

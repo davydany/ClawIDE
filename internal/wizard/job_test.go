@@ -145,3 +145,31 @@ func TestJobTracker_ConcurrentAccess(t *testing.T) {
 
 	assert.Len(t, tracker.List(), 50)
 }
+
+func TestNewJob_EmptyProject(t *testing.T) {
+	req := WizardRequest{
+		ProjectName:  "empty-test",
+		EmptyProject: true,
+	}
+	job := NewJob(req)
+
+	assert.NotEmpty(t, job.ID)
+	assert.Equal(t, JobStatusPending, job.Status)
+	assert.Len(t, job.Steps, 5, "empty project should have 5 steps")
+
+	expectedSteps := []string{"validate", "create_directory", "copy_docs", "generate_claude_md", "init_git"}
+	for i, expected := range expectedSteps {
+		assert.Equal(t, expected, job.Steps[i].Name, "step %d should be %s", i, expected)
+	}
+}
+
+func TestNewJob_TemplateProject(t *testing.T) {
+	req := WizardRequest{
+		ProjectName:  "template-test",
+		Language:     "python",
+		Framework:    "django",
+		EmptyProject: false,
+	}
+	job := NewJob(req)
+	assert.Len(t, job.Steps, 7, "template project should have 7 steps")
+}

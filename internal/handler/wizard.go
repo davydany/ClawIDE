@@ -58,6 +58,7 @@ type createWizardRequest struct {
 	Framework       string  `json:"framework"`
 	OutputDir       string  `json:"output_dir"`
 	Description     string  `json:"description"`
+	EmptyProject    bool    `json:"empty_project"`
 	DocPRD          string  `json:"doc_prd"`
 	DocUIUX         string  `json:"doc_uiux"`
 	DocArchitecture string  `json:"doc_architecture"`
@@ -107,6 +108,7 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 			ProjectName:     r.FormValue("project_name"),
 			Language:        r.FormValue("language"),
 			Framework:       r.FormValue("framework"),
+			EmptyProject:    r.FormValue("empty_project") == "true",
 			OutputDir:       r.FormValue("output_dir"),
 			Description:     r.FormValue("description"),
 			DocPRD:          r.FormValue("doc_prd"),
@@ -142,6 +144,7 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 		ProjectName:     body.ProjectName,
 		Language:        body.Language,
 		Framework:       body.Framework,
+		EmptyProject:    body.EmptyProject,
 		OutputDir:       body.OutputDir,
 		Description:     body.Description,
 		DocPRD:          body.DocPRD,
@@ -275,6 +278,7 @@ func (h *Handlers) ValidateWizardField(w http.ResponseWriter, r *http.Request) {
 		ProjectName:     body.ProjectName,
 		Language:        body.Language,
 		Framework:       body.Framework,
+		EmptyProject:    body.EmptyProject,
 		OutputDir:       body.OutputDir,
 		Description:     body.Description,
 		DocPRD:          body.DocPRD,

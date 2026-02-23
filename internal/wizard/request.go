@@ -9,7 +9,8 @@ type WizardRequest struct {
 	OutputDir   string `json:"output_dir"`
 
 	// Optional fields
-	Description string `json:"description"`
+	Description  string `json:"description"`
+	EmptyProject bool   `json:"empty_project"` // If true, skip language/framework/template generation
 
 	// Supporting docs (PRD, UI/UX, Architecture, Other)
 	// These are file paths to uploaded documents that will be
