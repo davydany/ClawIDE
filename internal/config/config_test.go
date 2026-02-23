@@ -18,7 +18,7 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(t, "0.0.0.0", cfg.Host)
 	assert.Equal(t, 9800, cfg.Port)
 	assert.Equal(t, filepath.Join(home, "projects"), cfg.ProjectsDir)
-	assert.Equal(t, 10, cfg.MaxSessions)
+	assert.Equal(t, 20, cfg.MaxSessions)
 	assert.Equal(t, 65536, cfg.ScrollbackSize)
 	assert.Equal(t, "claude", cfg.AgentCommand)
 	assert.Equal(t, "info", cfg.LogLevel)
@@ -202,7 +202,7 @@ func TestLoadEnv(t *testing.T) {
 		cfg.loadEnv()
 
 		assert.Equal(t, 9800, cfg.Port)
-		assert.Equal(t, 10, cfg.MaxSessions)
+		assert.Equal(t, 20, cfg.MaxSessions)
 	})
 }
 

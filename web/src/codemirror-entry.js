@@ -13,6 +13,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { yaml } from '@codemirror/lang-yaml';
 import { sql } from '@codemirror/lang-sql';
 import { search, openSearchPanel } from '@codemirror/search';
+import { MergeView } from '@codemirror/merge';
 
 // Map file extensions to language support
 var extMap = {
@@ -237,6 +238,41 @@ function destroyEditor(view) {
     }
 }
 
+// --- MergeView support ---
+
+function createMergeView(container, docA, docB, filename, options) {
+    return getLanguageExtension(filename || '').then(function(langExt) {
+        var readOnlyBase = [
+            basicSetup,
+            oneDark,
+            search(),
+            EditorState.readOnly.of(true),
+            EditorView.editable.of(false),
+            EditorView.theme({
+                '&': { height: '100%' },
+                '.cm-scroller': { overflow: 'auto' },
+                '.cm-content': { fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' },
+            }),
+        ];
+        var mv = new MergeView({
+            a: { doc: docA || '', extensions: readOnlyBase.concat(langExt) },
+            b: { doc: docB || '', extensions: readOnlyBase.concat(langExt) },
+            parent: container,
+            orientation: (options && options.orientation) || 'a-b',
+            highlightChanges: true,
+            gutter: true,
+            collapseUnchanged: { margin: 3, minSize: 4 },
+        });
+        return mv;
+    });
+}
+
+function destroyMergeView(mv) {
+    if (mv) {
+        mv.destroy();
+    }
+}
+
 // Expose to global scope
 window.ClawIDECodeMirror = {
     createEditor: createEditor,
@@ -245,4 +281,6 @@ window.ClawIDECodeMirror = {
     destroyEditor: destroyEditor,
     toggleWordWrap: toggleWordWrap,
     getWordWrapState: getWordWrapState,
+    createMergeView: createMergeView,
+    destroyMergeView: destroyMergeView,
 };

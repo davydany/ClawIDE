@@ -8,6 +8,7 @@ type Project struct {
 	Path      string    `json:"path"`
 	Starred   bool      `json:"starred"`
 	Color     string    `json:"color"`
+	SortOrder int       `json:"sort_order"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

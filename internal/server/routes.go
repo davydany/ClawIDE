@@ -55,6 +55,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Route("/projects", func(r chi.Router) {
 		r.Get("/", s.handlers.ListProjects)
 		r.Post("/", s.handlers.CreateProject)
+		r.Post("/reorder", s.handlers.ReorderProjects)
 
 		// Wizard routes (before /{id} to avoid conflict)
 		r.Get("/wizard", s.handlers.ShowWizard)
@@ -133,6 +134,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Post("/api/commit", s.handlers.FeatureGitCommit)
 				r.Post("/api/merge", s.handlers.FeatureMerge)
 				r.Post("/api/pull-main", s.handlers.FeaturePullMain)
+
+				// Feature merge review
+				r.Get("/api/review/files", s.handlers.FeatureReviewFiles)
+				r.Get("/api/review/file-content", s.handlers.FeatureReviewFileContent)
+				r.Get("/api/review/annotations", s.handlers.FeatureReviewAnnotations)
 			})
 		})
 	})
@@ -155,6 +161,19 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Post("/", s.handlers.CreateNote)
 		r.Put("/{noteID}", s.handlers.UpdateNote)
 		r.Delete("/{noteID}", s.handlers.DeleteNote)
+		r.Post("/reorder", s.handlers.ReorderNotes)
+
+		// Note git operations
+		r.Get("/git-status", s.handlers.NoteGitStatus)
+		r.Post("/commit", s.handlers.NoteGitCommit)
+
+		// Note folders
+		r.Route("/folders", func(r chi.Router) {
+			r.Get("/", s.handlers.ListNoteFolders)
+			r.Post("/", s.handlers.CreateNoteFolder)
+			r.Put("/{folderID}", s.handlers.UpdateNoteFolder)
+			r.Delete("/{folderID}", s.handlers.DeleteNoteFolder)
+		})
 	})
 
 	// Bookmarks API (project-scoped via query param)
@@ -163,7 +182,19 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Post("/", s.handlers.CreateBookmark)
 		r.Put("/{bookmarkID}", s.handlers.UpdateBookmark)
 		r.Delete("/{bookmarkID}", s.handlers.DeleteBookmark)
-		r.Patch("/{bookmarkID}/star", s.handlers.ToggleBookmarkStar)
+		r.Post("/reorder", s.handlers.ReorderBookmarks)
+
+		// Bookmark git operations
+		r.Get("/git-status", s.handlers.BookmarkGitStatus)
+		r.Post("/commit", s.handlers.BookmarkGitCommit)
+
+		// Bookmark folders
+		r.Route("/folders", func(r chi.Router) {
+			r.Get("/", s.handlers.ListBookmarkFolders)
+			r.Post("/", s.handlers.CreateBookmarkFolder)
+			r.Put("/{folderID}", s.handlers.UpdateBookmarkFolder)
+			r.Delete("/{folderID}", s.handlers.DeleteBookmarkFolder)
+		})
 	})
 
 	// Voice Box API (global, not project-scoped)

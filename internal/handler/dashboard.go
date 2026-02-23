@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
@@ -56,14 +55,7 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var starredProjects, unstarredProjects []model.Project
-	for _, p := range projects {
-		if p.Starred {
-			starredProjects = append(starredProjects, p)
-		} else {
-			unstarredProjects = append(unstarredProjects, p)
-		}
-	}
+	starredProjects, unstarredProjects := splitAndSortProjects(projects)
 
 	data := map[string]any{
 		"Title":           "ClawIDE - Dashboard",
