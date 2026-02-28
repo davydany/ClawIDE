@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/color"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -139,6 +140,39 @@ func (h *Handlers) UpdateProjectColor(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error updating project color: %v", err)
 		http.Error(w, "failed to update color", http.StatusInternalServerError)
 		return
+	}
+
+	// Regenerate feature shades from the new project color.
+	features := h.store.GetFeatures(project.ID)
+	if len(features) > 0 {
+		if body.Color == "" {
+			// Clear all feature colors when project color is cleared.
+			for _, f := range features {
+				if f.Color != "" {
+					f.Color = ""
+					f.UpdatedAt = time.Now()
+					if err := h.store.UpdateFeature(f); err != nil {
+						log.Printf("Error clearing feature color %s: %v", f.ID, err)
+					}
+				}
+			}
+		} else {
+			// Assign fresh shades to each feature sequentially.
+			var usedColors []string
+			for _, f := range features {
+				shade, err := color.PickUnusedShade(body.Color, usedColors, 8)
+				if err != nil {
+					log.Printf("Error generating shade for feature %s: %v", f.ID, err)
+					continue
+				}
+				f.Color = shade
+				f.UpdatedAt = time.Now()
+				if err := h.store.UpdateFeature(f); err != nil {
+					log.Printf("Error updating feature shade %s: %v", f.ID, err)
+				}
+				usedColors = append(usedColors, shade)
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
