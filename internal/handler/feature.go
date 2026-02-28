@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/color"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -80,6 +82,20 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt:    now,
 	}
 
+	// Auto-assign a shade of the project color if the project has one.
+	if project.Color != "" {
+		existingFeatures := h.store.GetFeatures(project.ID)
+		var usedColors []string
+		for _, ef := range existingFeatures {
+			if ef.Color != "" {
+				usedColors = append(usedColors, ef.Color)
+			}
+		}
+		if shade, err := color.PickUnusedShade(project.Color, usedColors, 8); err == nil {
+			feature.Color = shade
+		}
+	}
+
 	if err := h.store.AddFeature(feature); err != nil {
 		log.Printf("Error storing feature: %v", err)
 		http.Error(w, "failed to store feature", http.StatusInternalServerError)
@@ -103,6 +119,52 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/projects/"+project.ID+"/features/"+featureID+"/", http.StatusSeeOther)
+}
+
+// UpdateFeatureColor updates the color of a feature.
+// PATCH /projects/{id}/features/{fid}/color
+func (h *Handlers) UpdateFeatureColor(w http.ResponseWriter, r *http.Request) {
+	featureID := chi.URLParam(r, "fid")
+
+	feature, ok := h.store.GetFeature(featureID)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+
+	var body struct {
+		Color string `json:"color"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validate hex color format if non-empty
+	if body.Color != "" {
+		if len(body.Color) != 7 || body.Color[0] != '#' {
+			http.Error(w, "color must be a hex value like #ff0000 or empty to clear", http.StatusBadRequest)
+			return
+		}
+		for _, c := range body.Color[1:] {
+			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+				http.Error(w, "color must be a valid hex value", http.StatusBadRequest)
+				return
+			}
+		}
+	}
+
+	feature.Color = body.Color
+	feature.UpdatedAt = time.Now()
+
+	if err := h.store.UpdateFeature(feature); err != nil {
+		log.Printf("Error updating feature color: %v", err)
+		http.Error(w, "failed to update color", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(feature)
 }
 
 // FeatureWorkspace renders the feature workspace page.

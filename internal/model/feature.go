@@ -12,6 +12,7 @@ type Feature struct {
 	BranchName   string    `json:"branch_name"`
 	BaseBranch   string    `json:"base_branch"`
 	WorktreePath string    `json:"worktree_path"`
+	Color        string    `json:"color"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

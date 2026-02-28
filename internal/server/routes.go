@@ -119,6 +119,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Route("/features/{fid}", func(r chi.Router) {
 				r.Get("/", s.handlers.FeatureWorkspace)
 				r.Delete("/", s.handlers.DeleteFeature)
+				r.Patch("/color", s.handlers.UpdateFeatureColor)
 
 				// Feature sessions
 				r.Post("/sessions/", s.handlers.CreateFeatureSession)
