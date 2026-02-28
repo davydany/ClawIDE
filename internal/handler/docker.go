@@ -277,3 +277,83 @@ func (h *Handlers) DockerLogsWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+// DockerBuildWS is a WebSocket handler that streams Docker Compose build output
+// for a specific service. The project ID and service name are extracted from the
+// URL path parameters (defined in routes.go as /ws/docker/{projectID}/build/{svc}).
+func (h *Handlers) DockerBuildWS(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "projectID")
+	svc := chi.URLParam(r, "svc")
+
+	if projectID == "" || svc == "" {
+		http.Error(w, "project ID and service name required", http.StatusBadRequest)
+		return
+	}
+
+	project, ok := h.store.GetProject(projectID)
+	if !ok {
+		http.Error(w, "project not found", http.StatusNotFound)
+		return
+	}
+
+	if !docker.HasComposeFile(project.Path) {
+		http.Error(w, "No compose file found", http.StatusBadRequest)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("DockerBuildWS upgrade failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	// Drain reads from the client side. When the connection closes, cancel
+	// the context to stop the build process.
+	go func() {
+		defer cancel()
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+
+	reader, err := docker.BuildStream(ctx, project.Path, svc)
+	if err != nil {
+		log.Printf("DockerBuildWS stream error for %s/%s: %v", projectID, svc, err)
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
+		return
+	}
+
+	// Stream build output line by line to the WebSocket client.
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(line+"\n")); err != nil {
+			reader.Close()
+			return
+		}
+	}
+
+	if err := scanner.Err(); err != nil && ctx.Err() == nil {
+		log.Printf("DockerBuildWS scanner error for %s/%s: %v", projectID, svc, err)
+	}
+
+	// Close the reader to wait on the process and capture the exit status.
+	reader.Close()
+
+	// If the client disconnected, no point sending a status message.
+	if ctx.Err() != nil {
+		return
+	}
+
+	if reader.WaitErr() != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("[Build failed]\n"))
+	} else {
+		conn.WriteMessage(websocket.TextMessage, []byte("[Build complete]\n"))
+	}
+}

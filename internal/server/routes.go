@@ -238,6 +238,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// WebSocket endpoints (no project middleware, session ID is in URL)
 	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)
+	r.Get("/ws/docker/{projectID}/build/{svc}", s.handlers.DockerBuildWS)
 
 	return r
 }
