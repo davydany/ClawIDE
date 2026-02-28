@@ -95,6 +95,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/mkdir", s.handlers.Mkdir)
 
 			// Docker API
+			r.Get("/api/docker/status", s.handlers.DockerStatus)
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
 			r.Post("/api/docker/up", s.handlers.DockerUp)
 			r.Post("/api/docker/down", s.handlers.DockerDown)
@@ -110,9 +111,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/checkout", s.handlers.CheckoutBranch)
 			r.Post("/api/branches", s.handlers.CreateBranch)
 			r.Post("/api/pull-main", s.handlers.PullMain)
-
-			// Port detection
-			r.Get("/api/ports", s.handlers.DetectPorts)
 
 			// Feature routes
 			r.Post("/features/", s.handlers.CreateFeature)
