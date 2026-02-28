@@ -1,8 +1,10 @@
 package server
 
 import (
+	"io"
 	"io/fs"
 	"net/http"
+	"time"
 
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/web"
@@ -22,6 +24,19 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// Static files
 	staticFS, _ := fs.Sub(web.StaticFS, "static")
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+
+	// Favicon at root — browsers request /favicon.ico automatically
+	r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		f, err := staticFS.Open("favicon.ico")
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		defer f.Close()
+		w.Header().Set("Content-Type", "image/x-icon")
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+		http.ServeContent(w, r, "favicon.ico", time.Time{}, f.(io.ReadSeeker))
+	})
 
 	// Version
 	r.Get("/api/version", s.handlers.Version)
@@ -95,6 +110,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/mkdir", s.handlers.Mkdir)
 
 			// Docker API
+			r.Get("/api/docker/status", s.handlers.DockerStatus)
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
 			r.Post("/api/docker/up", s.handlers.DockerUp)
 			r.Post("/api/docker/down", s.handlers.DockerDown)
@@ -110,9 +126,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/checkout", s.handlers.CheckoutBranch)
 			r.Post("/api/branches", s.handlers.CreateBranch)
 			r.Post("/api/pull-main", s.handlers.PullMain)
-
-			// Port detection
-			r.Get("/api/ports", s.handlers.DetectPorts)
 
 			// Feature routes
 			r.Post("/features/", s.handlers.CreateFeature)

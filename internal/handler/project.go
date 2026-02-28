@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/color"
+	"github.com/davydany/ClawIDE/internal/docker"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -222,6 +223,7 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"StarredProjects":    starredProjects,
 		"NonStarredProjects": nonStarredProjects,
 		"BarBookmarks":       barBookmarkViews,
+		"WebAppURL":          docker.FindWebAppURL(project.Path),
 		"StartTour":          !h.cfg.WorkspaceTourCompleted,
 		"ActiveFeatureID":    "",
 		"SidebarPosition":    h.cfg.SidebarPosition,

@@ -107,16 +107,28 @@ func parsePortString(service, raw string) PortMapping {
 // ComposeServiceDetail is a JSON-friendly normalized representation of a
 // Docker Compose service with all fields as clean types.
 type ComposeServiceDetail struct {
-	Name          string       `json:"name"`
-	Image         string       `json:"image,omitempty"`
-	Build         string       `json:"build,omitempty"`
-	Ports         []PortDetail `json:"ports"`
-	Volumes       []string     `json:"volumes"`
-	Environment   []string     `json:"environment"`
-	DependsOn     []string     `json:"depends_on"`
-	Command       string       `json:"command,omitempty"`
-	ContainerName string       `json:"container_name,omitempty"`
-	Restart       string       `json:"restart,omitempty"`
+	Name          string             `json:"name"`
+	Image         string             `json:"image,omitempty"`
+	Build         string             `json:"build,omitempty"`
+	Ports         []PortDetail       `json:"ports"`
+	Volumes       []string           `json:"volumes"`
+	Environment   []string           `json:"environment"`
+	DependsOn     []string           `json:"depends_on"`
+	Command       string             `json:"command,omitempty"`
+	ContainerName string             `json:"container_name,omitempty"`
+	Restart       string             `json:"restart,omitempty"`
+	Healthcheck   *HealthcheckDetail `json:"healthcheck,omitempty"`
+}
+
+// HealthcheckDetail is a JSON-friendly representation of a Docker Compose
+// healthcheck configuration.
+type HealthcheckDetail struct {
+	Test        string `json:"test,omitempty"`
+	Interval    string `json:"interval,omitempty"`
+	Timeout     string `json:"timeout,omitempty"`
+	Retries     int    `json:"retries,omitempty"`
+	StartPeriod string `json:"start_period,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
 }
 
 // PortDetail represents a single port binding with host, container, and protocol.
@@ -145,6 +157,7 @@ func ExtractServiceDetails(cfg *model.ComposeConfig) []ComposeServiceDetail {
 			Command:       normalizeCommand(svc.Command),
 			ContainerName: svc.ContainerName,
 			Restart:       svc.Restart,
+			Healthcheck:   normalizeHealthcheck(svc.Healthcheck),
 		}
 
 		// Normalize ports
@@ -251,6 +264,45 @@ func normalizeDependsOn(v any) []string {
 		return out
 	}
 	return nil
+}
+
+// FindWebAppURL parses the compose file in projectPath and looks for a service
+// whose name contains "web" (case-insensitive). If found, it returns
+// "http://localhost:{hostPort}" using the first host port of that service.
+// Returns an empty string if no matching service or port is found.
+func FindWebAppURL(projectPath string) string {
+	cfg, err := ParseComposeFile(projectPath)
+	if err != nil {
+		return ""
+	}
+	for name, svc := range cfg.Services {
+		if !strings.Contains(strings.ToLower(name), "web") {
+			continue
+		}
+		for _, portStr := range svc.Ports {
+			pm := parsePortString(name, portStr)
+			if pm.HostPort != "" {
+				return "http://localhost:" + pm.HostPort
+			}
+		}
+	}
+	return ""
+}
+
+// normalizeHealthcheck converts a HealthcheckConfig from the YAML model into a
+// JSON-friendly HealthcheckDetail. Returns nil when no healthcheck is defined.
+func normalizeHealthcheck(hc *model.HealthcheckConfig) *HealthcheckDetail {
+	if hc == nil {
+		return nil
+	}
+	return &HealthcheckDetail{
+		Test:        normalizeCommand(hc.Test),
+		Interval:    hc.Interval,
+		Timeout:     hc.Timeout,
+		Retries:     hc.Retries,
+		StartPeriod: hc.StartPeriod,
+		Disabled:    hc.Disable,
+	}
 }
 
 // normalizeCommand converts the YAML command field (nil, string, or string
