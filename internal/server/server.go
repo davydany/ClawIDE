@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/banner"
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/handler"
 	"github.com/davydany/ClawIDE/internal/pty"
@@ -152,7 +153,7 @@ func recoverTmuxSessions(st *store.Store) {
 }
 
 func (s *Server) Start() error {
-	log.Printf("Starting %s on http://%s", version.String(), s.cfg.Addr())
+	banner.Print(s.cfg.Host, s.cfg.Port, version.String())
 	if err := s.http.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server error: %w", err)
 	}
