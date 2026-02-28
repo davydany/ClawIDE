@@ -227,6 +227,48 @@ func TestNormalizeCommand(t *testing.T) {
 	}
 }
 
+func TestNormalizeHealthcheck(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		assert.Nil(t, normalizeHealthcheck(nil))
+	})
+
+	t.Run("full config with string test", func(t *testing.T) {
+		hc := &model.HealthcheckConfig{
+			Test:        "CMD-SHELL pg_isready -U postgres",
+			Interval:    "10s",
+			Timeout:     "5s",
+			Retries:     5,
+			StartPeriod: "30s",
+		}
+		got := normalizeHealthcheck(hc)
+		require.NotNil(t, got)
+		assert.Equal(t, "CMD-SHELL pg_isready -U postgres", got.Test)
+		assert.Equal(t, "10s", got.Interval)
+		assert.Equal(t, "5s", got.Timeout)
+		assert.Equal(t, 5, got.Retries)
+		assert.Equal(t, "30s", got.StartPeriod)
+		assert.False(t, got.Disabled)
+	})
+
+	t.Run("list test command", func(t *testing.T) {
+		hc := &model.HealthcheckConfig{
+			Test: []any{"CMD", "pg_isready", "-U", "postgres"},
+		}
+		got := normalizeHealthcheck(hc)
+		require.NotNil(t, got)
+		assert.Equal(t, "CMD pg_isready -U postgres", got.Test)
+	})
+
+	t.Run("disabled", func(t *testing.T) {
+		hc := &model.HealthcheckConfig{
+			Disable: true,
+		}
+		got := normalizeHealthcheck(hc)
+		require.NotNil(t, got)
+		assert.True(t, got.Disabled)
+	})
+}
+
 func TestExtractServiceDetails(t *testing.T) {
 	t.Run("full config", func(t *testing.T) {
 		cfg := &model.ComposeConfig{
@@ -276,6 +318,39 @@ func TestExtractServiceDetails(t *testing.T) {
 		cfg := &model.ComposeConfig{Services: map[string]model.ComposeService{}}
 		details := ExtractServiceDetails(cfg)
 		assert.Empty(t, details)
+	})
+
+	t.Run("healthcheck included in details", func(t *testing.T) {
+		cfg := &model.ComposeConfig{
+			Services: map[string]model.ComposeService{
+				"db": {
+					Image: "postgres:15",
+					Healthcheck: &model.HealthcheckConfig{
+						Test:     []any{"CMD-SHELL", "pg_isready -U postgres"},
+						Interval: "10s",
+						Timeout:  "5s",
+						Retries:  3,
+					},
+				},
+			},
+		}
+		details := ExtractServiceDetails(cfg)
+		require.Len(t, details, 1)
+		require.NotNil(t, details[0].Healthcheck)
+		assert.Equal(t, "CMD-SHELL pg_isready -U postgres", details[0].Healthcheck.Test)
+		assert.Equal(t, "10s", details[0].Healthcheck.Interval)
+		assert.Equal(t, 3, details[0].Healthcheck.Retries)
+	})
+
+	t.Run("no healthcheck yields nil", func(t *testing.T) {
+		cfg := &model.ComposeConfig{
+			Services: map[string]model.ComposeService{
+				"web": {Image: "nginx"},
+			},
+		}
+		details := ExtractServiceDetails(cfg)
+		require.Len(t, details, 1)
+		assert.Nil(t, details[0].Healthcheck)
 	})
 
 	t.Run("partial fields produce empty slices not nil", func(t *testing.T) {
