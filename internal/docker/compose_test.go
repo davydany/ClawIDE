@@ -34,8 +34,14 @@ func TestHasComposeFile(t *testing.T) {
 func TestToDockerServices(t *testing.T) {
 	t.Run("converts correctly", func(t *testing.T) {
 		services := []Service{
-			{Name: "web", Status: "running", State: "running", Ports: "0.0.0.0:8080->80/tcp"},
-			{Name: "db", Status: "running", State: "running", Ports: "0.0.0.0:5432->5432/tcp"},
+			{
+				Name: "web", Status: "running", State: "running",
+				Publishers: []Publisher{{URL: "0.0.0.0", TargetPort: 80, PublishedPort: 8080, Protocol: "tcp"}},
+			},
+			{
+				Name: "db", Status: "running", State: "running",
+				Publishers: []Publisher{{URL: "0.0.0.0", TargetPort: 5432, PublishedPort: 5432, Protocol: "tcp"}},
+			},
 		}
 
 		result := ToDockerServices(services)
@@ -57,5 +63,28 @@ func TestToDockerServices(t *testing.T) {
 	t.Run("empty input", func(t *testing.T) {
 		result := ToDockerServices([]Service{})
 		assert.Empty(t, result)
+	})
+
+	t.Run("formats publishers with no host binding", func(t *testing.T) {
+		services := []Service{
+			{
+				Name: "worker", Status: "running", State: "running",
+				Publishers: []Publisher{{URL: "", TargetPort: 8000, PublishedPort: 0, Protocol: "tcp"}},
+			},
+		}
+		result := ToDockerServices(services)
+		assert.Equal(t, "8000/tcp", result[0].Ports)
+	})
+
+	t.Run("formats publishers with health", func(t *testing.T) {
+		services := []Service{
+			{
+				Name: "pg", Status: "Up 5 minutes (healthy)", State: "running", Health: "healthy",
+				Publishers: []Publisher{{URL: "0.0.0.0", TargetPort: 5432, PublishedPort: 3001, Protocol: "tcp"}},
+			},
+		}
+		result := ToDockerServices(services)
+		assert.Equal(t, "healthy", result[0].Health)
+		assert.Equal(t, "0.0.0.0:3001->5432/tcp", result[0].Ports)
 	})
 }
