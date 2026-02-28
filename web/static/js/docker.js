@@ -2,6 +2,29 @@
 (function() {
     'use strict';
 
+    // Track in-flight operations to prevent double-clicks and show loading state.
+    var busy = false;
+
+    function showToast(message, duration) {
+        if (window.ClawIDEToast) {
+            window.ClawIDEToast.show(message, duration || 2000);
+        }
+    }
+
+    function setButtonsBusy(isBusy) {
+        busy = isBusy;
+        var upBtn = document.getElementById('docker-up-btn');
+        var downBtn = document.getElementById('docker-down-btn');
+        if (upBtn) {
+            upBtn.disabled = isBusy;
+            upBtn.textContent = isBusy ? 'Starting...' : 'Up';
+        }
+        if (downBtn) {
+            downBtn.disabled = isBusy;
+            downBtn.textContent = isBusy ? 'Stopping...' : 'Down';
+        }
+    }
+
     function refreshServices(projectID, container) {
         fetch('/projects/' + projectID + '/api/docker/ps')
             .then(function(resp) {
@@ -46,35 +69,76 @@
             method: 'POST',
         })
             .then(function(resp) {
-                if (!resp.ok) throw new Error('Action failed');
-                // Refresh after a short delay
+                if (!resp.ok) {
+                    return resp.json().then(function(body) {
+                        throw new Error(body.error || 'Action failed');
+                    });
+                }
                 setTimeout(function() {
                     var container = document.getElementById('docker-services');
                     if (container) refreshServices(projectID, container);
                 }, 1000);
             })
             .catch(function(err) {
-                console.error('Docker action failed:', err);
+                showToast('Docker ' + action + ' failed: ' + err.message, 3000);
             });
     }
 
     function composeUp(projectID) {
+        if (busy) return;
+        setButtonsBusy(true);
+        var container = document.getElementById('docker-services');
+        if (container) {
+            container.innerHTML = '<div class="text-gray-400 text-sm p-4">Starting services...</div>';
+        }
+
         fetch('/projects/' + projectID + '/api/docker/up', { method: 'POST' })
-            .then(function() {
+            .then(function(resp) {
+                if (!resp.ok) {
+                    return resp.json().then(function(body) {
+                        throw new Error(body.error || 'Failed to start stack');
+                    });
+                }
+                showToast('Docker Compose stack started');
                 setTimeout(function() {
-                    var container = document.getElementById('docker-services');
                     if (container) refreshServices(projectID, container);
                 }, 2000);
+            })
+            .catch(function(err) {
+                showToast('Docker up failed: ' + err.message, 4000);
+                if (container) refreshServices(projectID, container);
+            })
+            .finally(function() {
+                setButtonsBusy(false);
             });
     }
 
     function composeDown(projectID) {
+        if (busy) return;
+        setButtonsBusy(true);
+        var container = document.getElementById('docker-services');
+        if (container) {
+            container.innerHTML = '<div class="text-gray-400 text-sm p-4">Stopping services...</div>';
+        }
+
         fetch('/projects/' + projectID + '/api/docker/down', { method: 'POST' })
-            .then(function() {
+            .then(function(resp) {
+                if (!resp.ok) {
+                    return resp.json().then(function(body) {
+                        throw new Error(body.error || 'Failed to stop stack');
+                    });
+                }
+                showToast('Docker Compose stack stopped');
                 setTimeout(function() {
-                    var container = document.getElementById('docker-services');
                     if (container) refreshServices(projectID, container);
                 }, 2000);
+            })
+            .catch(function(err) {
+                showToast('Docker down failed: ' + err.message, 4000);
+                if (container) refreshServices(projectID, container);
+            })
+            .finally(function() {
+                setButtonsBusy(false);
             });
     }
 

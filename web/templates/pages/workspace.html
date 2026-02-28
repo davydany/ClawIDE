@@ -1109,8 +1109,8 @@
                     <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
                         <h3 class="text-sm font-medium text-white">Docker Compose</h3>
                         <div class="ml-auto flex gap-1">
-                            <button onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors">Up</button>
-                            <button onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors">Down</button>
+                            <button id="docker-up-btn" onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Up</button>
+                            <button id="docker-down-btn" onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Down</button>
                             <button onclick="ClawIDEDocker.refresh('{{.Project.ID}}', document.getElementById('docker-services'))" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">Refresh</button>
                         </div>
                     </div>
