@@ -1138,6 +1138,7 @@
                         <div class="ml-auto flex gap-1">
                             <button id="docker-up-btn" onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Up</button>
                             <button id="docker-down-btn" onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Down</button>
+                            <button id="docker-restart-btn" onclick="ClawIDEDocker.composeRestart('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Restart</button>
                             <button id="docker-refresh-btn" onclick="ClawIDEDocker.refresh('{{.Project.ID}}')" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
                         </div>
                     </div>
