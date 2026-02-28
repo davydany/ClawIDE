@@ -71,11 +71,19 @@ func PS(projectPath string) ([]Service, error) {
 
 // Up runs `docker compose up -d` in the given project directory.
 func Up(projectPath string) error {
-	cmd := exec.Command("docker", "compose", "up", "-d")
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "up", "-d")
 	cmd.Dir = projectPath
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose up: %s", msg)
+		}
 		return fmt.Errorf("docker compose up: %w", err)
 	}
 	return nil
@@ -83,11 +91,19 @@ func Up(projectPath string) error {
 
 // Down runs `docker compose down` in the given project directory.
 func Down(projectPath string) error {
-	cmd := exec.Command("docker", "compose", "down")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "down")
 	cmd.Dir = projectPath
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose down: %s", msg)
+		}
 		return fmt.Errorf("docker compose down: %w", err)
 	}
 	return nil
@@ -95,11 +111,19 @@ func Down(projectPath string) error {
 
 // StartService starts a single service via `docker compose start <service>`.
 func StartService(projectPath, service string) error {
-	cmd := exec.Command("docker", "compose", "start", service)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "start", service)
 	cmd.Dir = projectPath
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose start %s: %s", service, msg)
+		}
 		return fmt.Errorf("docker compose start %s: %w", service, err)
 	}
 	return nil
@@ -107,11 +131,19 @@ func StartService(projectPath, service string) error {
 
 // StopService stops a single service via `docker compose stop <service>`.
 func StopService(projectPath, service string) error {
-	cmd := exec.Command("docker", "compose", "stop", service)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "stop", service)
 	cmd.Dir = projectPath
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose stop %s: %s", service, msg)
+		}
 		return fmt.Errorf("docker compose stop %s: %w", service, err)
 	}
 	return nil
@@ -119,11 +151,19 @@ func StopService(projectPath, service string) error {
 
 // RestartService restarts a single service via `docker compose restart <service>`.
 func RestartService(projectPath, service string) error {
-	cmd := exec.Command("docker", "compose", "restart", service)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "restart", service)
 	cmd.Dir = projectPath
+	var stderr bytes.Buffer
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose restart %s: %s", service, msg)
+		}
 		return fmt.Errorf("docker compose restart %s: %w", service, err)
 	}
 	return nil

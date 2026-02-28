@@ -46,7 +46,9 @@ func (h *Handlers) DockerUp(w http.ResponseWriter, r *http.Request) {
 
 	if err := docker.Up(project.Path); err != nil {
 		log.Printf("DockerUp error for project %s: %v", project.ID, err)
-		http.Error(w, "Failed to start Docker Compose stack", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -65,7 +67,9 @@ func (h *Handlers) DockerDown(w http.ResponseWriter, r *http.Request) {
 
 	if err := docker.Down(project.Path); err != nil {
 		log.Printf("DockerDown error for project %s: %v", project.ID, err)
-		http.Error(w, "Failed to stop Docker Compose stack", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -84,7 +88,9 @@ func (h *Handlers) DockerServiceStart(w http.ResponseWriter, r *http.Request) {
 
 	if err := docker.StartService(project.Path, svc); err != nil {
 		log.Printf("DockerServiceStart error for %s/%s: %v", project.ID, svc, err)
-		http.Error(w, "Failed to start service", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -103,7 +109,9 @@ func (h *Handlers) DockerServiceStop(w http.ResponseWriter, r *http.Request) {
 
 	if err := docker.StopService(project.Path, svc); err != nil {
 		log.Printf("DockerServiceStop error for %s/%s: %v", project.ID, svc, err)
-		http.Error(w, "Failed to stop service", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
@@ -122,7 +130,9 @@ func (h *Handlers) DockerServiceRestart(w http.ResponseWriter, r *http.Request) 
 
 	if err := docker.RestartService(project.Path, svc); err != nil {
 		log.Printf("DockerServiceRestart error for %s/%s: %v", project.ID, svc, err)
-		http.Error(w, "Failed to restart service", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
