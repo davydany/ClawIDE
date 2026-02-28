@@ -114,6 +114,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/docker/ps", s.handlers.DockerPS)
 			r.Post("/api/docker/up", s.handlers.DockerUp)
 			r.Post("/api/docker/down", s.handlers.DockerDown)
+			r.Post("/api/docker/restart", s.handlers.DockerRestart)
 			r.Post("/api/docker/{svc}/start", s.handlers.DockerServiceStart)
 			r.Post("/api/docker/{svc}/stop", s.handlers.DockerServiceStop)
 			r.Post("/api/docker/{svc}/restart", s.handlers.DockerServiceRestart)

@@ -136,6 +136,27 @@ func (h *Handlers) DockerDown(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
+// DockerRestart runs `docker compose restart` and returns a status response.
+func (h *Handlers) DockerRestart(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+
+	if !docker.HasComposeFile(project.Path) {
+		http.Error(w, "No compose file found", http.StatusBadRequest)
+		return
+	}
+
+	if err := docker.Restart(project.Path); err != nil {
+		log.Printf("DockerRestart error for project %s: %v", project.ID, err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
 // DockerServiceStart starts a single Docker Compose service.
 func (h *Handlers) DockerServiceStart(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)

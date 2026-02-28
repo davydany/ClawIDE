@@ -24,6 +24,7 @@
         busy = isBusy;
         var upBtn = document.getElementById('docker-up-btn');
         var downBtn = document.getElementById('docker-down-btn');
+        var restartBtn = document.getElementById('docker-restart-btn');
         var refreshBtn = document.getElementById('docker-refresh-btn');
         if (upBtn) {
             upBtn.disabled = isBusy;
@@ -33,6 +34,10 @@
             downBtn.disabled = isBusy;
             if (label === 'down') downBtn.textContent = isBusy ? 'Stopping...' : 'Down';
         }
+        if (restartBtn) {
+            restartBtn.disabled = isBusy;
+            if (label === 'restart') restartBtn.textContent = isBusy ? 'Restarting...' : 'Restart';
+        }
         if (refreshBtn) {
             refreshBtn.disabled = isBusy;
         }
@@ -40,7 +45,7 @@
 
     // Disable all interactive buttons in the docker panel.
     function setControlsDisabled(disabled) {
-        var ids = ['docker-up-btn', 'docker-down-btn', 'docker-refresh-btn'];
+        var ids = ['docker-up-btn', 'docker-down-btn', 'docker-restart-btn', 'docker-refresh-btn'];
         ids.forEach(function(id) {
             var el = document.getElementById(id);
             if (el) el.disabled = disabled;
@@ -90,16 +95,20 @@
             // Hide compose controls
             var upBtn = document.getElementById('docker-up-btn');
             var downBtn = document.getElementById('docker-down-btn');
+            var restartBtn = document.getElementById('docker-restart-btn');
             if (upBtn) upBtn.style.display = 'none';
             if (downBtn) downBtn.style.display = 'none';
+            if (restartBtn) restartBtn.style.display = 'none';
             return;
         }
 
         // Compose file exists, daemon running — show controls, check for errors
         var upBtn = document.getElementById('docker-up-btn');
         var downBtn = document.getElementById('docker-down-btn');
+        var restartBtn = document.getElementById('docker-restart-btn');
         if (upBtn) upBtn.style.display = '';
         if (downBtn) downBtn.style.display = '';
+        if (restartBtn) restartBtn.style.display = '';
         setControlsDisabled(false);
 
         if (status.error) {
@@ -446,6 +455,33 @@
             });
     }
 
+    function composeRestart(projectID) {
+        if (busy) return;
+        setButtonsBusy(true, 'restart');
+        var container = document.getElementById('docker-compose-services');
+        if (container) {
+            container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Restarting services...</div>';
+        }
+
+        fetch('/projects/' + projectID + '/api/docker/restart', { method: 'POST' })
+            .then(function(resp) {
+                if (!resp.ok) {
+                    return resp.json().then(function(body) {
+                        throw new Error(body.error || 'Failed to restart stack');
+                    });
+                }
+                showToast('Docker Compose stack restarted');
+                setTimeout(function() { refreshStatus(projectID); }, 2000);
+            })
+            .catch(function(err) {
+                showToast('Docker restart failed: ' + err.message, 4000);
+                refreshStatus(projectID);
+            })
+            .finally(function() {
+                setButtonsBusy(false, 'restart');
+            });
+    }
+
     // ─── Inline Log Viewer ─────────────────────────────────
 
     function viewLogs(projectID, service) {
@@ -640,6 +676,7 @@
         serviceAction: serviceAction,
         composeUp: composeUp,
         composeDown: composeDown,
+        composeRestart: composeRestart,
         viewLogs: viewLogs,
         closeLogs: closeLogs,
         buildService: buildService,

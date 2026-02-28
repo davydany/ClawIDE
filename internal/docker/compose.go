@@ -154,6 +154,26 @@ func Down(projectPath string) error {
 	return nil
 }
 
+// Restart runs `docker compose restart` in the given project directory.
+func Restart(projectPath string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "compose", "restart")
+	cmd.Dir = projectPath
+	var stderr bytes.Buffer
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := stderr.String()
+		if msg != "" {
+			return fmt.Errorf("docker compose restart: %s", msg)
+		}
+		return fmt.Errorf("docker compose restart: %w", err)
+	}
+	return nil
+}
+
 // StartService starts a single service via `docker compose start <service>`.
 func StartService(projectPath, service string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
