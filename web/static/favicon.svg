@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <!-- Body gradient: dark red-orange edge to warm orange center -->
+    <radialGradient id="body" cx="50%" cy="42%" r="50%">
+      <stop offset="0%" stop-color="#f4943e"/>
+      <stop offset="60%" stop-color="#e8622a"/>
+      <stop offset="100%" stop-color="#c0392b"/>
+    </radialGradient>
+    <!-- Claw gradient -->
+    <radialGradient id="claw" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#e8622a"/>
+      <stop offset="100%" stop-color="#b5301f"/>
+    </radialGradient>
+    <!-- Leg color -->
+    <linearGradient id="leg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d94a2a"/>
+      <stop offset="100%" stop-color="#b5301f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Back legs (behind body) — 4 per side -->
+  <g stroke="url(#leg)" stroke-width="3.2" stroke-linecap="round" fill="none">
+    <!-- Left legs -->
+    <path d="M19 30 Q8 25 3 19"/>
+    <path d="M17 35 Q6 33 1 29"/>
+    <path d="M17 40 Q6 42 2 39"/>
+    <path d="M19 45 Q10 50 5 49"/>
+    <!-- Right legs -->
+    <path d="M45 30 Q56 25 61 19"/>
+    <path d="M47 35 Q58 33 63 29"/>
+    <path d="M47 40 Q58 42 62 39"/>
+    <path d="M45 45 Q54 50 59 49"/>
+  </g>
+
+  <!-- Claw arms -->
+  <g stroke="#c0392b" stroke-width="4.5" stroke-linecap="round" fill="none">
+    <path d="M22 27 Q14 20 10 15"/>
+    <path d="M42 27 Q50 20 54 15"/>
+  </g>
+
+  <!-- Left claw (pincer) -->
+  <g fill="url(#claw)">
+    <!-- Lower pincer half -->
+    <ellipse cx="7" cy="17" rx="7" ry="4" transform="rotate(-40 7 17)"/>
+    <!-- Upper pincer half -->
+    <ellipse cx="11" cy="11" rx="7" ry="3.5" transform="rotate(-20 11 11)"/>
+    <!-- Claw tips (darker) -->
+    <ellipse cx="4" cy="13" rx="2.5" ry="1.5" transform="rotate(-45 4 13)" fill="#8b1a0e"/>
+    <ellipse cx="6" cy="7.5" rx="2.5" ry="1.5" transform="rotate(-25 6 7.5)" fill="#8b1a0e"/>
+  </g>
+
+  <!-- Right claw (pincer) — mirrored -->
+  <g fill="url(#claw)">
+    <ellipse cx="57" cy="17" rx="7" ry="4" transform="rotate(40 57 17)"/>
+    <ellipse cx="53" cy="11" rx="7" ry="3.5" transform="rotate(20 53 11)"/>
+    <ellipse cx="60" cy="13" rx="2.5" ry="1.5" transform="rotate(45 60 13)" fill="#8b1a0e"/>
+    <ellipse cx="58" cy="7.5" rx="2.5" ry="1.5" transform="rotate(25 58 7.5)" fill="#8b1a0e"/>
+  </g>
+
+  <!-- Body (large round shell) -->
+  <ellipse cx="32" cy="37" rx="17" ry="16" fill="url(#body)"/>
+  <!-- Body highlight (lighter belly area) -->
+  <ellipse cx="32" cy="35" rx="11" ry="10" fill="#f4a04a" opacity="0.45"/>
+  <!-- Subtle top shell ridge -->
+  <ellipse cx="32" cy="32" rx="8" ry="4" fill="#d15424" opacity="0.3"/>
+
+  <!-- Eyes — small, black, close together on top of body -->
+  <circle cx="28" cy="25" r="2.8" fill="#1a1a1a"/>
+  <circle cx="36" cy="25" r="2.8" fill="#1a1a1a"/>
+  <!-- Eye shine -->
+  <circle cx="28.8" cy="24.2" r="1" fill="#fff" opacity="0.8"/>
+  <circle cx="36.8" cy="24.2" r="1" fill="#fff" opacity="0.8"/>
+
+  <!-- Mouth parts — small cream/white mandibles at bottom -->
+  <ellipse cx="30" cy="51" rx="2.5" ry="1.8" fill="#f5deb3" opacity="0.8"/>
+  <ellipse cx="34" cy="51" rx="2.5" ry="1.8" fill="#f5deb3" opacity="0.8"/>
+</svg>
