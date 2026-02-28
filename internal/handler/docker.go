@@ -6,12 +6,71 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/davydany/ClawIDE/internal/docker"
 	"github.com/davydany/ClawIDE/internal/middleware"
+	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 )
+
+// dockerStatusResponse is the JSON envelope for the combined Docker status endpoint.
+type dockerStatusResponse struct {
+	DaemonRunning   bool                         `json:"daemon_running"`
+	ComposeFile     bool                         `json:"compose_file"`
+	Services        []model.DockerService        `json:"services"`
+	ComposeServices []docker.ComposeServiceDetail `json:"compose_services"`
+	WebAppURL       string                       `json:"web_app_url"`
+	Error           string                       `json:"error,omitempty"`
+}
+
+// DockerStatus returns a combined JSON response with daemon health, compose
+// file presence, running services, compose service details, OS ports, and
+// an optional web app URL.
+func (h *Handlers) DockerStatus(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	resp := dockerStatusResponse{}
+
+	resp.DaemonRunning = docker.IsDockerRunning()
+	resp.ComposeFile = docker.HasComposeFile(project.Path)
+
+	// Running services (from docker compose ps). PS() returns services
+	// even when the command exits non-zero (e.g. unhealthy containers),
+	// so we always use whatever data came back.
+	if resp.DaemonRunning && resp.ComposeFile {
+		services, err := docker.PS(project.Path)
+		if err != nil {
+			log.Printf("DockerStatus PS error for project %s: %v", project.ID, err)
+			resp.Error = err.Error()
+		}
+		if len(services) > 0 {
+			resp.Services = docker.ToDockerServices(services)
+		}
+	}
+	if resp.Services == nil {
+		resp.Services = []model.DockerService{}
+	}
+
+	// Compose service details (parsed from YAML)
+	if resp.ComposeFile {
+		cfg, err := docker.ParseComposeFile(project.Path)
+		if err != nil {
+			log.Printf("DockerStatus compose parse error for project %s: %v", project.ID, err)
+		} else {
+			resp.ComposeServices = docker.ExtractServiceDetails(cfg)
+		}
+	}
+	if resp.ComposeServices == nil {
+		resp.ComposeServices = []docker.ComposeServiceDetail{}
+	}
+
+	// Web app URL
+	resp.WebAppURL = docker.FindWebAppURL(project.Path)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
 
 // DockerPS returns the list of Docker Compose services as JSON.
 func (h *Handlers) DockerPS(w http.ResponseWriter, r *http.Request) {
@@ -188,7 +247,12 @@ func (h *Handlers) DockerLogsWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	reader, err := docker.LogsStream(ctx, project.Path, svc)
+	tail := 0
+	if n, err := strconv.Atoi(r.URL.Query().Get("tail")); err == nil && n > 0 {
+		tail = n
+	}
+
+	reader, err := docker.LogsStream(ctx, project.Path, svc, tail)
 	if err != nil {
 		log.Printf("DockerLogsWS stream error for %s/%s: %v", projectID, svc, err)
 		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))

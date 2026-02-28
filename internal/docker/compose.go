@@ -10,41 +10,86 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/model"
 )
 
+// IsDockerRunning checks whether the Docker daemon is reachable by running
+// `docker info` with a short timeout. Returns true if the command succeeds.
+func IsDockerRunning() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", "info")
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	return cmd.Run() == nil
+}
+
+// Publisher represents a single port binding in the Docker Compose JSON output.
+type Publisher struct {
+	URL           string `json:"URL"`
+	TargetPort    int    `json:"TargetPort"`
+	PublishedPort int    `json:"PublishedPort"`
+	Protocol      string `json:"Protocol"`
+}
+
 // Service represents a running Docker Compose service as reported by `docker compose ps`.
 type Service struct {
-	Name   string `json:"Name"`
-	Status string `json:"Status"`
-	State  string `json:"State"`
-	Ports  string `json:"Publishers"`
+	Name       string      `json:"Name"`
+	Service    string      `json:"Service"`
+	Status     string      `json:"Status"`
+	State      string      `json:"State"`
+	Health     string      `json:"Health"`
+	Publishers []Publisher `json:"Publishers"`
 }
 
 // PS runs `docker compose ps --format json` in the given project directory
-// and returns the list of services.
+// and returns the list of services. When the command exits with a non-zero
+// status (e.g. unhealthy services), it still attempts to parse whatever JSON
+// was written to stdout so the caller gets service data alongside the error.
 func PS(projectPath string) ([]Service, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", "compose", "ps", "--format", "json")
 	cmd.Dir = projectPath
 
+	// Capture stderr separately so we can include it in error messages.
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
 	out, err := cmd.Output()
+
+	// Parse whatever stdout we got, even if the command failed. Docker Compose
+	// returns exit code 1 when services are unhealthy/restarting but still
+	// writes valid NDJSON to stdout.
+	services := parseNDJSON(out)
+
 	if err != nil {
-		return nil, fmt.Errorf("docker compose ps: %w", err)
+		errMsg := stderr.String()
+		if errMsg == "" {
+			errMsg = err.Error()
+		}
+		// Return services AND the error — let the caller decide what to do.
+		return services, fmt.Errorf("docker compose ps: %s", errMsg)
 	}
 
-	if len(out) == 0 {
-		return []Service{}, nil
+	return services, nil
+}
+
+// parseNDJSON parses Docker Compose NDJSON output (one JSON object per line)
+// into a slice of Service. It also handles the case where some versions emit
+// a JSON array on a single line.
+func parseNDJSON(data []byte) []Service {
+	if len(data) == 0 {
+		return nil
 	}
 
-	// docker compose ps --format json outputs one JSON object per line (NDJSON),
-	// not a JSON array. Parse each line independently.
 	var services []Service
-	scanner := bufio.NewScanner(bytes.NewReader(out))
+	scanner := bufio.NewScanner(bytes.NewReader(data))
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
@@ -66,7 +111,7 @@ func PS(projectPath string) ([]Service, error) {
 		}
 	}
 
-	return services, scanner.Err()
+	return services
 }
 
 // Up runs `docker compose up -d` in the given project directory.
@@ -172,9 +217,15 @@ func RestartService(projectPath, service string) error {
 // LogsStream starts `docker compose logs -f <service>` and returns a ReadCloser
 // that streams the combined stdout/stderr output. The caller is responsible for
 // closing the returned reader, which will also terminate the underlying process.
-// The provided context can be used to cancel the log stream.
-func LogsStream(ctx context.Context, projectPath, service string) (io.ReadCloser, error) {
-	cmd := exec.CommandContext(ctx, "docker", "compose", "logs", "-f", "--no-log-prefix", service)
+// The provided context can be used to cancel the log stream. When tail > 0,
+// only the last N lines are returned before streaming begins.
+func LogsStream(ctx context.Context, projectPath, service string, tail int) (io.ReadCloser, error) {
+	args := []string{"compose", "logs", "-f", "--no-log-prefix"}
+	if tail > 0 {
+		args = append(args, "--tail", fmt.Sprintf("%d", tail))
+	}
+	args = append(args, service)
+	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Dir = projectPath
 
 	stdout, err := cmd.StdoutPipe()
@@ -214,16 +265,38 @@ func HasComposeFile(projectPath string) bool {
 	return false
 }
 
+// formatPublishers converts the Publishers array into a human-readable ports
+// string like "0.0.0.0:3001->5432/tcp, 0.0.0.0:3000->8000/tcp".
+func formatPublishers(pubs []Publisher) string {
+	if len(pubs) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, p := range pubs {
+		if p.PublishedPort == 0 {
+			// Container port only, no host binding
+			parts = append(parts, fmt.Sprintf("%d/%s", p.TargetPort, p.Protocol))
+		} else if p.URL != "" {
+			parts = append(parts, fmt.Sprintf("%s:%d->%d/%s", p.URL, p.PublishedPort, p.TargetPort, p.Protocol))
+		} else {
+			parts = append(parts, fmt.Sprintf("%d->%d/%s", p.PublishedPort, p.TargetPort, p.Protocol))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
 // ToDockerServices converts the internal Service slice to the model representation
 // used by handlers and templates.
 func ToDockerServices(services []Service) []model.DockerService {
 	out := make([]model.DockerService, len(services))
 	for i, s := range services {
 		out[i] = model.DockerService{
-			Name:   s.Name,
-			Status: s.Status,
-			State:  s.State,
-			Ports:  s.Ports,
+			Name:    s.Name,
+			Service: s.Service,
+			Status:  s.Status,
+			State:   s.State,
+			Health:  s.Health,
+			Ports:   formatPublishers(s.Publishers),
 		}
 	}
 	return out
