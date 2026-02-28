@@ -11,6 +11,9 @@
     // Active WebSocket connections for log streaming, keyed by service name.
     var activeLogSockets = {};
 
+    // Active WebSocket connections for build streaming, keyed by service name.
+    var activeBuildSockets = {};
+
     function showToast(message, duration) {
         if (window.ClawIDEToast) {
             window.ClawIDEToast.show(message, duration || 2000);
@@ -234,6 +237,15 @@
 
             // Right: prominent action buttons
             html += '<div class="flex items-center gap-2 flex-shrink-0 ml-3 pt-0.5">';
+            // Build button (for services with a Dockerfile)
+            if (svc.build) {
+                var isBuildActive = !!activeBuildSockets[svc.name];
+                if (isBuildActive) {
+                    html += '<button onclick="event.stopPropagation(); ClawIDEDocker.buildService(\'' + projectID + '\', \'' + escapedName + '\')" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-purple-500/70 bg-purple-700/50 text-purple-200 transition-colors">Building\u2026</button>';
+                } else {
+                    html += '<button onclick="event.stopPropagation(); ClawIDEDocker.buildService(\'' + projectID + '\', \'' + escapedName + '\')" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-purple-700/50 bg-purple-900/30 text-purple-300 hover:bg-purple-800/50 transition-colors">Build</button>';
+                }
+            }
             if (isRunning) {
                 html += '<button onclick="event.stopPropagation(); ClawIDEDocker.viewLogs(\'' + projectID + '\', \'' + escapedName + '\')" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-blue-700/50 bg-blue-900/30 text-blue-300 hover:bg-blue-800/50 transition-colors">Logs</button>';
                 html += '<button onclick="event.stopPropagation(); ClawIDEDocker.serviceAction(\'' + projectID + '\', \'' + escapedName + '\', \'restart\')" class="px-2.5 py-1 text-xs font-medium rounded-lg border border-amber-700/50 bg-amber-900/30 text-amber-300 hover:bg-amber-800/50 transition-colors">Restart</button>';
@@ -311,6 +323,15 @@
             html += '<button onclick="ClawIDEDocker.closeLogs(\'' + escapedName + '\')" class="text-xs text-gray-500 hover:text-white transition-colors">Close</button>';
             html += '</div>';
             html += '<pre id="' + svcId + '-logs-output" class="px-3 pb-3 text-xs font-mono text-gray-400 max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
+            html += '</div>';
+
+            // ── Inline build output container (hidden by default) ──
+            html += '<div id="' + svcId + '-build" class="hidden border-t border-gray-800">';
+            html += '<div class="flex items-center justify-between px-3 py-2">';
+            html += '<span class="text-xs text-purple-400">Build Output</span>';
+            html += '<button onclick="ClawIDEDocker.closeBuild(\'' + escapedName + '\')" class="text-xs text-gray-500 hover:text-white transition-colors">Close</button>';
+            html += '</div>';
+            html += '<pre id="' + svcId + '-build-output" class="px-3 pb-3 text-xs font-mono text-gray-400 max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
             html += '</div>';
 
             html += '</div>'; // end card
@@ -508,6 +529,87 @@
             }
         });
         activeLogSockets = {};
+        Object.keys(activeBuildSockets).forEach(function(service) {
+            if (activeBuildSockets[service]) {
+                activeBuildSockets[service].close();
+            }
+        });
+        activeBuildSockets = {};
+    }
+
+    // ─── Inline Build Viewer ──────────────────────────────
+
+    function buildService(projectID, service) {
+        var svcId = 'compose-svc-' + service.replace(/[^a-zA-Z0-9]/g, '-');
+
+        // Toggle off if already building
+        if (activeBuildSockets[service]) {
+            closeBuild(service);
+            return;
+        }
+
+        var buildContainer = document.getElementById(svcId + '-build');
+        var buildOutput = document.getElementById(svcId + '-build-output');
+        if (!buildContainer || !buildOutput) return;
+
+        // Show the build container
+        buildContainer.classList.remove('hidden');
+        buildOutput.textContent = 'Starting build...\n';
+
+        // Also expand the detail section so build output is visible
+        var detail = document.getElementById(svcId + '-detail');
+        if (detail && detail.classList.contains('hidden')) {
+            detail.classList.remove('hidden');
+            var chevron = document.getElementById(svcId + '-chevron');
+            if (chevron) chevron.classList.add('rotate-90');
+        }
+
+        // Open WebSocket
+        var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        var wsUrl = proto + '//' + location.host + '/ws/docker/' + projectID + '/build/' + service;
+        var ws = new WebSocket(wsUrl);
+
+        ws.onopen = function() {
+            buildOutput.textContent = '';
+        };
+
+        ws.onmessage = function(event) {
+            buildOutput.textContent += event.data;
+            // Auto-scroll to bottom
+            buildOutput.scrollTop = buildOutput.scrollHeight;
+        };
+
+        ws.onerror = function() {
+            buildOutput.textContent += '\n[WebSocket error]\n';
+        };
+
+        ws.onclose = function() {
+            delete activeBuildSockets[service];
+        };
+
+        activeBuildSockets[service] = ws;
+    }
+
+    function closeBuild(service) {
+        var svcId = 'compose-svc-' + service.replace(/[^a-zA-Z0-9]/g, '-');
+
+        // Close the WebSocket
+        if (activeBuildSockets[service]) {
+            activeBuildSockets[service].close();
+            delete activeBuildSockets[service];
+        }
+
+        // Hide the build container
+        var buildContainer = document.getElementById(svcId + '-build');
+        if (buildContainer) {
+            buildContainer.classList.add('hidden');
+        }
+
+        // Clear output
+        var buildOutput = document.getElementById(svcId + '-build-output');
+        if (buildOutput) {
+            buildOutput.textContent = '';
+        }
     }
 
     // ─── Utilities ─────────────────────────────────────────
@@ -540,5 +642,7 @@
         composeDown: composeDown,
         viewLogs: viewLogs,
         closeLogs: closeLogs,
+        buildService: buildService,
+        closeBuild: closeBuild,
     };
 })();

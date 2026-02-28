@@ -248,6 +248,57 @@ func LogsStream(ctx context.Context, projectPath, service string, tail int) (io.
 	}, nil
 }
 
+// BuildReadCloser wraps an io.ReadCloser for a build process. After closing,
+// the WaitErr method returns the process exit error (nil for success).
+type BuildReadCloser struct {
+	io.ReadCloser
+	cmd     *exec.Cmd
+	waitErr error
+	closed  bool
+}
+
+func (b *BuildReadCloser) Close() error {
+	if b.closed {
+		return nil
+	}
+	b.closed = true
+	_ = b.ReadCloser.Close()
+	b.waitErr = b.cmd.Wait()
+	return nil
+}
+
+// WaitErr returns the process exit error. Only valid after Close has been called.
+func (b *BuildReadCloser) WaitErr() error {
+	return b.waitErr
+}
+
+// BuildStream starts `docker compose build --progress=plain <service>` and
+// returns a BuildReadCloser that streams the combined stdout/stderr output.
+// The caller is responsible for closing the returned reader, which will also
+// wait for the underlying process to exit. After closing, call WaitErr() to
+// check whether the build succeeded (nil) or failed.
+func BuildStream(ctx context.Context, projectPath, service string) (*BuildReadCloser, error) {
+	cmd := exec.CommandContext(ctx, "docker", "compose", "build", "--progress=plain", service)
+	cmd.Dir = projectPath
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("docker compose build stdout pipe: %w", err)
+	}
+
+	// Merge stderr into stdout — Docker build progress goes to stderr.
+	cmd.Stderr = cmd.Stdout
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("docker compose build start: %w", err)
+	}
+
+	return &BuildReadCloser{
+		ReadCloser: stdout,
+		cmd:        cmd,
+	}, nil
+}
+
 // HasComposeFile checks whether the project directory contains a
 // docker-compose.yml, docker-compose.yaml, compose.yml, or compose.yaml file.
 func HasComposeFile(projectPath string) bool {
