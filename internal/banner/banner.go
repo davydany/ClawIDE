@@ -11,12 +11,43 @@ import (
 // ANSI color codes
 const (
 	cyan   = "\033[36m"
+	red    = "\033[31m"
 	gray   = "\033[90m"
 	bold   = "\033[1m"
 	reset  = "\033[0m"
 	white  = "\033[97m"
 	yellow = "\033[33m"
 )
+
+// Happy crab — displayed at startup (Tamagotchi: alive and thriving)
+var happyCrab = []string{
+	`            ▗▖   ▗▖`,
+	`     ▗▄▖   ▐▙▖ ▗▟▌   ▗▄▖`,
+	`    ▐▛▀▜▖ ▗▟████▙▖  ▗▜▀▛▌`,
+	`    ▐▌  ▜▟██████████▛▘  ▐▌`,
+	`     ▜▖ ▐████████████▌ ▗▛`,
+	`      ▀▄▐██ ▀▌▐▀ ██▌▄▀`,
+	`        ▐██▌  ▄  ▐██▌`,
+	`        ▐████▀▀▀████▌`,
+	`        ▗▟██████████▙▖`,
+	`       ▟▛▘ ▐██████▌ ▀▜▙`,
+	`      ▟▘  ▗▛▘    ▀▜▖  ▝▙`,
+}
+
+// Dead crab — displayed at shutdown (Tamagotchi: game over)
+var deadCrab = []string{
+	`            ▗▖   ▗▖`,
+	`     ▗▄▖   ▐▙▖ ▗▟▌   ▗▄▖`,
+	`    ▐▛▀▜▖ ▗▟████▙▖  ▗▜▀▛▌`,
+	`    ▐▌  ▜▟██████████▛▘  ▐▌`,
+	`     ▜▖ ▐████████████▌ ▗▛`,
+	`      ▀▄▐██ ╳▌▐╳ ██▌▄▀`,
+	`        ▐██▌  ▄  ▐██▌`,
+	`        ▐████▄▄▄████▌`,
+	`        ▗▟██████████▙▖`,
+	`       ▟▛▘ ▐██████▌ ▀▜▙`,
+	`      ▟▘  ▗▛▘    ▀▜▖  ▝▙`,
+}
 
 // ASCII art generated using block characters.
 // Each line is a row of the banner.
@@ -45,6 +76,12 @@ func Print(host string, port int, versionStr string) {
 		lanURL = fmt.Sprintf("http://%s:%d", lanIP, port)
 	}
 
+	fmt.Println()
+
+	// Print happy crab mascot
+	for _, line := range happyCrab {
+		fmt.Printf("  %s%s%s\n", cyan, line, reset)
+	}
 	fmt.Println()
 
 	// Print ASCII art
@@ -82,6 +119,19 @@ func Print(host string, port int, versionStr string) {
 		}
 		fmt.Println()
 	}
+}
+
+// PrintShutdown renders the dead crab and a farewell message.
+func PrintShutdown() {
+	fmt.Println()
+	for _, line := range deadCrab {
+		fmt.Printf("  %s%s%s\n", red, line, reset)
+	}
+	fmt.Println()
+	fmt.Printf("  %s%sEt tu, Brute?%s\n", red, bold, reset)
+	fmt.Printf("  %sThe claw has been... declawed.%s\n", red, reset)
+	fmt.Printf("  %sClawIDE signing off. Snip snip.%s\n", red, reset)
+	fmt.Println()
 }
 
 // renderTerminalQR generates a compact QR code string using Unicode half-block

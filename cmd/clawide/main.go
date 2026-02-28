@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/banner"
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/pidfile"
 	"github.com/davydany/ClawIDE/internal/server"
@@ -75,6 +76,8 @@ func main() {
 	}()
 
 	<-done
+
+	banner.PrintShutdown()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
