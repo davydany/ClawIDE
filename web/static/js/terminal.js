@@ -109,6 +109,17 @@
             document.body.removeChild(textarea);
         }
 
+        // Auto-copy on mouse selection (highlight-to-copy)
+        term.element.addEventListener('mouseup', function() {
+            // Small delay to let xterm finalize the selection
+            setTimeout(function() {
+                var selection = term.getSelection();
+                if (selection) {
+                    copyToClipboard(selection);
+                }
+            }, 10);
+        });
+
         // Enable keyboard copy-paste
         // Cmd+C/V on macOS, Ctrl+Shift+C/V on Linux/Windows
         term.attachCustomKeyEventHandler(function(ev) {
