@@ -305,6 +305,63 @@ func normalizeHealthcheck(hc *model.HealthcheckConfig) *HealthcheckDetail {
 	}
 }
 
+// FindMissingEnvFiles parses the compose file in dir and returns a list of
+// env_file paths that are referenced but don't exist on disk. Docker Compose
+// also auto-loads a root .env file, so that's checked too.
+func FindMissingEnvFiles(dir string) []string {
+	cfg, err := ParseComposeFile(dir)
+	if err != nil {
+		return nil
+	}
+
+	// Collect all referenced env file paths (deduplicated).
+	seen := map[string]bool{}
+
+	// Docker Compose always tries to load .env from the project dir.
+	seen[".env"] = true
+
+	for _, svc := range cfg.Services {
+		for _, ef := range normalizeEnvFile(svc.EnvFile) {
+			seen[ef] = true
+		}
+	}
+
+	var missing []string
+	for ef := range seen {
+		absPath := ef
+		if !filepath.IsAbs(ef) {
+			absPath = filepath.Join(dir, ef)
+		}
+		if _, err := os.Stat(absPath); os.IsNotExist(err) {
+			missing = append(missing, ef)
+		}
+	}
+
+	sort.Strings(missing)
+	return missing
+}
+
+// normalizeEnvFile converts the YAML env_file field (nil, string, or list)
+// to a []string of file paths.
+func normalizeEnvFile(v any) []string {
+	if v == nil {
+		return nil
+	}
+	switch e := v.(type) {
+	case string:
+		return []string{e}
+	case []any:
+		out := make([]string, 0, len(e))
+		for _, item := range e {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
+}
+
 // normalizeCommand converts the YAML command field (nil, string, or string
 // list) to a single string.
 func normalizeCommand(v any) string {

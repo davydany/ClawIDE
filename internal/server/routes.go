@@ -154,6 +154,17 @@ func (s *Server) setupRoutes() *chi.Mux {
 				r.Get("/api/review/files", s.handlers.FeatureReviewFiles)
 				r.Get("/api/review/file-content", s.handlers.FeatureReviewFileContent)
 				r.Get("/api/review/annotations", s.handlers.FeatureReviewAnnotations)
+
+				// Feature Docker API
+				r.Get("/api/docker/status", s.handlers.FeatureDockerStatus)
+				r.Get("/api/docker/ps", s.handlers.FeatureDockerPS)
+				r.Post("/api/docker/up", s.handlers.FeatureDockerUp)
+				r.Post("/api/docker/down", s.handlers.FeatureDockerDown)
+				r.Post("/api/docker/restart", s.handlers.FeatureDockerRestart)
+				r.Post("/api/docker/{svc}/start", s.handlers.FeatureDockerServiceStart)
+				r.Post("/api/docker/{svc}/stop", s.handlers.FeatureDockerServiceStop)
+				r.Post("/api/docker/{svc}/restart", s.handlers.FeatureDockerServiceRestart)
+				r.Post("/api/docker/copy-env-files", s.handlers.FeatureDockerCopyEnvFiles)
 			})
 		})
 	})
@@ -240,6 +251,8 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)
 	r.Get("/ws/docker/{projectID}/build/{svc}", s.handlers.DockerBuildWS)
+	r.Get("/ws/docker/{projectID}/features/{fid}/logs/{svc}", s.handlers.FeatureDockerLogsWS)
+	r.Get("/ws/docker/{projectID}/features/{fid}/build/{svc}", s.handlers.FeatureDockerBuildWS)
 
 	return r
 }
