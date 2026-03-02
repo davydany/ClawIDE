@@ -157,11 +157,19 @@ func (j *Job) MarkRolledBack() {
 }
 
 // Snapshot returns a read-safe copy of the job state for serialization.
-func (j *Job) Snapshot() Job {
+func (j *Job) Snapshot() *Job {
 	j.mu.RLock()
 	defer j.mu.RUnlock()
-	snap := *j
-	snap.Steps = make([]JobStep, len(j.Steps))
+	snap := &Job{
+		ID:        j.ID,
+		Request:   j.Request,
+		Status:    j.Status,
+		Error:     j.Error,
+		OutputDir: j.OutputDir,
+		CreatedAt: j.CreatedAt,
+		UpdatedAt: j.UpdatedAt,
+		Steps:     make([]JobStep, len(j.Steps)),
+	}
 	copy(snap.Steps, j.Steps)
 	return snap
 }
@@ -207,10 +215,10 @@ func (jt *JobTracker) Remove(id string) {
 }
 
 // List returns snapshots of all tracked jobs.
-func (jt *JobTracker) List() []Job {
+func (jt *JobTracker) List() []*Job {
 	jt.mu.RLock()
 	defer jt.mu.RUnlock()
-	result := make([]Job, 0, len(jt.jobs))
+	result := make([]*Job, 0, len(jt.jobs))
 	for _, job := range jt.jobs {
 		result = append(result, job.Snapshot())
 	}
