@@ -360,6 +360,10 @@ func (g *Generator) initGit(ctx context.Context, projectDir string) error {
 		return fmt.Errorf("git init: %w (stderr: %s)", result.Err, result.Stderr)
 	}
 
+	// Set local git identity so commits work in environments without global config (e.g. CI).
+	g.executor.Run(ctx, projectDir, "git", "config", "user.email", "clawide@localhost")
+	g.executor.Run(ctx, projectDir, "git", "config", "user.name", "ClawIDE")
+
 	result = g.executor.Run(ctx, projectDir, "git", "add", ".")
 	if result.Err != nil {
 		return fmt.Errorf("git add: %w (stderr: %s)", result.Err, result.Stderr)
