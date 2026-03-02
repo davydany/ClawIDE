@@ -4,8 +4,12 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/davydany/ClawIDE/internal/docker"
@@ -22,26 +26,20 @@ type dockerStatusResponse struct {
 	Services        []model.DockerService        `json:"services"`
 	ComposeServices []docker.ComposeServiceDetail `json:"compose_services"`
 	WebAppURL       string                       `json:"web_app_url"`
+	MissingEnvFiles []string                     `json:"missing_env_files,omitempty"`
 	Error           string                       `json:"error,omitempty"`
 }
 
-// DockerStatus returns a combined JSON response with daemon health, compose
-// file presence, running services, compose service details, OS ports, and
-// an optional web app URL.
-func (h *Handlers) DockerStatus(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
+// dockerStatusForDir returns the combined Docker status for a given directory.
+func dockerStatusForDir(dir, label string) dockerStatusResponse {
 	resp := dockerStatusResponse{}
-
 	resp.DaemonRunning = docker.IsDockerRunning()
-	resp.ComposeFile = docker.HasComposeFile(project.Path)
+	resp.ComposeFile = docker.HasComposeFile(dir)
 
-	// Running services (from docker compose ps). PS() returns services
-	// even when the command exits non-zero (e.g. unhealthy containers),
-	// so we always use whatever data came back.
 	if resp.DaemonRunning && resp.ComposeFile {
-		services, err := docker.PS(project.Path)
+		services, err := docker.PS(dir)
 		if err != nil {
-			log.Printf("DockerStatus PS error for project %s: %v", project.ID, err)
+			log.Printf("DockerStatus PS error for %s: %v", label, err)
 			resp.Error = err.Error()
 		}
 		if len(services) > 0 {
@@ -52,11 +50,10 @@ func (h *Handlers) DockerStatus(w http.ResponseWriter, r *http.Request) {
 		resp.Services = []model.DockerService{}
 	}
 
-	// Compose service details (parsed from YAML)
 	if resp.ComposeFile {
-		cfg, err := docker.ParseComposeFile(project.Path)
+		cfg, err := docker.ParseComposeFile(dir)
 		if err != nil {
-			log.Printf("DockerStatus compose parse error for project %s: %v", project.ID, err)
+			log.Printf("DockerStatus compose parse error for %s: %v", label, err)
 		} else {
 			resp.ComposeServices = docker.ExtractServiceDetails(cfg)
 		}
@@ -65,27 +62,38 @@ func (h *Handlers) DockerStatus(w http.ResponseWriter, r *http.Request) {
 		resp.ComposeServices = []docker.ComposeServiceDetail{}
 	}
 
-	// Web app URL
-	resp.WebAppURL = docker.FindWebAppURL(project.Path)
+	resp.WebAppURL = docker.FindWebAppURL(dir)
 
+	// Check for missing env files referenced by the compose file.
+	if resp.ComposeFile {
+		resp.MissingEnvFiles = docker.FindMissingEnvFiles(dir)
+	}
+
+	return resp
+}
+
+// DockerStatus returns a combined JSON response with daemon health, compose
+// file presence, running services, compose service details, OS ports, and
+// an optional web app URL.
+func (h *Handlers) DockerStatus(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	resp := dockerStatusForDir(project.Path, project.ID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
 
-// DockerPS returns the list of Docker Compose services as JSON.
-func (h *Handlers) DockerPS(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
-
-	if !docker.HasComposeFile(project.Path) {
+// dockerPS is the shared implementation for listing Docker Compose services.
+func dockerPS(w http.ResponseWriter, dir, label string) {
+	if !docker.HasComposeFile(dir) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode([]any{})
 		return
 	}
 
-	services, err := docker.PS(project.Path)
+	services, err := docker.PS(dir)
 	if err != nil {
-		log.Printf("DockerPS error for project %s: %v", project.ID, err)
+		log.Printf("DockerPS error for %s: %v", label, err)
 		http.Error(w, "Failed to list Docker services", http.StatusInternalServerError)
 		return
 	}
@@ -94,17 +102,15 @@ func (h *Handlers) DockerPS(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(docker.ToDockerServices(services))
 }
 
-// DockerUp runs `docker compose up -d` and returns a status response.
-func (h *Handlers) DockerUp(w http.ResponseWriter, r *http.Request) {
-	project := middleware.GetProject(r)
-
-	if !docker.HasComposeFile(project.Path) {
+// dockerComposeAction runs a compose-level action (up/down/restart) in the given dir.
+func dockerComposeAction(w http.ResponseWriter, dir, label, action string, fn func(string) error) {
+	if !docker.HasComposeFile(dir) {
 		http.Error(w, "No compose file found", http.StatusBadRequest)
 		return
 	}
 
-	if err := docker.Up(project.Path); err != nil {
-		log.Printf("DockerUp error for project %s: %v", project.ID, err)
+	if err := fn(dir); err != nil {
+		log.Printf("Docker%s error for %s: %v", action, label, err)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -113,117 +119,184 @@ func (h *Handlers) DockerUp(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// dockerServiceAction runs a per-service action (start/stop/restart) in the given dir.
+func dockerServiceAction(w http.ResponseWriter, r *http.Request, dir, label string, fn func(string, string) error) {
+	svc := chi.URLParam(r, "svc")
+	if svc == "" {
+		http.Error(w, "service name required", http.StatusBadRequest)
+		return
+	}
+
+	if err := fn(dir, svc); err != nil {
+		log.Printf("DockerService error for %s/%s: %v", label, svc, err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// DockerPS returns the list of Docker Compose services as JSON.
+func (h *Handlers) DockerPS(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	dockerPS(w, project.Path, project.ID)
+}
+
+// DockerUp runs `docker compose up -d` and returns a status response.
+func (h *Handlers) DockerUp(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	dockerComposeAction(w, project.Path, project.ID, "Up", docker.Up)
 }
 
 // DockerDown runs `docker compose down` and returns a status response.
 func (h *Handlers) DockerDown(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
-
-	if !docker.HasComposeFile(project.Path) {
-		http.Error(w, "No compose file found", http.StatusBadRequest)
-		return
-	}
-
-	if err := docker.Down(project.Path); err != nil {
-		log.Printf("DockerDown error for project %s: %v", project.ID, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	dockerComposeAction(w, project.Path, project.ID, "Down", docker.Down)
 }
 
 // DockerRestart runs `docker compose restart` and returns a status response.
 func (h *Handlers) DockerRestart(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
-
-	if !docker.HasComposeFile(project.Path) {
-		http.Error(w, "No compose file found", http.StatusBadRequest)
-		return
-	}
-
-	if err := docker.Restart(project.Path); err != nil {
-		log.Printf("DockerRestart error for project %s: %v", project.ID, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	dockerComposeAction(w, project.Path, project.ID, "Restart", docker.Restart)
 }
 
 // DockerServiceStart starts a single Docker Compose service.
 func (h *Handlers) DockerServiceStart(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
-	svc := chi.URLParam(r, "svc")
-	if svc == "" {
-		http.Error(w, "service name required", http.StatusBadRequest)
-		return
-	}
-
-	if err := docker.StartService(project.Path, svc); err != nil {
-		log.Printf("DockerServiceStart error for %s/%s: %v", project.ID, svc, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	dockerServiceAction(w, r, project.Path, project.ID, docker.StartService)
 }
 
 // DockerServiceStop stops a single Docker Compose service.
 func (h *Handlers) DockerServiceStop(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
-	svc := chi.URLParam(r, "svc")
-	if svc == "" {
-		http.Error(w, "service name required", http.StatusBadRequest)
-		return
-	}
-
-	if err := docker.StopService(project.Path, svc); err != nil {
-		log.Printf("DockerServiceStop error for %s/%s: %v", project.ID, svc, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	dockerServiceAction(w, r, project.Path, project.ID, docker.StopService)
 }
 
 // DockerServiceRestart restarts a single Docker Compose service.
 func (h *Handlers) DockerServiceRestart(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
-	svc := chi.URLParam(r, "svc")
-	if svc == "" {
-		http.Error(w, "service name required", http.StatusBadRequest)
-		return
-	}
-
-	if err := docker.RestartService(project.Path, svc); err != nil {
-		log.Printf("DockerServiceRestart error for %s/%s: %v", project.ID, svc, err)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	dockerServiceAction(w, r, project.Path, project.ID, docker.RestartService)
 }
 
-// DockerLogsWS is a WebSocket handler that streams Docker Compose logs for a
-// specific service. The project ID and service name are extracted from the URL
-// path parameters (defined in routes.go as /ws/docker/{projectID}/logs/{svc}).
-// It uses the same gorilla/websocket upgrader defined in terminal.go.
+// dockerLogsWSForDir streams Docker Compose logs for a service in the given dir.
+func dockerLogsWSForDir(w http.ResponseWriter, r *http.Request, dir, label, svc string) {
+	if !docker.HasComposeFile(dir) {
+		http.Error(w, "No compose file found", http.StatusBadRequest)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("DockerLogsWS upgrade failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	go func() {
+		defer cancel()
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+
+	tail := 0
+	if n, err := strconv.Atoi(r.URL.Query().Get("tail")); err == nil && n > 0 {
+		tail = n
+	}
+
+	reader, err := docker.LogsStream(ctx, dir, svc, tail)
+	if err != nil {
+		log.Printf("DockerLogsWS stream error for %s/%s: %v", label, svc, err)
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
+		return
+	}
+	defer reader.Close()
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(line+"\n")); err != nil {
+			return
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		if ctx.Err() == nil {
+			log.Printf("DockerLogsWS scanner error for %s/%s: %v", label, svc, err)
+		}
+	}
+}
+
+// dockerBuildWSForDir streams Docker Compose build output for a service in the given dir.
+func dockerBuildWSForDir(w http.ResponseWriter, r *http.Request, dir, label, svc string) {
+	if !docker.HasComposeFile(dir) {
+		http.Error(w, "No compose file found", http.StatusBadRequest)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("DockerBuildWS upgrade failed: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	go func() {
+		defer cancel()
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+
+	reader, err := docker.BuildStream(ctx, dir, svc)
+	if err != nil {
+		log.Printf("DockerBuildWS stream error for %s/%s: %v", label, svc, err)
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
+		return
+	}
+
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(line+"\n")); err != nil {
+			reader.Close()
+			return
+		}
+	}
+
+	if err := scanner.Err(); err != nil && ctx.Err() == nil {
+		log.Printf("DockerBuildWS scanner error for %s/%s: %v", label, svc, err)
+	}
+
+	reader.Close()
+
+	if ctx.Err() != nil {
+		return
+	}
+
+	if reader.WaitErr() != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("[Build failed]\n"))
+	} else {
+		conn.WriteMessage(websocket.TextMessage, []byte("[Build complete]\n"))
+	}
+}
+
+// DockerLogsWS streams Docker Compose logs for a project service via WebSocket.
 func (h *Handlers) DockerLogsWS(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectID")
 	svc := chi.URLParam(r, "svc")
@@ -239,69 +312,10 @@ func (h *Handlers) DockerLogsWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !docker.HasComposeFile(project.Path) {
-		http.Error(w, "No compose file found", http.StatusBadRequest)
-		return
-	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("DockerLogsWS upgrade failed: %v", err)
-		return
-	}
-	defer conn.Close()
-
-	// Create a cancellable context tied to the WebSocket connection lifetime.
-	// When the client disconnects, the read goroutine detects the error and
-	// cancels the context, which terminates the docker compose logs process.
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
-
-	// Drain reads from the client side. When the connection closes, cancel
-	// the context to stop the log streaming process.
-	go func() {
-		defer cancel()
-		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				return
-			}
-		}
-	}()
-
-	tail := 0
-	if n, err := strconv.Atoi(r.URL.Query().Get("tail")); err == nil && n > 0 {
-		tail = n
-	}
-
-	reader, err := docker.LogsStream(ctx, project.Path, svc, tail)
-	if err != nil {
-		log.Printf("DockerLogsWS stream error for %s/%s: %v", projectID, svc, err)
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
-		return
-	}
-	defer reader.Close()
-
-	// Stream log lines from the docker compose process to the WebSocket client.
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(line+"\n")); err != nil {
-			// Client disconnected.
-			return
-		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		// Context cancellation errors are expected when the client disconnects.
-		if ctx.Err() == nil {
-			log.Printf("DockerLogsWS scanner error for %s/%s: %v", projectID, svc, err)
-		}
-	}
+	dockerLogsWSForDir(w, r, project.Path, projectID, svc)
 }
 
-// DockerBuildWS is a WebSocket handler that streams Docker Compose build output
-// for a specific service. The project ID and service name are extracted from the
-// URL path parameters (defined in routes.go as /ws/docker/{projectID}/build/{svc}).
+// DockerBuildWS streams Docker Compose build output for a project service via WebSocket.
 func (h *Handlers) DockerBuildWS(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "projectID")
 	svc := chi.URLParam(r, "svc")
@@ -317,64 +331,251 @@ func (h *Handlers) DockerBuildWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !docker.HasComposeFile(project.Path) {
+	dockerBuildWSForDir(w, r, project.Path, projectID, svc)
+}
+
+// ─── Feature Docker Handlers ──────────────────────────────────────────────
+
+// featureDockerDir resolves the worktree path for a feature from URL params.
+func (h *Handlers) featureDockerDir(r *http.Request) (string, string, error) {
+	fid := chi.URLParam(r, "fid")
+	feature, ok := h.store.GetFeature(fid)
+	if !ok {
+		return "", "", fmt.Errorf("feature not found")
+	}
+	return feature.WorktreePath, "feature:" + fid, nil
+}
+
+// FeatureDockerStatus returns Docker status scoped to a feature's worktree.
+func (h *Handlers) FeatureDockerStatus(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	resp := dockerStatusForDir(dir, label)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
+// FeatureDockerPS returns the running services for a feature's worktree.
+func (h *Handlers) FeatureDockerPS(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerPS(w, dir, label)
+}
+
+// FeatureDockerUp stops any running Docker stacks from the project or other
+// features, then starts the stack in this feature's worktree.
+func (h *Handlers) FeatureDockerUp(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if !docker.HasComposeFile(dir) {
 		http.Error(w, "No compose file found", http.StatusBadRequest)
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("DockerBuildWS upgrade failed: %v", err)
-		return
+	// Stop other running stacks: main project + other features.
+	pathsToStop := []string{}
+	if docker.HasComposeFile(project.Path) {
+		pathsToStop = append(pathsToStop, project.Path)
 	}
-	defer conn.Close()
+	for _, f := range h.store.GetFeatures(project.ID) {
+		if f.WorktreePath != dir && docker.HasComposeFile(f.WorktreePath) {
+			pathsToStop = append(pathsToStop, f.WorktreePath)
+		}
+	}
 
-	ctx, cancel := context.WithCancel(r.Context())
-	defer cancel()
-
-	// Drain reads from the client side. When the connection closes, cancel
-	// the context to stop the build process.
-	go func() {
-		defer cancel()
-		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				return
+	for _, p := range pathsToStop {
+		services, _ := docker.PS(p)
+		if len(services) > 0 {
+			log.Printf("FeatureDockerUp: stopping stack at %s before starting %s", p, label)
+			if err := docker.Down(p); err != nil {
+				log.Printf("FeatureDockerUp: failed to stop stack at %s: %v", p, err)
 			}
 		}
-	}()
+	}
 
-	reader, err := docker.BuildStream(ctx, project.Path, svc)
+	// Now start the feature stack.
+	if err := docker.Up(dir); err != nil {
+		log.Printf("FeatureDockerUp error for %s: %v", label, err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// FeatureDockerDown stops the Docker stack in a feature's worktree.
+func (h *Handlers) FeatureDockerDown(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
 	if err != nil {
-		log.Printf("DockerBuildWS stream error for %s/%s: %v", projectID, svc, err)
-		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()))
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerComposeAction(w, dir, label, "Down", docker.Down)
+}
+
+// FeatureDockerRestart restarts the Docker stack in a feature's worktree.
+func (h *Handlers) FeatureDockerRestart(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerComposeAction(w, dir, label, "Restart", docker.Restart)
+}
+
+// FeatureDockerServiceStart starts a single service in a feature's worktree.
+func (h *Handlers) FeatureDockerServiceStart(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerServiceAction(w, r, dir, label, docker.StartService)
+}
+
+// FeatureDockerServiceStop stops a single service in a feature's worktree.
+func (h *Handlers) FeatureDockerServiceStop(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerServiceAction(w, r, dir, label, docker.StopService)
+}
+
+// FeatureDockerServiceRestart restarts a single service in a feature's worktree.
+func (h *Handlers) FeatureDockerServiceRestart(w http.ResponseWriter, r *http.Request) {
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	dockerServiceAction(w, r, dir, label, docker.RestartService)
+}
+
+// FeatureDockerLogsWS streams Docker logs for a feature's service via WebSocket.
+func (h *Handlers) FeatureDockerLogsWS(w http.ResponseWriter, r *http.Request) {
+	fid := chi.URLParam(r, "fid")
+	svc := chi.URLParam(r, "svc")
+
+	if fid == "" || svc == "" {
+		http.Error(w, "feature ID and service name required", http.StatusBadRequest)
 		return
 	}
 
-	// Stream build output line by line to the WebSocket client.
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(line+"\n")); err != nil {
-			reader.Close()
-			return
+	feature, ok := h.store.GetFeature(fid)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+
+	dockerLogsWSForDir(w, r, feature.WorktreePath, "feature:"+fid, svc)
+}
+
+// FeatureDockerBuildWS streams Docker build output for a feature's service via WebSocket.
+func (h *Handlers) FeatureDockerBuildWS(w http.ResponseWriter, r *http.Request) {
+	fid := chi.URLParam(r, "fid")
+	svc := chi.URLParam(r, "svc")
+
+	if fid == "" || svc == "" {
+		http.Error(w, "feature ID and service name required", http.StatusBadRequest)
+		return
+	}
+
+	feature, ok := h.store.GetFeature(fid)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+
+	dockerBuildWSForDir(w, r, feature.WorktreePath, "feature:"+fid, svc)
+}
+
+// FeatureDockerCopyEnvFiles copies missing .env files from the main project
+// directory to the feature's worktree so that Docker Compose can run.
+func (h *Handlers) FeatureDockerCopyEnvFiles(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	dir, label, err := h.featureDockerDir(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	missing := docker.FindMissingEnvFiles(dir)
+	if len(missing) == 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"copied": []string{}, "errors": []string{}})
+		return
+	}
+
+	var copied []string
+	var copyErrors []string
+
+	for _, envFile := range missing {
+		srcPath := envFile
+		dstPath := envFile
+		if !filepath.IsAbs(envFile) {
+			srcPath = filepath.Join(project.Path, envFile)
+			dstPath = filepath.Join(dir, envFile)
 		}
+
+		if _, err := os.Stat(srcPath); os.IsNotExist(err) {
+			copyErrors = append(copyErrors, fmt.Sprintf("%s: not found in main project", envFile))
+			continue
+		}
+
+		// Ensure destination directory exists.
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
+			copyErrors = append(copyErrors, fmt.Sprintf("%s: %v", envFile, err))
+			continue
+		}
+
+		if err := copyFile(srcPath, dstPath); err != nil {
+			log.Printf("FeatureDockerCopyEnvFiles: failed to copy %s for %s: %v", envFile, label, err)
+			copyErrors = append(copyErrors, fmt.Sprintf("%s: %v", envFile, err))
+			continue
+		}
+
+		copied = append(copied, envFile)
 	}
 
-	if err := scanner.Err(); err != nil && ctx.Err() == nil {
-		log.Printf("DockerBuildWS scanner error for %s/%s: %v", projectID, svc, err)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"copied": copied, "errors": copyErrors})
+}
+
+// copyFile copies a file from src to dst, preserving permissions.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	info, err := in.Stat()
+	if err != nil {
+		return err
 	}
 
-	// Close the reader to wait on the process and capture the exit status.
-	reader.Close()
-
-	// If the client disconnected, no point sending a status message.
-	if ctx.Err() != nil {
-		return
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode())
+	if err != nil {
+		return err
 	}
+	defer out.Close()
 
-	if reader.WaitErr() != nil {
-		conn.WriteMessage(websocket.TextMessage, []byte("[Build failed]\n"))
-	} else {
-		conn.WriteMessage(websocket.TextMessage, []byte("[Build complete]\n"))
-	}
+	_, err = io.Copy(out, in)
+	return err
 }

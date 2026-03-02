@@ -15,6 +15,7 @@
 <script src="/static/js/scratchpad.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
+<script src="/static/js/docker.js"></script>
 {{end}}
 
 {{define "body"}}
@@ -355,7 +356,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, dockerLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -742,6 +743,11 @@
                         :class="activeTab === 'review' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Review
+                </button>
+                <button @click="activeTab = 'docker'"
+                        :class="activeTab === 'docker' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
+                        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    Docker
                 </button>
                 <!-- Spacer between system tabs and content tabs -->
                 <div class="flex-grow"></div>
@@ -1356,6 +1362,31 @@
                     <!-- Bookmarks commit modal (managed by ClawIDEGit) -->
                 </div>
 
+                <!-- Docker panel -->
+                <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col"
+                     x-data="{ loaded: false }"
+                     x-effect="if (activeTab === 'docker' && !loaded) { loaded = true; $nextTick(() => { if (typeof ClawIDEDocker !== 'undefined') { ClawIDEDocker.setBasePath('/projects/{{.Project.ID}}/features/{{.Feature.ID}}', '/ws/docker/{{.Project.ID}}/features/{{.Feature.ID}}'); ClawIDEDocker.refresh('{{.Project.ID}}'); } }) }">
+                    <!-- Controls bar -->
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-gray-800">
+                        <h3 class="text-sm font-medium text-white">Docker</h3>
+                        <div class="ml-auto flex gap-1">
+                            <button id="docker-up-btn" onclick="ClawIDEDocker.composeUp('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Up</button>
+                            <button id="docker-down-btn" onclick="ClawIDEDocker.composeDown('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-red-600 hover:bg-red-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Down</button>
+                            <button id="docker-restart-btn" onclick="ClawIDEDocker.composeRestart('{{.Project.ID}}')" class="px-3 py-1 text-xs bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Restart</button>
+                            <button id="docker-refresh-btn" onclick="ClawIDEDocker.refresh('{{.Project.ID}}')" class="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
+                        </div>
+                    </div>
+                    <!-- Scrollable content area -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Alert area -->
+                        <div id="docker-alert" class="px-4 pt-3"></div>
+                        <!-- Unified compose + runtime services -->
+                        <div id="docker-compose-services">
+                            <div class="text-gray-500 text-sm px-4 py-3">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Review panel -->
                 <div x-show="activeTab === 'review'" x-cloak class="h-full flex flex-col"
                      x-data="{ bottomPanelOpen: false }">
@@ -1462,6 +1493,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
                 <span class="text-[10px]">Commit</span>
+            </button>
+            <button @click="activeTab = 'docker'" :class="activeTab === 'docker' ? 'text-indigo-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+                <span class="text-[10px]">Docker</span>
             </button>
             <button @click="activeTab = 'notes'" :class="activeTab === 'notes' ? 'text-amber-400' : 'text-gray-500'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>

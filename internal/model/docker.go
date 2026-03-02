@@ -28,6 +28,7 @@ type ComposeService struct {
 	Ports         []string           `yaml:"ports"`
 	Volumes       []string           `yaml:"volumes"`
 	Environment   any                `yaml:"environment"`
+	EnvFile       any                `yaml:"env_file"`
 	DependsOn     any                `yaml:"depends_on"`
 	Command       any                `yaml:"command"`
 	ContainerName string             `yaml:"container_name"`

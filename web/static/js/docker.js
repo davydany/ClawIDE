@@ -8,6 +8,9 @@
     // Cached state from last refresh.
     var lastStatus = null;
 
+    // Last projectID used for refresh (needed by copyEnvFiles).
+    var lastProjectID = '';
+
     // Active WebSocket connections for log streaming, keyed by service name.
     var activeLogSockets = {};
 
@@ -111,8 +114,27 @@
         if (restartBtn) restartBtn.style.display = '';
         setControlsDisabled(false);
 
+        var alertHtml = '';
+
+        // Missing env files alert with fix button
+        if (status.missing_env_files && status.missing_env_files.length > 0) {
+            var fileList = status.missing_env_files.map(function(f) { return escapeHtml(f); }).join(', ');
+            alertHtml +=
+                '<div class="flex items-start gap-3 px-4 py-3 bg-amber-900/20 border border-amber-800/40 rounded-lg mb-2">' +
+                    '<svg class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<p class="text-sm font-medium text-amber-300">Missing env files</p>' +
+                        '<p class="text-xs text-amber-400/80 mt-0.5">The following files are missing from this worktree: <span class="font-mono">' + fileList + '</span></p>' +
+                        '<p class="text-xs text-amber-400/60 mt-0.5">These are needed by Docker Compose but aren\'t tracked by git.</p>' +
+                    '</div>' +
+                    '<button onclick="ClawIDEDocker.copyEnvFiles()" class="flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors">' +
+                        'Copy from Main' +
+                    '</button>' +
+                '</div>';
+        }
+
         if (status.error) {
-            alertDiv.innerHTML =
+            alertHtml +=
                 '<div class="flex items-start gap-3 px-4 py-3 bg-amber-900/20 border border-amber-800/40 rounded-lg">' +
                     '<svg class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>' +
                     '<div class="min-w-0">' +
@@ -120,9 +142,9 @@
                         '<p class="text-xs text-amber-400/80 mt-0.5 break-all">' + escapeHtml(status.error) + '</p>' +
                     '</div>' +
                 '</div>';
-        } else {
-            alertDiv.innerHTML = '';
         }
+
+        alertDiv.innerHTML = alertHtml;
     }
 
     // Determine the health indicator color class for a service.
@@ -352,11 +374,27 @@
 
     // ─── Main refresh ──────────────────────────────────────
 
+    // Optional base path override for feature-scoped Docker.
+    // Set via ClawIDEDocker.setBasePath() before calling refresh().
+    var customBasePath = '';
+    var customWSPath = '';
+
+    function apiBase(projectID) {
+        if (customBasePath) return customBasePath;
+        return '/projects/' + projectID;
+    }
+
+    function wsBase(projectID) {
+        if (customWSPath) return customWSPath;
+        return '/ws/docker/' + projectID;
+    }
+
     function refreshStatus(projectID) {
+        lastProjectID = projectID;
         // Close all active log sockets before re-rendering
         closeAllLogs();
 
-        fetch('/projects/' + projectID + '/api/docker/status')
+        fetch(apiBase(projectID) + '/api/docker/status')
             .then(function(resp) {
                 if (!resp.ok) throw new Error('Failed to fetch docker status');
                 return resp.json();
@@ -384,7 +422,7 @@
     // ─── Actions ───────────────────────────────────────────
 
     function serviceAction(projectID, service, action) {
-        fetch('/projects/' + projectID + '/api/docker/' + service + '/' + action, {
+        fetch(apiBase(projectID) + '/api/docker/' + service + '/' + action, {
             method: 'POST',
         })
             .then(function(resp) {
@@ -409,7 +447,7 @@
             container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Starting services...</div>';
         }
 
-        fetch('/projects/' + projectID + '/api/docker/up', { method: 'POST' })
+        fetch(apiBase(projectID) + '/api/docker/up', { method: 'POST' })
             .then(function(resp) {
                 if (!resp.ok) {
                     return resp.json().then(function(body) {
@@ -436,7 +474,7 @@
             container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Stopping services...</div>';
         }
 
-        fetch('/projects/' + projectID + '/api/docker/down', { method: 'POST' })
+        fetch(apiBase(projectID) + '/api/docker/down', { method: 'POST' })
             .then(function(resp) {
                 if (!resp.ok) {
                     return resp.json().then(function(body) {
@@ -463,7 +501,7 @@
             container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Restarting services...</div>';
         }
 
-        fetch('/projects/' + projectID + '/api/docker/restart', { method: 'POST' })
+        fetch(apiBase(projectID) + '/api/docker/restart', { method: 'POST' })
             .then(function(resp) {
                 if (!resp.ok) {
                     return resp.json().then(function(body) {
@@ -511,7 +549,7 @@
 
         // Open WebSocket
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var wsUrl = proto + '//' + location.host + '/ws/docker/' + projectID + '/logs/' + service + '?tail=250';
+        var wsUrl = proto + '//' + location.host + wsBase(projectID) + '/logs/' + service + '?tail=250';
         var ws = new WebSocket(wsUrl);
 
         ws.onopen = function() {
@@ -602,7 +640,7 @@
 
         // Open WebSocket
         var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        var wsUrl = proto + '//' + location.host + '/ws/docker/' + projectID + '/build/' + service;
+        var wsUrl = proto + '//' + location.host + wsBase(projectID) + '/build/' + service;
         var ws = new WebSocket(wsUrl);
 
         ws.onopen = function() {
@@ -671,6 +709,46 @@
 
     // ─── Public API ────────────────────────────────────────
 
+    // Copy missing .env files from the main project to the feature worktree.
+    function copyEnvFiles() {
+        if (!customBasePath) {
+            showToast('Copy env files is only available for feature worktrees', 3000);
+            return;
+        }
+
+        fetch(customBasePath + '/api/docker/copy-env-files', { method: 'POST' })
+            .then(function(resp) {
+                if (!resp.ok) throw new Error('Failed to copy env files');
+                return resp.json();
+            })
+            .then(function(result) {
+                if (result.copied && result.copied.length > 0) {
+                    showToast('Copied: ' + result.copied.join(', '), 3000);
+                }
+                if (result.errors && result.errors.length > 0) {
+                    showToast('Some files could not be copied: ' + result.errors.join('; '), 5000);
+                }
+                // Refresh to clear the alert
+                if (lastProjectID) {
+                    setTimeout(function() { refreshStatus(lastProjectID); }, 500);
+                }
+            })
+            .catch(function(err) {
+                showToast('Failed to copy env files: ' + err.message, 4000);
+            });
+    }
+
+    // Configure feature-scoped paths for Docker API and WebSocket.
+    function setBasePath(apiPath, wsPath) {
+        customBasePath = apiPath;
+        customWSPath = wsPath;
+    }
+
+    function resetBasePath() {
+        customBasePath = '';
+        customWSPath = '';
+    }
+
     window.ClawIDEDocker = {
         refresh: refreshStatus,
         serviceAction: serviceAction,
@@ -681,5 +759,8 @@
         closeLogs: closeLogs,
         buildService: buildService,
         closeBuild: closeBuild,
+        copyEnvFiles: copyEnvFiles,
+        setBasePath: setBasePath,
+        resetBasePath: resetBasePath,
     };
 })();
