@@ -19,6 +19,14 @@ The file browser displays your project's directory structure as a tree. It uses 
 3. Click on directories to expand them and reveal their contents.
 4. Click on a file to open it in the editor.
 
+### Creating Files and Folders
+
+Right-click in the file tree (or use the toolbar buttons) to create new files or folders directly from the UI. Enter a name and the file or directory is created on disk immediately.
+
+### Collapse/Expand Toggle
+
+Use the collapse/expand toggle button in the file tree toolbar to collapse all expanded directories at once, or expand them back. Useful for resetting the tree view in large projects.
+
 ## Code Editor
 
 Files open in a CodeMirror 6 editor with the following capabilities:

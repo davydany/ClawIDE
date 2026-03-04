@@ -18,12 +18,9 @@ Bookmarks let you save useful URLs for each project — documentation links, sta
 
 ClawIDE automatically fetches a favicon for each bookmark URL.
 
-## Starred Bookmarks
+## Bookmarks Bar
 
-Star your most important bookmarks for quick access. Starred bookmarks appear at the top of the list.
-
-- Click the star icon on any bookmark to toggle its starred status.
-- You can have up to **5 starred bookmarks** per project.
+Root-level bookmarks (those not in any folder) automatically populate the bookmarks bar at the top of the workspace. This gives you one-click access to your most-used links without opening the full bookmarks panel.
 
 ## Emoji Labels
 
