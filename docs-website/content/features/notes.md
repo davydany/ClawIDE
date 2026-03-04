@@ -15,12 +15,23 @@ Notes let you jot down project-specific documentation, reminders, or reference m
 3. Enter a title and write your content using markdown.
 4. Save the note.
 
-Notes are stored persistently and survive server restarts.
+Notes are stored persistently and survive server restarts. Filenames are derived from the note title, making them easy to identify on disk.
 
-## Project vs Global Notes
+## Folders
 
-- **Project notes** are tied to a specific project and only appear in that project's workspace. Pass a `project_id` when creating the note.
-- **Global notes** are available across all projects. Leave the project ID empty to create a global note.
+Notes can be organized into folders for better structure:
+
+1. Click **New Folder** to create a folder.
+2. Drag and drop notes between folders to organize them.
+3. Folders are displayed as a tree in the notes panel.
+
+## Drag-and-Drop
+
+Reorder notes and move them between folders using drag-and-drop. Grab a note and drop it onto a folder or between other notes to change its position.
+
+## Project-Scoped Notes
+
+Notes are scoped to the current project. Each project has its own set of notes and folders, keeping project documentation separate.
 
 ## Markdown Support
 

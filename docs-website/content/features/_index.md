@@ -20,9 +20,33 @@ Browse project files with a lazy-loaded directory tree and edit them with CodeMi
 
 ## Docker Integration
 
-Manage Docker Compose services directly from the IDE. Start, stop, and restart containers, view service status badges, and stream logs in real time.
+Manage Docker Compose services directly from the IDE. Start, stop, build, and restart containers, view healthcheck status, and stream logs inline.
 
 [Learn more →]({{< ref "features/docker-integration" >}})
+
+## Feature Workspaces
+
+Isolated development environments per feature — each with its own git branch, terminal sessions, file browser, Docker stack, and merge review. Color-coded for quick identification.
+
+[Learn more →]({{< ref "features/feature-workspaces" >}})
+
+## Merge Review
+
+Review feature branch changes with a side-by-side diff viewer before merging back to the main branch.
+
+[Learn more →]({{< ref "features/merge-review" >}})
+
+## Project Wizard
+
+Create new projects from 15 framework templates across 8 languages, generate with an LLM provider (Claude, OpenAI), or start empty.
+
+[Learn more →]({{< ref "features/project-wizard" >}})
+
+## Scratchpad
+
+A persistent text area for quick notes and scratch work. Auto-saves on blur, accessible from the sidebar.
+
+[Learn more →]({{< ref "features/scratchpad" >}})
 
 ## Git Worktrees
 

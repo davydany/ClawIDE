@@ -30,6 +30,14 @@ Click **Up** to start all services defined in the project's `docker-compose.yml`
 
 Click **Down** to stop and remove all containers. This runs `docker compose down`.
 
+### Restart Stack
+
+Click **Restart** to restart the entire Docker Compose stack. This stops all containers and starts them again.
+
+### Build Services
+
+Click **Build** to run `docker compose build` with streaming output. Build progress is displayed inline in the Docker panel, so you can watch the build in real time without switching to a terminal.
+
 ### Individual Service Control
 
 For each service, you can:
@@ -38,15 +46,23 @@ For each service, you can:
 - **Stop** — Stop a running service
 - **Restart** — Restart a service (useful after configuration changes)
 
+## Healthchecks
+
+Services with Docker healthchecks display their health status directly on the service card. The status indicator shows:
+
+- **Healthy** — The healthcheck is passing
+- **Unhealthy** — The healthcheck is failing
+- **Starting** — The container is still initializing
+
 ## Log Streaming
 
-ClawIDE streams Docker service logs in real time via WebSocket:
+Each service card includes an inline log viewer. Click the log icon to expand logs for that service — no need to open a separate panel.
 
-1. Select a service from the Docker panel.
-2. Logs appear in a streaming terminal view.
-3. New log lines are pushed to the browser as they arrive.
+ClawIDE streams Docker service logs in real time via WebSocket. New log lines are pushed to the browser as they arrive.
 
-The log streaming WebSocket endpoint is `ws://localhost:9800/ws/docker/{projectID}/logs/{service}`.
+## Feature Workspace Docker
+
+[Feature workspaces]({{< ref "features/feature-workspaces" >}}) can run their own isolated Docker Compose stacks. Each feature workspace has its own Docker panel, so you can run different service configurations per feature without conflicting with the main branch or other features.
 
 ## Troubleshooting
 

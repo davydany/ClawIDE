@@ -10,21 +10,29 @@ The dashboard is your central hub for managing projects in ClawIDE. From here yo
 
 ## Project List
 
-When you open ClawIDE, the dashboard displays all your projects as cards. Each project card shows:
+When you open ClawIDE, the dashboard displays your starred projects in a bar at the top, with remaining projects accessible via a dropdown. Each project shows:
 
-- The project name
+- The project name with its assigned color
 - The project path on disk
 - Quick-access navigation to the project workspace
 
-Projects are loaded from the configured projects directory (default: `~/projects`).
+Projects are loaded from the configured projects directory (default: `~/projects`). Hidden files and worktree directories are automatically excluded.
+
+## Starred Projects
+
+Star your most-used projects to pin them to the dashboard bar. Drag starred projects to reorder them. Non-starred projects are available in a dropdown below the bar.
+
+## Color-Coding
+
+Each project is assigned a color that appears on the project card and throughout its workspace. [Feature workspaces]({{< ref "features/feature-workspaces" >}}) within a project also get their own colors, making it easy to visually identify where you are.
 
 ## Creating a New Project
 
 To create a new project:
 
 1. Click the **Create Project** button on the dashboard.
-2. Enter a name for your project.
-3. ClawIDE creates a new directory in your projects folder and sets up the project workspace.
+2. The [Project Wizard]({{< ref "features/project-wizard" >}}) opens with options to create from a template, generate with an LLM, or start empty.
+3. ClawIDE creates the project directory and sets up the workspace.
 
 ## Importing Existing Projects
 

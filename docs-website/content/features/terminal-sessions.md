@@ -47,6 +47,10 @@ Descriptive session names help you keep track of what each Claude instance is wo
 - **Close a pane**: Click the close button on an individual pane. If it's the last pane in a session, the session is also removed.
 - **Delete a session**: Use the session delete action to remove the entire session and all its panes. The underlying tmux session is terminated.
 
+## Auto-Copy on Highlight
+
+Selecting text in a terminal session automatically copies it to the clipboard. No need to use keyboard shortcuts or right-click menus — just highlight and the text is copied.
+
 ## Session Persistence
 
 Sessions are backed by tmux, which provides:
@@ -57,7 +61,7 @@ Sessions are backed by tmux, which provides:
 
 ## Configuration
 
-- **Max Sessions**: Limit the number of concurrent sessions with `--max-sessions` (default: 10).
+- **Max Sessions**: Limit the number of concurrent sessions with `--max-sessions` (default: 10, configurable in the [Settings]({{< ref "features/settings" >}}) page). The value is bounded by a minimum and maximum to prevent misconfiguration.
 - **Scrollback Size**: Control the terminal scrollback buffer with `CLAWIDE_SCROLLBACK_SIZE` (default: 65536 bytes).
 - **Claude Command**: Change the Claude CLI binary with `--claude-command` (default: `claude`).
 
