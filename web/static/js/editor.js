@@ -70,6 +70,8 @@
     var ICON_SPLIT_H = '<svg class="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="6" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="9" y="2" width="6" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
     var ICON_SPLIT_V = '<svg class="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="1" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="9" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
     var ICON_CLOSE = '&#x2715;';
+    var ICON_PREVIEW = '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var ICON_PREVIEW_SIDE = '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>';
 
     // --- Tab helpers ---
     function findTabByPath(paneId, filePath) {
@@ -109,6 +111,9 @@
             modified: false,
             content: content || '',
             wrapperEl: null,
+            previewMode: 'off',
+            previewEl: null,
+            previewTimer: null,
         };
         pane.tabs.push(tab);
         pane.activeTabId = tabId;
@@ -133,7 +138,16 @@
         for (var i = 0; i < pane.tabs.length; i++) {
             var tab = pane.tabs[i];
             if (tab.wrapperEl) {
-                tab.wrapperEl.style.display = (tab.id === tabId) ? 'block' : 'none';
+                if (tab.id === tabId) {
+                    // Restore display based on preview mode
+                    if (tab.previewMode === 'side') {
+                        tab.wrapperEl.style.display = 'flex';
+                    } else {
+                        tab.wrapperEl.style.display = 'block';
+                    }
+                } else {
+                    tab.wrapperEl.style.display = 'none';
+                }
             }
         }
 
@@ -158,6 +172,12 @@
         if (tab.modified) {
             var filename = tab.filePath ? tab.filePath.split('/').pop() : 'Untitled';
             if (!confirm('Discard unsaved changes to "' + filename + '"?')) return;
+        }
+
+        // Clear preview timer
+        if (tab.previewTimer) {
+            clearTimeout(tab.previewTimer);
+            tab.previewTimer = null;
         }
 
         // Destroy CM view
@@ -336,6 +356,38 @@
         var controls = document.createElement('div');
         controls.className = 'editor-pane-controls';
 
+        // Markdown preview buttons (hidden by default, shown for .md files)
+        var previewSideBtn = document.createElement('button');
+        previewSideBtn.className = 'editor-preview-btn text-gray-500 hover:text-gray-300 px-1 transition-colors hidden';
+        previewSideBtn.title = 'Side-by-side preview';
+        previewSideBtn.innerHTML = ICON_PREVIEW_SIDE;
+        previewSideBtn.onclick = function(e) {
+            e.stopPropagation();
+            var tab = getActiveTab(paneId);
+            if (!tab) return;
+            var newMode = (tab.previewMode === 'side') ? 'off' : 'side';
+            setPreviewMode(paneId, tab.id, newMode);
+        };
+        controls.appendChild(previewSideBtn);
+
+        var previewOnlyBtn = document.createElement('button');
+        previewOnlyBtn.className = 'editor-preview-btn text-gray-500 hover:text-gray-300 px-1 transition-colors hidden';
+        previewOnlyBtn.title = 'Preview only';
+        previewOnlyBtn.innerHTML = ICON_PREVIEW;
+        previewOnlyBtn.onclick = function(e) {
+            e.stopPropagation();
+            var tab = getActiveTab(paneId);
+            if (!tab) return;
+            var newMode = (tab.previewMode === 'preview') ? 'off' : 'preview';
+            setPreviewMode(paneId, tab.id, newMode);
+        };
+        controls.appendChild(previewOnlyBtn);
+
+        // Store references so updatePreviewButtons can find them
+        header.dataset.paneId = paneId;
+        header._previewSideBtn = previewSideBtn;
+        header._previewOnlyBtn = previewOnlyBtn;
+
         var splitHBtn = document.createElement('button');
         splitHBtn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
         splitHBtn.title = 'Split horizontal';
@@ -371,6 +423,182 @@
         return header;
     }
 
+    // --- Markdown preview helpers ---
+    function isMarkdownFile(filePath) {
+        return filePath && /\.md$/i.test(filePath);
+    }
+
+    function updatePreviewButtons(paneId) {
+        var pane = editorPanes[paneId];
+        if (!pane || !pane.container) return;
+
+        var header = pane.container.querySelector('.editor-pane-header');
+        if (!header || !header._previewSideBtn) return;
+
+        var tab = getActiveTab(paneId);
+        var isMd = tab && isMarkdownFile(tab.filePath);
+
+        header._previewSideBtn.classList.toggle('hidden', !isMd);
+        header._previewOnlyBtn.classList.toggle('hidden', !isMd);
+
+        if (isMd && tab) {
+            header._previewSideBtn.classList.toggle('active', tab.previewMode === 'side');
+            header._previewOnlyBtn.classList.toggle('active', tab.previewMode === 'preview');
+        } else {
+            header._previewSideBtn.classList.remove('active');
+            header._previewOnlyBtn.classList.remove('active');
+        }
+    }
+
+    function ensurePreviewContainer(tab) {
+        if (tab.previewEl) return tab.previewEl;
+        if (!tab.wrapperEl) return null;
+
+        var container = document.createElement('div');
+        container.className = 'md-preview-container note-markdown-preview text-sm text-gray-300';
+        tab.wrapperEl.appendChild(container);
+        tab.previewEl = container;
+        return container;
+    }
+
+    function ensureCmWrap(tab) {
+        if (!tab.wrapperEl || !tab.editorView) return null;
+        var existing = tab.wrapperEl.querySelector('.cm-editor-wrap');
+        if (existing) return existing;
+
+        // Wrap the CodeMirror DOM in a .cm-editor-wrap div
+        var wrap = document.createElement('div');
+        wrap.className = 'cm-editor-wrap';
+        // Move the CM editor dom into the wrap
+        if (tab.editorView.dom.parentNode === tab.wrapperEl) {
+            tab.wrapperEl.insertBefore(wrap, tab.editorView.dom);
+            wrap.appendChild(tab.editorView.dom);
+        }
+        return wrap;
+    }
+
+    function setPreviewMode(paneId, tabId, mode) {
+        var tab = findTabById(paneId, tabId);
+        if (!tab || !tab.wrapperEl) return;
+
+        tab.previewMode = mode;
+        var wrapper = tab.wrapperEl;
+
+        // Remove all mode classes
+        wrapper.classList.remove('preview-side', 'preview-only');
+
+        if (mode === 'off') {
+            // Remove preview container if it exists
+            if (tab.previewEl && tab.previewEl.parentNode) {
+                tab.previewEl.parentNode.removeChild(tab.previewEl);
+                tab.previewEl = null;
+            }
+            // Remove resize handle
+            var handle = wrapper.querySelector('.editor-preview-resize-handle');
+            if (handle) handle.parentNode.removeChild(handle);
+            // Ensure cm-wrap is removed (flatten back)
+            var cmWrap = wrapper.querySelector('.cm-editor-wrap');
+            if (cmWrap && tab.editorView) {
+                wrapper.insertBefore(tab.editorView.dom, cmWrap);
+                wrapper.removeChild(cmWrap);
+            }
+            // Show editor
+            if (tab.editorView) {
+                tab.editorView.dom.style.display = '';
+            }
+        } else if (mode === 'side') {
+            wrapper.classList.add('preview-side');
+            ensureCmWrap(tab);
+            // Show editor
+            if (tab.editorView) {
+                tab.editorView.dom.style.display = '';
+            }
+            // Add resize handle if not present
+            if (!wrapper.querySelector('.editor-preview-resize-handle')) {
+                var resizeHandle = document.createElement('div');
+                resizeHandle.className = 'editor-preview-resize-handle';
+                var cmWrap2 = wrapper.querySelector('.cm-editor-wrap');
+                if (cmWrap2) {
+                    wrapper.insertBefore(resizeHandle, cmWrap2.nextSibling);
+                }
+                setupPreviewResizeHandle(resizeHandle, wrapper);
+            }
+            ensurePreviewContainer(tab);
+            renderPreview(paneId, tabId);
+        } else if (mode === 'preview') {
+            wrapper.classList.add('preview-only');
+            ensureCmWrap(tab);
+            // Hide editor
+            var cmWrap3 = wrapper.querySelector('.cm-editor-wrap');
+            if (cmWrap3) {
+                cmWrap3.style.display = 'none';
+            }
+            // Remove resize handle
+            var handle2 = wrapper.querySelector('.editor-preview-resize-handle');
+            if (handle2) handle2.parentNode.removeChild(handle2);
+            ensurePreviewContainer(tab);
+            renderPreview(paneId, tabId);
+        }
+
+        updatePreviewButtons(paneId);
+        renderTabs(paneId);
+    }
+
+    function renderPreview(paneId, tabId) {
+        var tab = findTabById(paneId, tabId);
+        if (!tab || !tab.previewEl) return;
+        if (!tab.editorView) return;
+
+        var content = window.ClawIDECodeMirror.getContent(tab.editorView);
+        if (window.ClawIDEMarkdown) {
+            window.ClawIDEMarkdown.renderInto(tab.previewEl, content);
+        }
+    }
+
+    function debouncedRenderPreview(paneId, tabId) {
+        var tab = findTabById(paneId, tabId);
+        if (!tab) return;
+
+        if (tab.previewTimer) clearTimeout(tab.previewTimer);
+        tab.previewTimer = setTimeout(function() {
+            tab.previewTimer = null;
+            renderPreview(paneId, tabId);
+        }, 150);
+    }
+
+    function setupPreviewResizeHandle(handle, wrapper) {
+        handle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            var cmWrap = wrapper.querySelector('.cm-editor-wrap');
+            if (!cmWrap) return;
+
+            var startX = e.clientX;
+            var startWidth = cmWrap.offsetWidth;
+            var totalWidth = wrapper.offsetWidth;
+
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+
+            function onMouseMove(e) {
+                var delta = e.clientX - startX;
+                var newWidth = startWidth + delta;
+                var ratio = newWidth / totalWidth;
+                ratio = Math.max(0.15, Math.min(0.85, ratio));
+                cmWrap.style.flex = '0 0 ' + (ratio * 100) + '%';
+            }
+
+            function onMouseUp() {
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+
     // --- Render the tab bar for a pane ---
     function renderTabs(paneId) {
         var pane = editorPanes[paneId];
@@ -391,6 +619,14 @@
                 nameSpan.textContent = tab.filePath ? tab.filePath.split('/').pop() : 'Untitled';
                 nameSpan.title = tab.filePath || '';
                 tabEl.appendChild(nameSpan);
+
+                // Preview indicator for active .md tabs
+                if (tab.previewMode && tab.previewMode !== 'off' && isMarkdownFile(tab.filePath)) {
+                    var previewIcon = document.createElement('span');
+                    previewIcon.className = 'text-indigo-400 flex items-center';
+                    previewIcon.innerHTML = '<svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+                    tabEl.appendChild(previewIcon);
+                }
 
                 // Modified dot
                 if (tab.modified) {
@@ -428,6 +664,8 @@
                 activeEl.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
             }
         });
+
+        updatePreviewButtons(paneId);
     }
 
     // --- Attach CodeMirror to a tab ---
@@ -476,6 +714,9 @@
                     tab.modified = true;
                     renderTabs(paneId);
                 }
+                if (tab.previewMode && tab.previewMode !== 'off') {
+                    debouncedRenderPreview(paneId, tab.id);
+                }
             },
             function() {
                 // onSave (Cmd+S from within CM)
@@ -520,6 +761,9 @@
                                 t.modified = true;
                                 renderTabs(pid);
                             }
+                            if (t.previewMode && t.previewMode !== 'off') {
+                                debouncedRenderPreview(pid, t.id);
+                            }
                         },
                         function() {
                             saveTab(projectID, pid, t.id);
@@ -530,6 +774,20 @@
         }
 
         renderTabs(paneId);
+
+        // Restore preview mode for tabs that had it active
+        for (var j = 0; j < pane.tabs.length; j++) {
+            (function(t) {
+                if (t.previewMode && t.previewMode !== 'off') {
+                    var savedMode = t.previewMode;
+                    t.previewMode = 'off'; // Reset so setPreviewMode can re-apply
+                    t.previewEl = null;
+                    requestAnimationFrame(function() {
+                        setPreviewMode(paneId, t.id, savedMode);
+                    });
+                }
+            })(pane.tabs[j]);
+        }
     }
 
     // --- Resize handle ---
@@ -680,6 +938,18 @@
     }
 
     function reuseTab(paneId, tab, filePath, content) {
+        // Clean up preview state when switching files
+        var wasMd = isMarkdownFile(tab.filePath);
+        var willBeMd = isMarkdownFile(filePath);
+
+        if (wasMd && !willBeMd) {
+            // Switching from .md to non-.md: reset preview
+            if (tab.previewMode !== 'off') {
+                setPreviewMode(paneId, tab.id, 'off');
+            }
+            tab.previewMode = 'off';
+        }
+
         tab.filePath = filePath;
         tab.content = content;
         tab.modified = false;
@@ -855,6 +1125,22 @@
             e.preventDefault();
             if (window.ClawIDECommands && window.ClawIDECommands.toggleWordWrap) {
                 window.ClawIDECommands.toggleWordWrap();
+            }
+        }
+
+        // Cmd+Shift+V / Ctrl+Shift+V: toggle markdown preview
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'v') {
+            var pidPreview = getFocusedPaneId();
+            if (pidPreview) {
+                var previewTab = getActiveTab(pidPreview);
+                if (previewTab && isMarkdownFile(previewTab.filePath)) {
+                    e.preventDefault();
+                    // Cycle: off → side → preview → off
+                    var modes = ['off', 'side', 'preview'];
+                    var idx = modes.indexOf(previewTab.previewMode || 'off');
+                    var nextMode = modes[(idx + 1) % modes.length];
+                    setPreviewMode(pidPreview, previewTab.id, nextMode);
+                }
             }
         }
 
