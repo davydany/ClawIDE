@@ -224,6 +224,65 @@
     @apply h-1 cursor-row-resize;
 }
 
+/* ═══════════════════════════════════════════════════
+   Markdown Preview in Editor Tabs
+   ═══════════════════════════════════════════════════ */
+
+/* Side-by-side mode: editor left, preview right */
+.editor-tab-wrapper.preview-side {
+    display: flex !important;
+    flex-direction: row;
+}
+
+.editor-tab-wrapper.preview-side .cm-editor-wrap {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.editor-tab-wrapper.preview-side .md-preview-container {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    border-left: 1px solid #374151;
+    display: block;
+}
+
+/* Preview-only mode: hide editor, show preview full */
+.editor-tab-wrapper.preview-only .cm-editor-wrap {
+    display: none;
+}
+
+.editor-tab-wrapper.preview-only .md-preview-container {
+    height: 100%;
+    overflow-y: auto;
+    display: block;
+}
+
+/* Preview container (hidden by default) */
+.md-preview-container {
+    padding: 16px 20px;
+    display: none;
+}
+
+/* Resize handle between editor and preview */
+.editor-preview-resize-handle {
+    width: 4px;
+    cursor: col-resize;
+    background: #374151;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.editor-preview-resize-handle:hover {
+    background: #6366f1;
+}
+
+/* Active state for preview toggle buttons */
+.editor-preview-btn.active {
+    color: #818cf8;
+}
+
 /* CodeMirror overrides for dark theme */
 .cm-editor {
     height: 100%;
