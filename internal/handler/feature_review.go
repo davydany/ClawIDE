@@ -48,11 +48,15 @@ func (h *Handlers) FeatureReviewFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mainBranch, err := git.DetectMainBranch(project.Path)
-	if err != nil {
-		log.Printf("Error detecting main branch for %s: %v", project.Path, err)
-		http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
-		return
+	mainBranch := project.ActiveBranch
+	if mainBranch == "" {
+		detected, err := git.DetectMainBranch(project.Path)
+		if err != nil {
+			log.Printf("Error detecting main branch for %s: %v", project.Path, err)
+			http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		mainBranch = detected
 	}
 
 	files, err := git.DiffNameStatus(project.Path, mainBranch, feature.BranchName)
@@ -109,10 +113,14 @@ func (h *Handlers) FeatureReviewFileContent(w http.ResponseWriter, r *http.Reque
 	var actualRef string
 	switch refParam {
 	case "main":
-		mainBranch, err := git.DetectMainBranch(project.Path)
-		if err != nil {
-			http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
-			return
+		mainBranch := project.ActiveBranch
+		if mainBranch == "" {
+			detected, err := git.DetectMainBranch(project.Path)
+			if err != nil {
+				http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+			mainBranch = detected
 		}
 		actualRef = mainBranch
 	case "feature":

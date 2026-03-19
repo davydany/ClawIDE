@@ -127,6 +127,8 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Post("/api/checkout", s.handlers.CheckoutBranch)
 			r.Post("/api/branches", s.handlers.CreateBranch)
 			r.Post("/api/pull-main", s.handlers.PullMain)
+			r.Get("/api/remotes", s.handlers.ListRemotes)
+			r.Post("/api/base-branch", s.handlers.SetBaseBranch)
 
 			// Feature routes
 			r.Post("/features/", s.handlers.CreateFeature)
