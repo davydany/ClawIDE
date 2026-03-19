@@ -41,12 +41,13 @@ type Projects struct {
 
 // Stats is the top-level response returned by Gather.
 type Stats struct {
-	CPU          []CPUCore          `json:"cpu"`
-	Memory       Memory             `json:"memory"`
-	Network      []NetworkInterface `json:"network"`
-	TmuxSessions int                `json:"tmux_sessions"`
-	Projects     Projects           `json:"projects"`
-	ServerPort   int                `json:"server_port"`
+	CPU              []CPUCore          `json:"cpu"`
+	Memory           Memory             `json:"memory"`
+	Network          []NetworkInterface `json:"network"`
+	MuxSessions      int                `json:"mux_sessions"`
+	MultiplexerName  string             `json:"multiplexer_name"`
+	Projects         Projects           `json:"projects"`
+	ServerPort       int                `json:"server_port"`
 }
 
 // Gather collects all system stats. Each sub-collector is non-fatal;
@@ -112,11 +113,12 @@ func Gather(st *store.Store) Stats {
 		}
 	}
 
-	// Tmux sessions.
+	// Multiplexer sessions.
+	s.MultiplexerName = tmux.Binary()
 	if sessions, err := tmux.ListClawIDESessions(); err != nil {
-		log.Printf("sysinfo: tmux: %v", err)
+		log.Printf("sysinfo: %s: %v", tmux.Binary(), err)
 	} else {
-		s.TmuxSessions = len(sessions)
+		s.MuxSessions = len(sessions)
 	}
 
 	// Projects.
