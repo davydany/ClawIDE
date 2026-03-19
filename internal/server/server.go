@@ -11,6 +11,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/banner"
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/handler"
+	"github.com/davydany/ClawIDE/internal/migration"
 	"github.com/davydany/ClawIDE/internal/pty"
 	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
@@ -71,6 +72,9 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 	}
 
 	sseHub := sse.NewHub()
+
+	// Backfill ActiveBranch for projects that don't have one set
+	migration.BackfillActiveBranch(st)
 
 	// Recover tmux sessions from previous run
 	recoverTmuxSessions(st)
