@@ -32,11 +32,12 @@ type Server struct {
 }
 
 func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
-	// Check tmux dependency
+	// Configure and check multiplexer dependency
+	tmux.SetBinary(cfg.Multiplexer)
 	if err := tmux.Check(); err != nil {
-		log.Fatalf("tmux is required: %v", err)
+		log.Fatalf("%s is required: %v", tmux.Binary(), err)
 	}
-	log.Println("tmux check passed")
+	log.Printf("%s check passed", tmux.Binary())
 
 	ptyMgr := pty.NewManager(cfg.MaxSessions, cfg.ScrollbackSize, cfg.AgentCommand)
 
@@ -113,13 +114,15 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 func recoverTmuxSessions(st *store.Store) {
 	tmuxSessions, err := tmux.ListClawIDESessions()
 	if err != nil {
-		log.Printf("Warning: could not list tmux sessions: %v", err)
+		log.Printf("Warning: could not list %s sessions: %v", tmux.Binary(), err)
 		return
 	}
 
 	if len(tmuxSessions) == 0 {
 		return
 	}
+
+	muxName := tmux.Binary()
 
 	// Build set of all valid pane IDs from stored sessions
 	validPanes := make(map[string]bool)
@@ -132,23 +135,23 @@ func recoverTmuxSessions(st *store.Store) {
 		}
 	}
 
-	// Kill orphan tmux sessions (not referenced in state.json)
+	// Kill orphan multiplexer sessions (not referenced in state.json)
 	surviving := 0
 	for _, tmuxSess := range tmuxSessions {
 		if validPanes[tmuxSess] {
 			paneID := strings.TrimPrefix(tmuxSess, "clawide-")
-			log.Printf("Surviving tmux session: %s (pane %s) — will reconnect lazily", tmuxSess, paneID)
+			log.Printf("Surviving %s session: %s (pane %s) — will reconnect lazily", muxName, tmuxSess, paneID)
 			surviving++
 		} else {
-			log.Printf("Killing orphan tmux session: %s", tmuxSess)
+			log.Printf("Killing orphan %s session: %s", muxName, tmuxSess)
 			if err := tmux.KillSession(tmuxSess); err != nil {
-				log.Printf("Warning: failed to kill orphan tmux session %s: %v", tmuxSess, err)
+				log.Printf("Warning: failed to kill orphan %s session %s: %v", muxName, tmuxSess, err)
 			}
 		}
 	}
 
 	if surviving > 0 {
-		log.Printf("Found %d surviving tmux sessions (will reconnect on WebSocket connect)", surviving)
+		log.Printf("Found %d surviving %s sessions (will reconnect on WebSocket connect)", surviving, muxName)
 	}
 }
 

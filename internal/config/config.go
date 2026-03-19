@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 
 	"github.com/davydany/ClawIDE/internal/wizard"
@@ -30,12 +31,19 @@ type Config struct {
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
 	AISettings             *wizard.AIConfig `json:"ai_settings"`
 	AIReviewCommand        string `json:"ai_review_command"`
+	Multiplexer            string `json:"multiplexer"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
 }
 
 func DefaultConfig() *Config {
 	home, _ := os.UserHomeDir()
+
+	mux := "tmux"
+	if runtime.GOOS == "windows" {
+		mux = "psmux"
+	}
+
 	return &Config{
 		Host:           "0.0.0.0",
 		Port:           9800,
@@ -49,6 +57,7 @@ func DefaultConfig() *Config {
 		SidebarPosition:  "left",
 		SidebarWidth:     288,
 		AutoUpdateCheck:  true,
+		Multiplexer:     mux,
 	}
 }
 
@@ -138,6 +147,9 @@ func (c *Config) loadEnv() {
 	if v := os.Getenv("CLAWIDE_DATA_DIR"); v != "" {
 		c.DataDir = v
 	}
+	if v := os.Getenv("CLAWIDE_MULTIPLEXER"); v != "" {
+		c.Multiplexer = v
+	}
 }
 
 func (c *Config) loadFlags() {
@@ -149,6 +161,7 @@ func (c *Config) loadFlags() {
 	flag.StringVar(&c.AgentArgs, "agent-args", c.AgentArgs, "Additional CLI arguments for the AI agent command")
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
+	flag.StringVar(&c.Multiplexer, "multiplexer", c.Multiplexer, "Terminal multiplexer binary (tmux or psmux)")
 	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")
 	flag.BoolVar(&c.ShowVersion, "version", false, "Print version information and exit")
 	flag.Parse()

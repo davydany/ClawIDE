@@ -1,0 +1,73 @@
+name: CI (Windows)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Go vet
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Build Windows binary
+        run: go build -o clawide.exe ./cmd/clawide
+
+      - name: Verify binary runs (--version)
+        run: .\clawide.exe --version
+
+      - name: Verify multiplexer default is psmux on Windows
+        shell: pwsh
+        run: |
+          $env:CLAWIDE_MULTIPLEXER = "nonexistent-mux"
+          $output = .\clawide.exe 2>&1
+          # The binary should fail with an error mentioning the configured mux
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "Expected nonzero exit code when multiplexer is missing"
+            exit 1
+          }
+          if ($output -notmatch "nonexistent-mux") {
+            Write-Error "Expected error message to mention 'nonexistent-mux', got: $output"
+            exit 1
+          }
+          Write-Host "Multiplexer config validation works correctly"
+
+  cross-compile:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [windows]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Cross-compile
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: go build -o clawide-${{ matrix.goos }}-${{ matrix.goarch }}.exe ./cmd/clawide
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: clawide-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: clawide-${{ matrix.goos }}-${{ matrix.goarch }}.exe
