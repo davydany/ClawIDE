@@ -80,28 +80,39 @@ jobs:
             "darwin/arm64"
             "linux/amd64"
             "linux/arm64"
+            "windows/amd64"
+            "windows/arm64"
           )
 
           for platform in "${platforms[@]}"; do
             GOOS="${platform%/*}"
             GOARCH="${platform#*/}"
             output="clawide-${{ steps.vars.outputs.VERSION }}-${GOOS}-${GOARCH}"
+            binary_name="clawide"
+            if [ "${GOOS}" = "windows" ]; then
+              binary_name="clawide.exe"
+            fi
 
             echo "Building ${output}..."
             CGO_ENABLED=0 GOOS="${GOOS}" GOARCH="${GOARCH}" \
-              go build -ldflags "${LDFLAGS}" -o "dist/${output}/clawide" ./cmd/clawide
+              go build -ldflags "${LDFLAGS}" -o "dist/${output}/${binary_name}" ./cmd/clawide
 
             cp README.md "dist/${output}/"
             cp LICENSE "dist/${output}/" 2>/dev/null || true
 
-            tar -czf "dist/${output}.tar.gz" -C dist "${output}"
-            rm -rf "dist/${output}"
+            if [ "${GOOS}" = "windows" ]; then
+              (cd dist && zip -r "${output}.zip" "${output}")
+              rm -rf "dist/${output}"
+            else
+              tar -czf "dist/${output}.tar.gz" -C dist "${output}"
+              rm -rf "dist/${output}"
+            fi
           done
 
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum *.tar.gz > checksums.txt
+          sha256sum *.tar.gz *.zip 2>/dev/null > checksums.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -109,6 +120,7 @@ jobs:
           generate_release_notes: true
           files: |
             dist/*.tar.gz
+            dist/*.zip
             dist/checksums.txt
 
   docker:
