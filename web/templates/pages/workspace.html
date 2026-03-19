@@ -412,7 +412,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -461,11 +461,11 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             New Feature
                         </button>
-                        <!-- Pull Latest from Main -->
+                        <!-- Pull Latest -->
                         <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); mobileMenu = false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest from Main'"></span>
+                            <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest'"></span>
                         </button>
                     </div>
                 </div>
@@ -761,8 +761,13 @@
                 <a href="/projects/{{.Project.ID}}/" hx-boost="false"
                    class="feature-tab-active flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ActiveFeatureID ""}}text-white border-indigo-400{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    Main
+                    {{if .ActiveBranch}}{{.ActiveBranch}}{{else}}Main{{end}}
                 </a>
+                <!-- Switch base branch button -->
+                <button @click="showBranchPicker = true; branchPickerData = null; branchFilter = ''; fetch('/projects/{{.Project.ID}}/api/remotes').then(r=>r.json()).then(d=>{branchPickerData=d})"
+                        class="p-1 text-gray-500 hover:text-gray-300 transition-colors" title="Switch base branch">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                </button>
 
                 <!-- Feature tabs -->
                 {{range .Features}}
@@ -781,10 +786,10 @@
                          class="fixed mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1"
                          x-ref="menu{{.ID}}"
                          :style="{ top: $el.parentElement.getBoundingClientRect().bottom + 'px', left: $el.parentElement.getBoundingClientRect().left + 'px' }">
-                        <button @click="if(confirm('Merge {{.BranchName}} into the main branch?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
+                        <button @click="if(confirm('Merge {{.BranchName}} into {{if $.ActiveBranch}}{{$.ActiveBranch}}{{else}}main{{end}}?')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{$.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Merge to Main
+                            Merge to {{if $.ActiveBranch}}{{$.ActiveBranch}}{{else}}Main{{end}}
                         </button>
                         <button @click="if(confirm('Delete feature {{.Name}}? This cannot be undone.')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{$.Project.ID}}/'}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:bg-gray-800 transition-colors">
@@ -801,7 +806,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </button>
 
-                <!-- Pull Latest from Main (desktop) -->
+                <!-- Pull Latest (desktop) -->
                 <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)})"
                         class="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-gray-800 rounded transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -822,7 +827,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
-                                    <input type="text" name="base_branch" x-model="featureBase" placeholder="Leave empty for current branch"
+                                    <input type="text" name="base_branch" x-model="featureBase" placeholder="{{if .ActiveBranch}}{{.ActiveBranch}}{{else}}Leave empty for current branch{{end}}"
                                            class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                                 </div>
                             </div>
@@ -831,6 +836,57 @@
                                 <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
                             </div>
                     </form>
+                </div>
+            </div>
+            <!-- Base Branch Picker Modal -->
+            <div x-show="showBranchPicker" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showBranchPicker = false" @keydown.escape.window="showBranchPicker = false">
+                <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[70vh] flex flex-col">
+                    <div class="p-4 border-b border-gray-800">
+                        <h3 class="text-lg font-semibold text-white">Switch Base Branch</h3>
+                        <p class="text-xs text-gray-400 mt-1">Select the branch that new features will branch from and merge into.</p>
+                        <input type="text" x-model="branchFilter" placeholder="Filter branches..."
+                               class="w-full mt-3 px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="overflow-y-auto flex-1 p-2">
+                        <template x-if="!branchPickerData">
+                            <div class="p-4 text-center text-gray-500 text-sm">Loading branches...</div>
+                        </template>
+                        <template x-if="branchPickerData">
+                            <div>
+                                <!-- Local branches -->
+                                <div class="mb-2">
+                                    <div class="px-2 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Local</div>
+                                    <template x-for="b in (branchPickerData.branches || []).filter(b => !b.is_remote && (branchFilter === '' || b.name.toLowerCase().includes(branchFilter.toLowerCase())))" :key="b.name">
+                                        <button @click="if(switchingBranch) return; switchingBranch = true; fetch('/projects/{{.Project.ID}}/api/base-branch', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({branch:b.name, remote:''})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{location.reload()}).catch(e=>{switchingBranch=false; alert('Switch failed: '+e.message)})"
+                                                class="flex items-center gap-2 w-full px-3 py-2 text-sm rounded hover:bg-gray-800 transition-colors"
+                                                :class="b.name === branchPickerData.active_branch ? 'text-indigo-400 bg-gray-800/50' : 'text-gray-300'">
+                                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                            <span x-text="b.name" class="truncate"></span>
+                                            <template x-if="b.name === branchPickerData.active_branch">
+                                                <span class="ml-auto text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded">active</span>
+                                            </template>
+                                        </button>
+                                    </template>
+                                </div>
+                                <!-- Remote branches grouped by remote -->
+                                <template x-for="remote in (branchPickerData.remotes || [])" :key="remote.name">
+                                    <div class="mb-2">
+                                        <div class="px-2 py-1 text-[10px] font-semibold text-gray-500 uppercase tracking-wider" x-text="remote.name"></div>
+                                        <template x-for="b in (branchPickerData.branches || []).filter(b => b.is_remote && b.remote === remote.name && (branchFilter === '' || b.name.toLowerCase().includes(branchFilter.toLowerCase())))" :key="b.name">
+                                            <button @click="if(switchingBranch) return; switchingBranch = true; let localName = b.name.substring(b.remote.length + 1); fetch('/projects/{{.Project.ID}}/api/base-branch', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({branch:b.name, remote:b.remote})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{location.reload()}).catch(e=>{switchingBranch=false; alert('Switch failed: '+e.message)})"
+                                                    class="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-400 rounded hover:bg-gray-800 transition-colors">
+                                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 004 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <span x-text="b.name" class="truncate"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="p-3 border-t border-gray-800">
+                        <button @click="showBranchPicker = false" class="w-full px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors text-center">Cancel</button>
+                    </div>
                 </div>
             </div>
             {{end}}

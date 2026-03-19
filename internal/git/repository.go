@@ -13,6 +13,13 @@ type Branch struct {
 	Name      string `json:"name"`
 	IsCurrent bool   `json:"is_current"`
 	IsRemote  bool   `json:"is_remote"`
+	Remote    string `json:"remote,omitempty"`
+}
+
+// RemoteInfo holds details about a single git remote.
+type RemoteInfo struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 // IsGitRepo checks whether the given path contains a git repository
@@ -123,12 +130,67 @@ func ListBranches(repoPath string) ([]Branch, error) {
 			}
 		}
 
-		branches = append(branches, Branch{
+		b := Branch{
 			Name:      name,
 			IsCurrent: isCurrent,
 			IsRemote:  isRemote,
-		})
+		}
+
+		// Parse remote name from remote branches (e.g. "origin/main" → Remote: "origin")
+		if isRemote {
+			if idx := strings.Index(name, "/"); idx > 0 {
+				b.Remote = name[:idx]
+			}
+		}
+
+		branches = append(branches, b)
 	}
 
 	return branches, nil
+}
+
+// ListRemotes returns all configured remotes for the repo at repoPath
+// by parsing `git remote -v` output.
+func ListRemotes(repoPath string) ([]RemoteInfo, error) {
+	cmd := exec.Command("git", "remote", "-v")
+	cmd.Dir = repoPath
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git remote -v: %w", err)
+	}
+
+	seen := make(map[string]bool)
+	var remotes []RemoteInfo
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		if line == "" {
+			continue
+		}
+		// Format: "origin\thttps://... (fetch)"
+		parts := strings.Fields(line)
+		if len(parts) < 2 {
+			continue
+		}
+		name := parts[0]
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		remotes = append(remotes, RemoteInfo{
+			Name: name,
+			URL:  parts[1],
+		})
+	}
+
+	return remotes, nil
+}
+
+// CreateTrackingBranch creates a local branch that tracks a remote branch.
+// Equivalent to `git checkout -b <localName> --track <remoteBranch>`.
+func CreateTrackingBranch(repoPath, localName, remoteBranch string) error {
+	cmd := exec.Command("git", "checkout", "-b", localName, "--track", remoteBranch)
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout -b %s --track %s: %s: %w", localName, remoteBranch, strings.TrimSpace(string(output)), err)
+	}
+	return nil
 }

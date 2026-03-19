@@ -92,10 +92,11 @@ func (h *Handlers) FeatureGitCommit(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "committed"})
 }
 
-// FeaturePullMain fetches origin and merges the remote main branch into
+// FeaturePullMain fetches origin and merges the active base branch into
 // the feature's worktree.
 // POST /projects/{id}/features/{fid}/api/pull-main
 func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
 	featureID := chi.URLParam(r, "fid")
 
 	feature, ok := h.store.GetFeature(featureID)
@@ -104,8 +105,19 @@ func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := git.PullMain(feature.WorktreePath); err != nil {
-		log.Printf("Error pulling main in feature %s: %v", feature.WorktreePath, err)
+	// Use the project's active branch, falling back to detection
+	branch := project.ActiveBranch
+	if branch == "" {
+		detected, err := git.DetectMainBranch(project.Path)
+		if err != nil {
+			http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		branch = detected
+	}
+
+	if err := git.PullFromBranch(feature.WorktreePath, "origin", branch); err != nil {
+		log.Printf("Error pulling %s in feature %s: %v", branch, feature.WorktreePath, err)
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
@@ -127,11 +139,15 @@ func (h *Handlers) FeatureMerge(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Detect the main integration branch.
-	mainBranch, err := git.DetectMainBranch(project.Path)
-	if err != nil {
-		http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
-		return
+	// 1. Resolve the base branch (project's active branch or auto-detect).
+	mainBranch := project.ActiveBranch
+	if mainBranch == "" {
+		detected, err := git.DetectMainBranch(project.Path)
+		if err != nil {
+			http.Error(w, "could not detect main branch: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		mainBranch = detected
 	}
 
 	// 2. Save the current branch so we can restore it later.
