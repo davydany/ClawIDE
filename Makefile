@@ -1,4 +1,4 @@
-.PHONY: build dev clean vendor-js css css-watch run test version
+.PHONY: build build-windows build-linux build-all dev clean vendor-js css css-watch run test version
 
 # Binary name
 BINARY := clawide
@@ -52,6 +52,17 @@ vendor-js:
 		echo "Downloaded qrcode.min.js"; \
 	fi
 	@cd web/src && npm install && npm run build
+
+# Cross-compile for Windows (amd64)
+build-windows:
+	GOOS=windows GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY).exe ./cmd/clawide
+
+# Cross-compile for Linux (amd64)
+build-linux:
+	GOOS=linux GOARCH=amd64 go build -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY)-linux ./cmd/clawide
+
+# Build for all platforms
+build-all: build build-windows build-linux
 
 # Clean build artifacts
 clean:
