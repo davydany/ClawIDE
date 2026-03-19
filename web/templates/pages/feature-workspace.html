@@ -783,6 +783,13 @@
                     Open in {{.PreferredEditorName}}
                 </button>
                 {{end}}
+                <!-- Open Folder button -->
+                <button onclick="openFolder('{{.Feature.WorktreePath}}')"
+                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-full transition-colors border border-gray-700/40"
+                        title="Open folder in file explorer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                    Open Folder
+                </button>
                 <!-- Bookmark Bar (far right) -->
                 <div id="bookmarks-bar-server" class="ml-auto flex items-center gap-1">
                     {{range .BarBookmarks}}
@@ -1537,6 +1544,18 @@ function openInEditor(directory) {
         if (!r.ok) return r.text().then(function(t){ alert('Failed to open editor: ' + t); });
     }).catch(function() {
         alert('Failed to open editor');
+    });
+}
+
+function openFolder(directory) {
+    fetch('/api/editor/open-folder', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({directory: directory})
+    }).then(function(r) {
+        if (!r.ok) return r.text().then(function(t){ alert('Failed to open folder: ' + t); });
+    }).catch(function() {
+        alert('Failed to open folder');
     });
 }
 
