@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/color"
+	"github.com/davydany/ClawIDE/internal/editor"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -215,10 +216,12 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 		"NonStarredProjects": nonStarredProjects,
 		"BarBookmarks":       barBookmarkViews,
 		"ActiveFeatureID":    featureID,
-		"IsGitRepo":          true,
-		"SidebarPosition":    h.cfg.SidebarPosition,
-		"SidebarWidth":       h.cfg.SidebarWidth,
-		"AIReviewCommand":    h.cfg.AIReviewCommand,
+		"IsGitRepo":            true,
+		"SidebarPosition":      h.cfg.SidebarPosition,
+		"SidebarWidth":         h.cfg.SidebarWidth,
+		"AIReviewCommand":      h.cfg.AIReviewCommand,
+		"PreferredEditor":      h.cfg.PreferredEditor,
+		"PreferredEditorName":  editor.GetEditorName(h.cfg.PreferredEditor),
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "feature-workspace", "feature-workspace", data); err != nil {

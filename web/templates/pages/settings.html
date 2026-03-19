@@ -242,6 +242,67 @@
                         </div>
                     </div>
 
+                    <!-- Preferred Editor -->
+                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                         x-data="{
+                            editors: [],
+                            preferred: '',
+                            loading: true,
+                            saving: false,
+                            saved: false,
+                            init() {
+                                var self = this;
+                                fetch('/api/editors/available').then(function(r){ return r.json(); }).then(function(d){
+                                    self.editors = d.editors || [];
+                                    self.preferred = d.preferred_editor || '';
+                                    self.loading = false;
+                                }).catch(function(){ self.loading = false; });
+                            },
+                            save() {
+                                var self = this;
+                                self.saving = true;
+                                self.saved = false;
+                                fetch('/api/settings', {
+                                    method: 'PUT',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({preferred_editor: self.preferred})
+                                }).then(function(r){
+                                    if (r.ok) { self.saved = true; setTimeout(function(){ self.saved = false; }, 2000); }
+                                }).finally(function(){ self.saving = false; });
+                            }
+                         }">
+                        <h3 class="text-sm font-medium text-white mb-2">Preferred Editor</h3>
+                        <p class="text-xs text-gray-400 mb-4">Choose which code editor to open projects in from the workspace.</p>
+                        <template x-if="loading">
+                            <p class="text-sm text-gray-500">Detecting editors...</p>
+                        </template>
+                        <template x-if="!loading">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <select x-model="preferred"
+                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                        <option value="">None (disabled)</option>
+                                        <template x-for="ed in editors" :key="ed.id">
+                                            <option :value="ed.id"
+                                                    :disabled="!ed.installed"
+                                                    x-text="ed.name + (ed.terminal ? ' (terminal)' : '') + (!ed.installed ? ' — not installed' : '')">
+                                            </option>
+                                        </template>
+                                    </select>
+                                    <button @click="save()" :disabled="saving"
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                        <span x-show="!saving && !saved">Save</span>
+                                        <span x-show="saving">Saving...</span>
+                                        <span x-show="saved" class="text-green-300">✓ Saved</span>
+                                    </button>
+                                </div>
+                                <template x-if="preferred !== '' && editors.find(function(e){ return e.id === preferred && e.terminal; })">
+                                    <p class="text-xs text-amber-400 mt-2">Terminal editors (vim, neovim, emacs) cannot be opened from the workspace button.</p>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+
                     <!-- Sidebar settings -->
                     <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
                          x-data="{ position: '{{.Config.SidebarPosition}}', saving: false }">
