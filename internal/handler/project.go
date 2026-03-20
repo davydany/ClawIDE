@@ -227,6 +227,7 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"WebAppURL":          docker.FindWebAppURL(project.Path),
 		"StartTour":            !h.cfg.WorkspaceTourCompleted,
 		"ActiveFeatureID":      "",
+		"ActiveBranch":         project.ActiveBranch,
 		"SidebarPosition":      h.cfg.SidebarPosition,
 		"SidebarWidth":         h.cfg.SidebarWidth,
 		"PreferredEditor":      h.cfg.PreferredEditor,

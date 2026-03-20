@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/davydany/ClawIDE/internal/store"
 )
@@ -176,4 +177,28 @@ func EnsureProjectStores(projectPath, globalNotesPath, globalBookmarksPath, proj
 	}
 
 	return noteStore, bookmarkStore, nil
+}
+
+// BackfillActiveBranch iterates all projects and sets ActiveBranch for any
+// that have an empty value by detecting the main branch via git.
+func BackfillActiveBranch(st *store.Store) {
+	for _, p := range st.GetProjects() {
+		if p.ActiveBranch != "" {
+			continue
+		}
+		if !git.IsGitRepo(p.Path) {
+			continue
+		}
+		mainBranch, err := git.DetectMainBranch(p.Path)
+		if err != nil {
+			log.Printf("BackfillActiveBranch: could not detect main branch for %s: %v", p.Path, err)
+			continue
+		}
+		p.ActiveBranch = mainBranch
+		if err := st.UpdateProject(p); err != nil {
+			log.Printf("BackfillActiveBranch: failed to update project %s: %v", p.ID, err)
+		} else {
+			log.Printf("BackfillActiveBranch: set active branch to %q for project %s", mainBranch, p.Name)
+		}
+	}
 }

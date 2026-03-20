@@ -117,15 +117,34 @@ func Fetch(repoPath, remote string) error {
 // PullMain fetches origin and merges the remote main branch into the
 // currently checked-out branch. If a conflict occurs, the merge is
 // aborted and an error is returned.
+//
+// Deprecated: Use PullFromBranch for explicit remote/branch control.
 func PullMain(repoPath string) error {
 	mainBranch, err := DetectMainBranch(repoPath)
 	if err != nil {
 		return fmt.Errorf("detect main branch: %w", err)
 	}
-	if err := Fetch(repoPath, "origin"); err != nil {
+	return PullFromBranch(repoPath, "origin", mainBranch)
+}
+
+// FetchAll runs `git fetch --all --prune` in the given repo.
+func FetchAll(repoPath string) error {
+	cmd := exec.Command("git", "fetch", "--all", "--prune")
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git fetch --all: %s: %w", strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
+// PullFromBranch fetches the given remote and merges remote/branch into
+// the currently checked-out branch. If a conflict occurs, the merge is
+// aborted and an error is returned.
+func PullFromBranch(repoPath, remote, branch string) error {
+	if err := Fetch(repoPath, remote); err != nil {
 		return err
 	}
-	if err := Merge(repoPath, "origin/"+mainBranch); err != nil {
+	if err := Merge(repoPath, remote+"/"+branch); err != nil {
 		return err
 	}
 	return nil

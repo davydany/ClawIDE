@@ -357,9 +357,12 @@
         controls.className = 'editor-pane-controls';
 
         // Markdown preview buttons (hidden by default, shown for .md files)
+        var previewGroup = document.createElement('div');
+        previewGroup.className = 'editor-preview-group hidden';
+
         var previewSideBtn = document.createElement('button');
-        previewSideBtn.className = 'editor-preview-btn text-gray-500 hover:text-gray-300 px-1 transition-colors hidden';
-        previewSideBtn.title = 'Side-by-side preview';
+        previewSideBtn.className = 'editor-preview-btn editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        previewSideBtn.dataset.tooltip = 'Side-by-side Preview';
         previewSideBtn.innerHTML = ICON_PREVIEW_SIDE;
         previewSideBtn.onclick = function(e) {
             e.stopPropagation();
@@ -368,11 +371,11 @@
             var newMode = (tab.previewMode === 'side') ? 'off' : 'side';
             setPreviewMode(paneId, tab.id, newMode);
         };
-        controls.appendChild(previewSideBtn);
+        previewGroup.appendChild(previewSideBtn);
 
         var previewOnlyBtn = document.createElement('button');
-        previewOnlyBtn.className = 'editor-preview-btn text-gray-500 hover:text-gray-300 px-1 transition-colors hidden';
-        previewOnlyBtn.title = 'Preview only';
+        previewOnlyBtn.className = 'editor-preview-btn editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        previewOnlyBtn.dataset.tooltip = 'Full Preview';
         previewOnlyBtn.innerHTML = ICON_PREVIEW;
         previewOnlyBtn.onclick = function(e) {
             e.stopPropagation();
@@ -381,16 +384,25 @@
             var newMode = (tab.previewMode === 'preview') ? 'off' : 'preview';
             setPreviewMode(paneId, tab.id, newMode);
         };
-        controls.appendChild(previewOnlyBtn);
+        previewGroup.appendChild(previewOnlyBtn);
+
+        controls.appendChild(previewGroup);
+
+        // Separator between preview and split controls
+        var separator = document.createElement('div');
+        separator.className = 'editor-controls-separator hidden';
+        controls.appendChild(separator);
 
         // Store references so updatePreviewButtons can find them
         header.dataset.paneId = paneId;
         header._previewSideBtn = previewSideBtn;
         header._previewOnlyBtn = previewOnlyBtn;
+        header._previewGroup = previewGroup;
+        header._previewSeparator = separator;
 
         var splitHBtn = document.createElement('button');
-        splitHBtn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
-        splitHBtn.title = 'Split horizontal';
+        splitHBtn.className = 'editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        splitHBtn.dataset.tooltip = 'Split Horizontal';
         splitHBtn.innerHTML = ICON_SPLIT_H;
         splitHBtn.onclick = function(e) {
             e.stopPropagation();
@@ -399,8 +411,8 @@
         controls.appendChild(splitHBtn);
 
         var splitVBtn = document.createElement('button');
-        splitVBtn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
-        splitVBtn.title = 'Split vertical';
+        splitVBtn.className = 'editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        splitVBtn.dataset.tooltip = 'Split Vertical';
         splitVBtn.innerHTML = ICON_SPLIT_V;
         splitVBtn.onclick = function(e) {
             e.stopPropagation();
@@ -409,8 +421,8 @@
         controls.appendChild(splitVBtn);
 
         var closeBtn = document.createElement('button');
-        closeBtn.className = 'text-gray-500 hover:text-red-400 px-1 transition-colors';
-        closeBtn.title = 'Close pane';
+        closeBtn.className = 'editor-control-btn text-gray-500 hover:text-red-400 px-1 transition-colors';
+        closeBtn.dataset.tooltip = 'Close Pane';
         closeBtn.innerHTML = ICON_CLOSE;
         closeBtn.onclick = function(e) {
             e.stopPropagation();
@@ -422,6 +434,47 @@
 
         return header;
     }
+
+    // --- Floating tooltip for editor control buttons ---
+    // (Uses body-appended element to escape overflow:hidden ancestors)
+    var floatingTooltip = null;
+    function showTooltip(btn) {
+        var text = btn.dataset.tooltip;
+        if (!text) return;
+        if (!floatingTooltip) {
+            floatingTooltip = document.createElement('div');
+            floatingTooltip.className = 'editor-floating-tooltip';
+            document.body.appendChild(floatingTooltip);
+        }
+        floatingTooltip.textContent = text;
+        floatingTooltip.style.opacity = '0';
+        floatingTooltip.style.display = 'block';
+        var rect = btn.getBoundingClientRect();
+        var ttRect = floatingTooltip.getBoundingClientRect();
+        var left = rect.left + rect.width / 2 - ttRect.width / 2;
+        var top = rect.bottom + 6;
+        // Keep within viewport
+        if (left < 4) left = 4;
+        if (left + ttRect.width > window.innerWidth - 4) left = window.innerWidth - 4 - ttRect.width;
+        floatingTooltip.style.left = left + 'px';
+        floatingTooltip.style.top = top + 'px';
+        floatingTooltip.style.opacity = '1';
+    }
+    function hideTooltip() {
+        if (floatingTooltip) {
+            floatingTooltip.style.opacity = '0';
+            floatingTooltip.style.display = 'none';
+        }
+    }
+    // Attach tooltip listeners via event delegation on the editor container
+    document.addEventListener('mouseover', function(e) {
+        var btn = e.target.closest('.editor-control-btn');
+        if (btn && btn.dataset.tooltip) showTooltip(btn);
+    });
+    document.addEventListener('mouseout', function(e) {
+        var btn = e.target.closest('.editor-control-btn');
+        if (btn) hideTooltip();
+    });
 
     // --- Markdown preview helpers ---
     function isMarkdownFile(filePath) {
@@ -438,8 +491,13 @@
         var tab = getActiveTab(paneId);
         var isMd = tab && isMarkdownFile(tab.filePath);
 
-        header._previewSideBtn.classList.toggle('hidden', !isMd);
-        header._previewOnlyBtn.classList.toggle('hidden', !isMd);
+        // Show/hide the preview group and separator together
+        if (header._previewGroup) {
+            header._previewGroup.classList.toggle('hidden', !isMd);
+        }
+        if (header._previewSeparator) {
+            header._previewSeparator.classList.toggle('hidden', !isMd);
+        }
 
         if (isMd && tab) {
             header._previewSideBtn.classList.toggle('active', tab.previewMode === 'side');

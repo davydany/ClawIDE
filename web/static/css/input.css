@@ -278,9 +278,26 @@
     background: #6366f1;
 }
 
+/* Preview button group — visually separated from split controls */
+.editor-preview-group {
+    @apply flex items-center gap-0.5;
+}
+
+/* Separator between preview and split/close controls */
+.editor-controls-separator {
+    @apply w-px h-3.5 bg-gray-600 mx-1 flex-shrink-0;
+}
+
 /* Active state for preview toggle buttons */
 .editor-preview-btn.active {
     color: #818cf8;
+}
+
+/* Floating tooltip for editor control buttons (appended to body to avoid overflow clipping) */
+.editor-floating-tooltip {
+    @apply fixed px-2 py-1 text-xs font-medium bg-gray-800 text-gray-200 rounded shadow-lg border border-gray-600 whitespace-nowrap pointer-events-none;
+    z-index: 9999;
+    transition: opacity 120ms ease-out;
 }
 
 /* CodeMirror overrides for dark theme */
