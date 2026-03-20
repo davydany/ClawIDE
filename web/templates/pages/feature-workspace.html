@@ -1017,14 +1017,22 @@
                                     filesAPI: baseURL + '/api/files',
                                     fileAPI: baseURL + '/api/file',
                                     mkdirAPI: baseURL + '/api/mkdir',
+                                    renameAPI: baseURL + '/api/rename',
                                     fileTreeId: 'feature-file-tree',
                                     onFileCreated: function(path) {
                                         window.featureLoadFile(path);
+                                    },
+                                    onRenamed: function(oldPath, newPath) {
+                                        if (typeof ClawIDEEditor !== 'undefined') ClawIDEEditor.handleRename(oldPath, newPath);
+                                    },
+                                    onDeleted: function(path, isDir) {
+                                        if (typeof ClawIDEEditor !== 'undefined') ClawIDEEditor.handleDelete(path, isDir);
                                     },
                                     refreshDir: function(dirPath) {
                                         window._clawIDERefreshDir(dirPath);
                                     }
                                 });
+                                window._clawIDESearchAPI = baseURL + '/api/files/search';
                             }
 
                             // Wire up the "+" button

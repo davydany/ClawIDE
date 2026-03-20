@@ -51,3 +51,36 @@ func (h *Handlers) FeatureMkdir(w http.ResponseWriter, r *http.Request) {
 	}
 	mkdirForRoot(w, r, feature.WorktreePath)
 }
+
+// FeatureRenameFile handles POST /projects/{id}/features/{fid}/api/rename
+func (h *Handlers) FeatureRenameFile(w http.ResponseWriter, r *http.Request) {
+	featureID := chi.URLParam(r, "fid")
+	feature, ok := h.store.GetFeature(featureID)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+	renameForRoot(w, r, feature.WorktreePath)
+}
+
+// FeatureDeleteFile handles DELETE /projects/{id}/features/{fid}/api/file
+func (h *Handlers) FeatureDeleteFile(w http.ResponseWriter, r *http.Request) {
+	featureID := chi.URLParam(r, "fid")
+	feature, ok := h.store.GetFeature(featureID)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+	deleteForRoot(w, r, feature.WorktreePath)
+}
+
+// FeatureSearchFiles handles GET /projects/{id}/features/{fid}/api/files/search
+func (h *Handlers) FeatureSearchFiles(w http.ResponseWriter, r *http.Request) {
+	featureID := chi.URLParam(r, "fid")
+	feature, ok := h.store.GetFeature(featureID)
+	if !ok {
+		http.Error(w, "feature not found", http.StatusNotFound)
+		return
+	}
+	searchFilesForRoot(w, r, feature.WorktreePath)
+}

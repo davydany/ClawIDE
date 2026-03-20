@@ -499,6 +499,9 @@
         newFolder: function() {
             if (window.ClawIDENewFile) window.ClawIDENewFile.openFolderModal('');
         },
+        findFile: function() {
+            if (window.ClawIDEPalette) window.ClawIDEPalette.openFileSearch();
+        },
 
         // View
         toggleSidebar: toggleSidebar,
