@@ -37,14 +37,18 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine the base branch (default to the currently checked-out branch).
+	// Determine the base branch: explicit > project active branch > current branch.
 	if baseBranch == "" {
-		current, err := git.CurrentBranch(project.Path)
-		if err != nil || current == "" {
-			http.Error(w, "could not determine current branch", http.StatusInternalServerError)
-			return
+		if project.ActiveBranch != "" {
+			baseBranch = project.ActiveBranch
+		} else {
+			current, err := git.CurrentBranch(project.Path)
+			if err != nil || current == "" {
+				http.Error(w, "could not determine current branch", http.StatusInternalServerError)
+				return
+			}
+			baseBranch = current
 		}
-		baseBranch = current
 	}
 
 	branchName := git.SanitizeBranchName(name)
@@ -216,6 +220,7 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 		"NonStarredProjects": nonStarredProjects,
 		"BarBookmarks":       barBookmarkViews,
 		"ActiveFeatureID":    featureID,
+		"ActiveBranch":         project.ActiveBranch,
 		"IsGitRepo":            true,
 		"SidebarPosition":      h.cfg.SidebarPosition,
 		"SidebarWidth":         h.cfg.SidebarWidth,
