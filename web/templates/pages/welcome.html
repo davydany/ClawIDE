@@ -121,6 +121,32 @@
             </template>
         </div>
 
+        <!-- Choose Your Editor (optional) -->
+        <div class="mb-10 mx-auto max-w-2xl"
+             x-data="{ editors: [], selected: '', loading: true, saving: false, saved: false }"
+             x-init="fetch('/api/editors/available').then(function(r){ return r.json(); }).then(function(d){ editors = d.editors.filter(function(e){ return e.installed; }); loading = false; }).catch(function(){ loading = false; })">
+            <template x-if="!loading && editors.length > 0">
+                <div class="bg-gray-900 rounded-xl border border-gray-800 p-5 text-left">
+                    <h3 class="text-sm font-semibold text-white mb-1">Choose Your Editor</h3>
+                    <p class="text-xs text-gray-400 mb-4">Select a preferred code editor to open projects from the workspace. You can change this later in Settings.</p>
+                    <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <template x-for="ed in editors" :key="ed.id">
+                            <button @click="selected = ed.id; saving = true; fetch('/api/settings', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({preferred_editor: ed.id}) }).then(function(r){ if(r.ok){ saved = true; setTimeout(function(){ saved = false; }, 2000); } }).finally(function(){ saving = false; })"
+                                    :class="selected === ed.id ? 'border-indigo-500 bg-indigo-900/20 text-white' : 'border-gray-700 text-gray-300 hover:border-gray-600 hover:text-white'"
+                                    class="flex items-center gap-2 px-3 py-2 text-sm border rounded-lg transition-colors text-left">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                                <span x-text="ed.name + (ed.terminal ? ' (terminal)' : '')"></span>
+                                <svg x-show="selected === ed.id" class="w-4 h-4 ml-auto text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </button>
+                        </template>
+                    </div>
+                    <template x-if="saved">
+                        <p class="text-xs text-green-400 mt-2">Editor preference saved!</p>
+                    </template>
+                </div>
+            </template>
+        </div>
+
         <!-- Action Buttons -->
         <div class="flex items-center justify-center gap-4">
             <button hx-post="/api/onboarding/complete"

@@ -55,6 +55,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"sidebar_position": true,
 		"sidebar_width":      true,
 		"auto_update_check": true,
+		"preferred_editor":   true,
 		"ai_settings":       true, // Allow nested AI settings updates
 	}
 
@@ -108,6 +109,7 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.cfg.Host = newCfg.Host
 	h.cfg.Port = newCfg.Port
 	h.cfg.AutoUpdateCheck = newCfg.AutoUpdateCheck
+	h.cfg.PreferredEditor = newCfg.PreferredEditor
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})

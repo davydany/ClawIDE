@@ -12,6 +12,7 @@ import (
 
 	"github.com/davydany/ClawIDE/internal/color"
 	"github.com/davydany/ClawIDE/internal/docker"
+	"github.com/davydany/ClawIDE/internal/editor"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -224,11 +225,13 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 		"NonStarredProjects": nonStarredProjects,
 		"BarBookmarks":       barBookmarkViews,
 		"WebAppURL":          docker.FindWebAppURL(project.Path),
-		"StartTour":          !h.cfg.WorkspaceTourCompleted,
-		"ActiveFeatureID":    "",
-		"ActiveBranch":       project.ActiveBranch,
-		"SidebarPosition":    h.cfg.SidebarPosition,
-		"SidebarWidth":       h.cfg.SidebarWidth,
+		"StartTour":            !h.cfg.WorkspaceTourCompleted,
+		"ActiveFeatureID":      "",
+		"ActiveBranch":         project.ActiveBranch,
+		"SidebarPosition":      h.cfg.SidebarPosition,
+		"SidebarWidth":         h.cfg.SidebarWidth,
+		"PreferredEditor":      h.cfg.PreferredEditor,
+		"PreferredEditorName":  editor.GetEditorName(h.cfg.PreferredEditor),
 	}
 
 	if err := h.renderer.RenderHTMX(w, r, "workspace", "workspace", data); err != nil {
