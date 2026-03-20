@@ -3,7 +3,7 @@ package wizard
 import (
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 	"strings"
 	"text/template"
 )
@@ -102,7 +102,7 @@ func (r *TemplateRegistry) loadFromFS(fsys fs.FS) error {
 		langID := langEntry.Name()
 
 		// Walk framework directories within each language
-		fwEntries, err := fs.ReadDir(fsys, filepath.Join("templates", langID))
+		fwEntries, err := fs.ReadDir(fsys, path.Join("templates", langID))
 		if err != nil {
 			return fmt.Errorf("reading %s templates: %w", langID, err)
 		}
@@ -112,7 +112,7 @@ func (r *TemplateRegistry) loadFromFS(fsys fs.FS) error {
 				continue
 			}
 			fwID := fwEntry.Name()
-			dir := filepath.Join("templates", langID, fwID)
+			dir := path.Join("templates", langID, fwID)
 
 			set, err := r.loadSet(fsys, dir, langID, fwID)
 			if err != nil {
