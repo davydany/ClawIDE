@@ -130,8 +130,9 @@ func validateDocPath(result *ValidationResult, field, path string) {
 		return
 	}
 
-	// Check if this looks like a file path (starts with / or ~/)
-	isFilePath := strings.HasPrefix(path, "/") || strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "./")
+	// Check if this looks like a file path (starts with / or ~/ or ./ or Windows drive letter)
+	isFilePath := strings.HasPrefix(path, "/") || strings.HasPrefix(path, "~/") || strings.HasPrefix(path, "./") ||
+		(len(path) >= 3 && path[1] == ':' && (path[2] == '/' || path[2] == '\\'))
 
 	if isFilePath {
 		// Validate as file path
