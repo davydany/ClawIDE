@@ -57,6 +57,7 @@
         // File Operations
         { id: 'newFile', name: 'New File', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'newFile' },
         { id: 'newFolder', name: 'New Folder', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'newFolder' },
+        { id: 'findFile', name: 'Find File...', category: 'File', icon: makeIcon('file'), shortcut: 'Cmd+P', handler: 'findFile' },
 
         // File Info
         { id: 'copyFilePath', name: 'Copy File Path', category: 'File', icon: makeIcon('file'), shortcut: '', handler: 'copyFilePath' },
@@ -188,12 +189,19 @@
             filteredCommands: [],
             recentCommands: [],
 
+            // File search mode state
+            fileSearchMode: false,
+            fileSearchResults: [],
+            fileSearchDebounceTimer: null,
+
             init: function() {
                 this.recentCommands = getRecentCommands();
                 this.updateFiltered();
             },
 
             openPalette: function() {
+                this.fileSearchMode = false;
+                this.fileSearchResults = [];
                 this.open = true;
                 this.query = '';
                 this.selectedIndex = 0;
@@ -202,7 +210,27 @@
                 var self = this;
                 this.$nextTick(function() {
                     var input = document.getElementById('command-palette-search');
-                    if (input) input.focus();
+                    if (input) {
+                        input.placeholder = 'Type a command...';
+                        input.focus();
+                    }
+                });
+            },
+
+            openFileSearch: function() {
+                this.fileSearchMode = true;
+                this.fileSearchResults = [];
+                this.filteredCommands = [];
+                this.open = true;
+                this.query = '';
+                this.selectedIndex = 0;
+                var self = this;
+                this.$nextTick(function() {
+                    var input = document.getElementById('command-palette-search');
+                    if (input) {
+                        input.placeholder = 'Search files by name (supports wildcards)...';
+                        input.focus();
+                    }
                 });
             },
 
@@ -210,9 +238,16 @@
                 this.open = false;
                 this.query = '';
                 this.selectedIndex = 0;
+                this.fileSearchMode = false;
+                this.fileSearchResults = [];
+                if (this.fileSearchDebounceTimer) {
+                    clearTimeout(this.fileSearchDebounceTimer);
+                    this.fileSearchDebounceTimer = null;
+                }
             },
 
             updateFiltered: function() {
+                if (this.fileSearchMode) return; // skip for file search mode
                 if (!this.query || !this.query.trim()) {
                     var recentIds = this.recentCommands.map(function(c) { return c.id; });
                     var rest = commands.filter(function(c) { return recentIds.indexOf(c.id) === -1; });
@@ -224,10 +259,45 @@
             },
 
             onSearchInput: function() {
-                this.updateFiltered();
+                if (this.fileSearchMode) {
+                    this.doFileSearch();
+                } else {
+                    this.updateFiltered();
+                }
+            },
+
+            doFileSearch: function() {
+                var self = this;
+                var q = this.query.trim();
+                if (!q) {
+                    this.fileSearchResults = [];
+                    this.selectedIndex = 0;
+                    return;
+                }
+                if (this.fileSearchDebounceTimer) {
+                    clearTimeout(this.fileSearchDebounceTimer);
+                }
+                this.fileSearchDebounceTimer = setTimeout(function() {
+                    self.fileSearchDebounceTimer = null;
+                    var searchAPI = window._clawIDESearchAPI;
+                    if (!searchAPI) return;
+                    fetch(searchAPI + '?q=' + encodeURIComponent(q))
+                        .then(function(r) { return r.ok ? r.json() : []; })
+                        .then(function(results) {
+                            self.fileSearchResults = results || [];
+                            self.selectedIndex = 0;
+                        })
+                        .catch(function() {
+                            self.fileSearchResults = [];
+                        });
+                }, 200);
             },
 
             onKeydown: function(e) {
+                if (this.fileSearchMode) {
+                    this.onFileSearchKeydown(e);
+                    return;
+                }
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     if (this.selectedIndex < this.filteredCommands.length - 1) {
@@ -249,6 +319,44 @@
                     e.preventDefault();
                     this.close();
                 }
+            },
+
+            onFileSearchKeydown: function(e) {
+                var results = this.fileSearchResults;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (this.selectedIndex < results.length - 1) this.selectedIndex++;
+                    this.scrollSelectedIntoView();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (this.selectedIndex > 0) this.selectedIndex--;
+                    this.scrollSelectedIntoView();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (results.length > 0 && this.selectedIndex < results.length) {
+                        this.openSearchResult(results[this.selectedIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    this.close();
+                }
+            },
+
+            openSearchResult: function(result) {
+                if (!result || result.is_dir) return;
+                var filePath = result.path;
+                this.close();
+                // Open the file in the editor
+                setTimeout(function() {
+                    if (typeof window.featureLoadFile === 'function') {
+                        window.featureLoadFile(filePath);
+                    } else if (typeof window.ClawIDEEditor !== 'undefined') {
+                        // Determine project ID from the editor root element
+                        var editorRoot = document.getElementById('editor-pane-root');
+                        var pid = editorRoot ? editorRoot.dataset.projectId : '';
+                        window.ClawIDEEditor.loadFile(pid, filePath);
+                    }
+                }, 50);
             },
 
             scrollSelectedIntoView: function() {
@@ -278,11 +386,19 @@
     document.addEventListener('keydown', function(e) {
         var isCmdK = (e.metaKey || e.ctrlKey) && e.key === 'k';
         var isCmdShiftP = (e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'P';
+        var isCmdP = (e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'p';
 
         if (isCmdK || isCmdShiftP) {
             e.preventDefault();
             if (typeof window.ClawIDEPalette !== 'undefined') {
                 window.ClawIDEPalette.toggle();
+            }
+        }
+
+        if (isCmdP) {
+            e.preventDefault();
+            if (typeof window.ClawIDEPalette !== 'undefined') {
+                window.ClawIDEPalette.openFileSearch();
             }
         }
     });
@@ -327,5 +443,15 @@
         },
         executeCommand: runCommandById,
         getCommands: function() { return commands.slice(); },
+        openFileSearch: function() {
+            var els = document.querySelectorAll('[x-data]');
+            for (var i = 0; i < els.length; i++) {
+                var el = els[i];
+                if (el._x_dataStack && el._x_dataStack[0] && typeof el._x_dataStack[0].openFileSearch === 'function') {
+                    el._x_dataStack[0].openFileSearch();
+                    return;
+                }
+            }
+        },
     };
 })();

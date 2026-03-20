@@ -1,5 +1,5 @@
 // ClawIDE New File — Modal dialog for creating new files and folders
-// Includes autocomplete, context menu, and keyboard navigation
+// Includes autocomplete, context menu (new/rename/delete), and keyboard navigation
 (function() {
     'use strict';
 
@@ -9,8 +9,11 @@
         filesAPI: '',
         fileAPI: '',
         mkdirAPI: '',
+        renameAPI: '',
         fileTreeId: 'file-tree',
         onFileCreated: null,
+        onRenamed: null,
+        onDeleted: null,
         refreshDir: null,
     };
 
@@ -404,6 +407,68 @@
             });
     }
 
+    // --- Rename ---
+    function doRename(itemPath, itemIsDir) {
+        if (!window.ClawIDEDialog) return;
+
+        var currentName = getFilenamePart(itemPath);
+        var typeLabel = itemIsDir ? 'folder' : 'file';
+
+        window.ClawIDEDialog.prompt('Rename ' + typeLabel, 'New name:', currentName).then(function(newName) {
+            if (!newName || newName === currentName) return;
+
+            // Validate new name
+            if (/\//.test(newName) || /\.\./.test(newName) || /[\x00-\x1f]/.test(newName)) {
+                return; // silently reject invalid names
+            }
+
+            var parentDir = getDirectoryPart(itemPath);
+            var newPath = parentDir ? parentDir + '/' + newName : newName;
+
+            var url = config.renameAPI + '?path=' + encodeURIComponent(itemPath) + '&newPath=' + encodeURIComponent(newPath);
+            fetch(url, { method: 'POST' })
+                .then(function(resp) {
+                    if (resp.status === 409) throw new Error('A file or folder with that name already exists');
+                    if (!resp.ok) throw new Error('Failed to rename (HTTP ' + resp.status + ')');
+                    // Refresh the parent directory in the tree
+                    if (config.refreshDir) config.refreshDir(parentDir);
+                    if (config.onRenamed) config.onRenamed(itemPath, newPath);
+                })
+                .catch(function(err) {
+                    if (window.ClawIDEDialog) {
+                        window.ClawIDEDialog.confirm('Rename Failed', err.message || 'Failed to rename', { confirmLabel: 'OK' });
+                    }
+                });
+        });
+    }
+
+    // --- Delete ---
+    function doDelete(itemPath, itemIsDir) {
+        if (!window.ClawIDEDialog) return;
+
+        var name = getFilenamePart(itemPath);
+        var typeLabel = itemIsDir ? 'folder' : 'file';
+        var message = 'Delete ' + typeLabel + ' "' + name + '"?' + (itemIsDir ? ' This will delete all contents.' : '');
+
+        window.ClawIDEDialog.confirm('Delete ' + typeLabel, message, { destructive: true, confirmLabel: 'Delete' }).then(function(confirmed) {
+            if (!confirmed) return;
+
+            var url = config.fileAPI + '?path=' + encodeURIComponent(itemPath);
+            fetch(url, { method: 'DELETE' })
+                .then(function(resp) {
+                    if (!resp.ok) throw new Error('Failed to delete (HTTP ' + resp.status + ')');
+                    var parentDir = getDirectoryPart(itemPath);
+                    if (config.refreshDir) config.refreshDir(parentDir);
+                    if (config.onDeleted) config.onDeleted(itemPath, itemIsDir);
+                })
+                .catch(function(err) {
+                    if (window.ClawIDEDialog) {
+                        window.ClawIDEDialog.confirm('Delete Failed', err.message || 'Failed to delete', { confirmLabel: 'OK' });
+                    }
+                });
+        });
+    }
+
     // --- Context menu ---
     function buildContextMenu() {
         if (contextMenuEl) return;
@@ -412,8 +477,10 @@
         menu.className = 'file-tree-context-menu';
         menu.style.display = 'none';
 
+        // New File
         var newFileItem = document.createElement('div');
         newFileItem.className = 'file-tree-context-menu-item';
+        newFileItem.dataset.action = 'newFile';
         newFileItem.textContent = 'New File';
         newFileItem.addEventListener('click', function() {
             var path = contextMenuEl.dataset.folderPath || '';
@@ -422,8 +489,10 @@
         });
         menu.appendChild(newFileItem);
 
+        // New Folder
         var newFolderItem = document.createElement('div');
         newFolderItem.className = 'file-tree-context-menu-item';
+        newFolderItem.dataset.action = 'newFolder';
         newFolderItem.textContent = 'New Folder';
         newFolderItem.addEventListener('click', function() {
             var path = contextMenuEl.dataset.folderPath || '';
@@ -432,13 +501,65 @@
         });
         menu.appendChild(newFolderItem);
 
+        // Separator
+        var sep1 = document.createElement('div');
+        sep1.className = 'file-tree-context-menu-separator';
+        menu.appendChild(sep1);
+
+        // Rename
+        var renameItem = document.createElement('div');
+        renameItem.className = 'file-tree-context-menu-item';
+        renameItem.dataset.action = 'rename';
+        renameItem.textContent = 'Rename';
+        renameItem.addEventListener('click', function() {
+            var itemPath = contextMenuEl.dataset.itemPath;
+            var itemIsDir = contextMenuEl.dataset.itemIsDir === 'true';
+            closeContextMenu();
+            if (itemPath) doRename(itemPath, itemIsDir);
+        });
+        menu.appendChild(renameItem);
+
+        // Separator
+        var sep2 = document.createElement('div');
+        sep2.className = 'file-tree-context-menu-separator';
+        menu.appendChild(sep2);
+
+        // Delete
+        var deleteItem = document.createElement('div');
+        deleteItem.className = 'file-tree-context-menu-item file-tree-context-menu-item-danger';
+        deleteItem.dataset.action = 'delete';
+        deleteItem.textContent = 'Delete';
+        deleteItem.addEventListener('click', function() {
+            var itemPath = contextMenuEl.dataset.itemPath;
+            var itemIsDir = contextMenuEl.dataset.itemIsDir === 'true';
+            closeContextMenu();
+            if (itemPath) doDelete(itemPath, itemIsDir);
+        });
+        menu.appendChild(deleteItem);
+
         contextMenuEl = menu;
         document.body.appendChild(menu);
     }
 
-    function showContextMenu(x, y, folderPath) {
+    function showContextMenu(x, y, itemPath, itemIsDir) {
         buildContextMenu();
-        contextMenuEl.dataset.folderPath = folderPath || '';
+        contextMenuEl.dataset.itemPath = itemPath || '';
+        contextMenuEl.dataset.itemIsDir = itemIsDir ? 'true' : 'false';
+        // For new file/folder, use folder path (the item if dir, or parent if file)
+        contextMenuEl.dataset.folderPath = itemIsDir ? itemPath : getDirectoryPart(itemPath);
+
+        // Show/hide "New File" and "New Folder" only for directories
+        var items = contextMenuEl.querySelectorAll('.file-tree-context-menu-item');
+        items.forEach(function(el) {
+            var action = el.dataset.action;
+            if (action === 'newFile' || action === 'newFolder') {
+                el.style.display = itemIsDir ? '' : 'none';
+            }
+        });
+        // Show/hide first separator (between new items and rename)
+        var seps = contextMenuEl.querySelectorAll('.file-tree-context-menu-separator');
+        if (seps[0]) seps[0].style.display = itemIsDir ? '' : 'none';
+
         contextMenuEl.style.left = x + 'px';
         contextMenuEl.style.top = y + 'px';
         contextMenuEl.style.display = 'block';
@@ -463,23 +584,33 @@
         var treeEl = document.getElementById(config.fileTreeId);
         if (!treeEl) return;
 
-        // Right-click on folders
+        // Right-click on any file tree item (files and folders)
         treeEl.addEventListener('contextmenu', function(e) {
-            var item = e.target.closest('.file-tree-item[data-path]');
+            // Match folders (data-path) or files (data-filepath)
+            var item = e.target.closest('.file-tree-item');
             if (!item) return;
             e.preventDefault();
-            showContextMenu(e.clientX, e.clientY, item.dataset.path);
+
+            var isDir = item.hasAttribute('data-path');
+            var itemPath = isDir ? item.dataset.path : item.dataset.filepath;
+            if (!itemPath) return;
+
+            showContextMenu(e.clientX, e.clientY, itemPath, isDir);
         });
 
         // Long-press for mobile (500ms)
         treeEl.addEventListener('touchstart', function(e) {
-            var item = e.target.closest('.file-tree-item[data-path]');
+            var item = e.target.closest('.file-tree-item');
             if (!item) return;
 
             longPressTimer = setTimeout(function() {
                 e.preventDefault();
                 var touch = e.touches[0];
-                showContextMenu(touch.clientX, touch.clientY, item.dataset.path);
+                var isDir = item.hasAttribute('data-path');
+                var itemPath = isDir ? item.dataset.path : item.dataset.filepath;
+                if (itemPath) {
+                    showContextMenu(touch.clientX, touch.clientY, itemPath, isDir);
+                }
             }, 500);
         }, { passive: false });
 
@@ -510,8 +641,11 @@
         config.filesAPI = opts.filesAPI || '';
         config.fileAPI = opts.fileAPI || '';
         config.mkdirAPI = opts.mkdirAPI || '';
+        config.renameAPI = opts.renameAPI || '';
         config.fileTreeId = opts.fileTreeId || 'file-tree';
         config.onFileCreated = opts.onFileCreated || null;
+        config.onRenamed = opts.onRenamed || null;
+        config.onDeleted = opts.onDeleted || null;
         config.refreshDir = opts.refreshDir || null;
 
         setupContextMenu();

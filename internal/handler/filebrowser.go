@@ -238,6 +238,200 @@ func mkdirForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// renameForRoot renames a file or directory. Both `path` (old) and `newPath`
+// (new) are resolved relative to rootPath. The destination must not exist.
+func renameForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
+	oldRel := r.URL.Query().Get("path")
+	newRel := r.URL.Query().Get("newPath")
+	if oldRel == "" || newRel == "" {
+		http.Error(w, "path and newPath parameters are required", http.StatusBadRequest)
+		return
+	}
+
+	absOld, ok := resolveAndValidatePath(rootPath, oldRel)
+	if !ok {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+	absNew, ok := resolveAndValidatePath(rootPath, newRel)
+	if !ok {
+		http.Error(w, "invalid newPath", http.StatusBadRequest)
+		return
+	}
+
+	cleanRoot := filepath.Clean(rootPath)
+	if absOld == cleanRoot {
+		http.Error(w, "cannot rename root directory", http.StatusBadRequest)
+		return
+	}
+
+	if _, err := os.Stat(absOld); os.IsNotExist(err) {
+		http.Error(w, "source path not found", http.StatusNotFound)
+		return
+	}
+
+	if _, err := os.Stat(absNew); err == nil {
+		http.Error(w, "destination already exists", http.StatusConflict)
+		return
+	}
+
+	// Ensure the destination parent directory exists.
+	if err := os.MkdirAll(filepath.Dir(absNew), 0755); err != nil {
+		http.Error(w, "failed to create destination directory", http.StatusInternalServerError)
+		return
+	}
+
+	if err := os.Rename(absOld, absNew); err != nil {
+		http.Error(w, "failed to rename: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"oldPath": oldRel,
+		"newPath": newRel,
+	})
+}
+
+// deleteForRoot deletes a file or directory under rootPath.
+func deleteForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
+	requestedPath := r.URL.Query().Get("path")
+	if requestedPath == "" {
+		http.Error(w, "path parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	absPath, ok := resolveAndValidatePath(rootPath, requestedPath)
+	if !ok {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+
+	cleanRoot := filepath.Clean(rootPath)
+	if absPath == cleanRoot {
+		http.Error(w, "cannot delete root directory", http.StatusBadRequest)
+		return
+	}
+
+	info, err := os.Stat(absPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "path not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "failed to stat path", http.StatusInternalServerError)
+		return
+	}
+
+	if info.IsDir() {
+		err = os.RemoveAll(absPath)
+	} else {
+		err = os.Remove(absPath)
+	}
+	if err != nil {
+		http.Error(w, "failed to delete: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+// skipDirs contains directory names that searchFilesForRoot should not descend into.
+var skipDirs = map[string]bool{
+	".git":         true,
+	"node_modules": true,
+	"vendor":       true,
+	"__pycache__":  true,
+}
+
+// searchFilesForRoot walks the directory tree under rootPath and returns files
+// whose names match the query. The query is first tried as a glob pattern via
+// filepath.Match; if that fails it falls back to a case-insensitive substring
+// match on the full relative path. Results are capped at 50 entries.
+func searchFilesForRoot(w http.ResponseWriter, r *http.Request, rootPath string) {
+	q := r.URL.Query().Get("q")
+	if q == "" {
+		http.Error(w, "q parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	showHidden := r.URL.Query().Get("hidden") == "true"
+	cleanRoot := filepath.Clean(rootPath)
+	qLower := strings.ToLower(q)
+
+	var results []FileEntry
+	const maxResults = 50
+
+	filepath.WalkDir(cleanRoot, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return nil // skip unreadable entries
+		}
+		if len(results) >= maxResults {
+			return filepath.SkipAll
+		}
+
+		name := d.Name()
+
+		// Skip hidden files/dirs unless requested.
+		if !showHidden && strings.HasPrefix(name, ".") {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// Skip known heavy directories.
+		if d.IsDir() && skipDirs[name] {
+			return filepath.SkipDir
+		}
+
+		// Don't include the root itself.
+		if path == cleanRoot {
+			return nil
+		}
+
+		// Try glob match on filename first.
+		matched, globErr := filepath.Match(q, name)
+		if globErr != nil {
+			// Invalid glob pattern — fall back to substring only.
+			matched = false
+		}
+
+		relPath, relErr := filepath.Rel(cleanRoot, path)
+		if relErr != nil {
+			return nil
+		}
+
+		if !matched {
+			// Case-insensitive substring on the full relative path.
+			if !strings.Contains(strings.ToLower(relPath), qLower) {
+				return nil
+			}
+		}
+
+		info, infoErr := d.Info()
+		if infoErr != nil {
+			return nil
+		}
+
+		results = append(results, FileEntry{
+			Name:     name,
+			Path:     relPath,
+			IsDir:    d.IsDir(),
+			Size:     info.Size(),
+			Modified: info.ModTime().UTC(),
+		})
+		return nil
+	})
+
+	if results == nil {
+		results = []FileEntry{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(results)
+}
+
 // ListFiles handles GET /projects/{id}/api/files?path=...
 func (h *Handlers) ListFiles(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
@@ -276,6 +470,36 @@ func (h *Handlers) Mkdir(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mkdirForRoot(w, r, project.Path)
+}
+
+// RenameFile handles POST /projects/{id}/api/rename?path=...&newPath=...
+func (h *Handlers) RenameFile(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	renameForRoot(w, r, project.Path)
+}
+
+// DeleteFile handles DELETE /projects/{id}/api/file?path=...
+func (h *Handlers) DeleteFile(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	deleteForRoot(w, r, project.Path)
+}
+
+// SearchFiles handles GET /projects/{id}/api/files/search?q=...
+func (h *Handlers) SearchFiles(w http.ResponseWriter, r *http.Request) {
+	project := middleware.GetProject(r)
+	if project.Path == "" {
+		http.Error(w, "project path not configured", http.StatusInternalServerError)
+		return
+	}
+	searchFilesForRoot(w, r, project.Path)
 }
 
 // detectContentType determines whether content is text or binary.

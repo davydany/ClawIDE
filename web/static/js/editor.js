@@ -1273,6 +1273,71 @@
         setFocusedPane(targetPaneId);
     }
 
+    // --- Handle rename of open tabs ---
+    function handleRename(oldPath, newPath) {
+        var paneIds = Object.keys(editorPanes);
+        for (var p = 0; p < paneIds.length; p++) {
+            var pane = editorPanes[paneIds[p]];
+            if (!pane) continue;
+            var needsRender = false;
+            for (var t = 0; t < pane.tabs.length; t++) {
+                var tab = pane.tabs[t];
+                if (!tab.filePath) continue;
+
+                // Exact match (file rename) or prefix match (directory rename)
+                if (tab.filePath === oldPath) {
+                    tab.filePath = newPath;
+                    needsRender = true;
+                } else if (tab.filePath.indexOf(oldPath + '/') === 0) {
+                    tab.filePath = newPath + tab.filePath.substring(oldPath.length);
+                    needsRender = true;
+                }
+
+                // Update saveURL if it contains the old path
+                if (needsRender && tab.saveURL) {
+                    tab.saveURL = tab.saveURL.replace(
+                        'path=' + encodeURIComponent(oldPath),
+                        'path=' + encodeURIComponent(tab.filePath)
+                    );
+                }
+            }
+            if (needsRender) {
+                renderTabs(paneIds[p]);
+            }
+        }
+    }
+
+    // --- Handle delete of open tabs ---
+    function handleDelete(deletedPath, isDir) {
+        var paneIds = Object.keys(editorPanes);
+        for (var p = 0; p < paneIds.length; p++) {
+            var pane = editorPanes[paneIds[p]];
+            if (!pane) continue;
+
+            // Collect tabs to close (iterate in reverse to avoid index shifting)
+            var tabsToClose = [];
+            for (var t = 0; t < pane.tabs.length; t++) {
+                var tab = pane.tabs[t];
+                if (!tab.filePath) continue;
+
+                if (tab.filePath === deletedPath) {
+                    tabsToClose.push(tab.id);
+                } else if (isDir && tab.filePath.indexOf(deletedPath + '/') === 0) {
+                    tabsToClose.push(tab.id);
+                }
+            }
+
+            // Close affected tabs (mark as not modified to skip confirm dialogs)
+            for (var c = 0; c < tabsToClose.length; c++) {
+                var tabToClose = findTabById(paneIds[p], tabsToClose[c]);
+                if (tabToClose) {
+                    tabToClose.modified = false; // skip "discard changes?" since the file is gone
+                    closeTab(paneIds[p], tabsToClose[c]);
+                }
+            }
+        }
+    }
+
     // --- Expose to global scope ---
     window.ClawIDEEditor = {
         loadFile: loadFile,
@@ -1287,6 +1352,8 @@
         splitPane: splitPane,
         closePane: closePane,
         getFocusedPaneId: getFocusedPaneId,
+        handleRename: handleRename,
+        handleDelete: handleDelete,
         isModified: function() {
             return Object.keys(editorPanes).some(function(id) {
                 var pane = editorPanes[id];

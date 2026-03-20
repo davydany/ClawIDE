@@ -823,6 +823,18 @@ dialog::backdrop {
     @apply bg-gray-700 text-white;
 }
 
+.file-tree-context-menu-separator {
+    @apply border-t border-gray-700 my-1;
+}
+
+.file-tree-context-menu-item-danger {
+    @apply text-red-400;
+}
+
+.file-tree-context-menu-item-danger:hover {
+    @apply bg-red-900/30 text-red-300;
+}
+
 /* New file modal */
 .new-file-modal {
     position: fixed;
