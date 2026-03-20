@@ -250,6 +250,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Delete("/{notifID}", s.handlers.DeleteNotification)
 	})
 
+	// Editor integration API
+	r.Get("/api/editors/available", s.handlers.AvailableEditors)
+	r.Post("/api/editor/open", s.handlers.OpenEditor)
+	r.Post("/api/editor/open-folder", s.handlers.OpenFolder)
+
 	// Claude Code integration API
 	r.Get("/api/claude/detect", s.handlers.DetectClaudeCLI)
 	r.Post("/api/claude/setup-hook", s.handlers.SetupClaudeHook)

@@ -31,6 +31,7 @@ type Config struct {
 	AutoUpdateCheck        bool   `json:"auto_update_check"`
 	AISettings             *wizard.AIConfig `json:"ai_settings"`
 	AIReviewCommand        string `json:"ai_review_command"`
+	PreferredEditor        string `json:"preferred_editor"`
 	Multiplexer            string `json:"multiplexer"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
