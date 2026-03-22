@@ -51,6 +51,20 @@
                 Back to Project
             </a>
 
+            <!-- Active Project -->
+            <div class="mt-3 mx-1 px-3 py-2.5 rounded-lg bg-gray-800/60 border border-gray-700/50">
+                <div class="flex items-center gap-2.5">
+                    <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Active Project</div>
+                        <div class="text-sm font-medium text-white truncate">{{.Project.Name}}</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Sessions section -->
             <div class="mt-4" x-data="{ sessionsOpen: true }">
                 <button @click="sessionsOpen = !sessionsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
@@ -95,153 +109,6 @@
                 </div>
             </div>
 
-            <!-- Snippets section -->
-            <div class="mt-4" x-data="{ snippetsOpen: false }">
-                <button @click="snippetsOpen = !snippetsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Snippets
-                    <svg class="w-3.5 h-3.5 transition-transform" :class="snippetsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="snippetsOpen" x-collapse>
-                    <div class="mt-1 px-1">
-                        <input id="snippet-search" type="text" placeholder="Search snippets..."
-                               class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div class="px-1 py-2">
-                        <h4 id="snippet-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Snippet</h4>
-                        <form id="snippet-form" hx-boost="false" class="space-y-1.5">
-                            <input id="snippet-name" type="text" placeholder="Snippet name" required
-                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                            <textarea id="snippet-content" placeholder="Snippet content..." rows="2"
-                                      class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
-                            <div class="flex items-center gap-2">
-                                <button type="submit"
-                                        class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                                    Save
-                                </button>
-                                <button type="button" id="snippet-cancel" style="display:none"
-                                        class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                    <div id="snippet-list" class="max-h-64 overflow-y-auto"></div>
-                </div>
-            </div>
-
-            <!-- Notes section -->
-            <div class="mt-4" x-data="{ notesOpen: false }">
-                <button @click="notesOpen = !notesOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Notes
-                    <svg class="w-3.5 h-3.5 transition-transform" :class="notesOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="notesOpen" x-collapse>
-                    <div id="notes-container" data-project-id="{{.Project.ID}}">
-                        <div class="flex items-center gap-1 mt-1 px-1">
-                            <button id="notes-tab-project" class="flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300" onclick="ClawIDENotes.setScope('project')">Project</button>
-                            <button id="notes-tab-global" class="flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800" onclick="ClawIDENotes.setScope('global')">Global</button>
-                        </div>
-                        <div class="mt-1.5 px-1">
-                            <input id="notes-search" type="text" placeholder="Search notes..."
-                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div class="px-1 py-2">
-                            <h4 id="notes-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Note</h4>
-                            <form id="notes-form" class="space-y-1.5">
-                                <input id="notes-title" type="text" placeholder="Note title" required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <textarea id="notes-content" placeholder="Note content (markdown)..." rows="3"
-                                          class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
-                                <div id="notes-preview" class="hidden note-markdown-preview px-2 py-1.5 text-xs text-gray-300 bg-gray-800/50 rounded border border-gray-700 max-h-32 overflow-y-auto"></div>
-                                <div class="flex items-center gap-2">
-                                    <button type="submit"
-                                            class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                                        Save
-                                    </button>
-                                    <button type="button" id="notes-preview-toggle"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Preview
-                                    </button>
-                                    <button type="button" id="notes-cancel" style="display:none"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                        <div id="notes-list" class="max-h-64 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bookmarks section -->
-            <div class="mt-4" x-data="{ bookmarksOpen: false }">
-                <button @click="bookmarksOpen = !bookmarksOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Bookmarks
-                    <svg class="w-3.5 h-3.5 transition-transform" :class="bookmarksOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="bookmarksOpen" x-collapse>
-                    <div id="bookmarks-container" data-project-id="{{.Project.ID}}">
-                        <!-- Bookmarks search -->
-                        <div class="mt-1 px-1">
-                            <input id="bookmarks-search" type="text" placeholder="Search bookmarks..."
-                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                        </div>
-
-                        <!-- Bookmarks create/edit form -->
-                        <div class="px-1 py-2">
-                            <h4 id="bookmarks-form-title" class="text-[10px] font-semibold text-gray-500 uppercase mb-1 px-1">New Bookmark</h4>
-                            <form id="bookmarks-form" class="space-y-1.5">
-                                <input id="bookmarks-name" type="text" placeholder="Bookmark name" required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <input id="bookmarks-url" type="url" placeholder="https://..." required
-                                       class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
-                                <div class="flex items-center gap-1.5">
-                                    <input id="bookmarks-emoji" type="text" placeholder="Emoji" maxlength="2" readonly
-                                           class="w-12 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-white text-center focus:outline-none focus:border-indigo-500 cursor-pointer">
-                                    <button type="button" id="bookmarks-emoji-btn"
-                                            class="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded border border-gray-700 transition-colors"
-                                            title="Pick emoji">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    </button>
-                                    <button type="button" onclick="document.getElementById('bookmarks-emoji').value=''"
-                                            class="px-1.5 py-1.5 text-xs text-gray-500 hover:text-white rounded transition-colors" title="Clear emoji">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-                                <!-- Emoji picker (hidden by default) -->
-                                <div class="relative">
-                                    <emoji-picker id="bookmarks-emoji-picker" style="display:none; position:absolute; z-index:50; bottom:100%; left:0;" class="light"></emoji-picker>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button type="submit"
-                                            class="px-2.5 py-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">
-                                        Save
-                                    </button>
-                                    <button type="button" id="bookmarks-cancel" style="display:none"
-                                            class="px-2.5 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors">
-                                        Cancel
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Bookmarks list -->
-                        <div id="bookmarks-list" class="max-h-64 overflow-y-auto"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings link -->
-            <div class="mt-4 border-t border-gray-800 pt-4">
-                <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    Settings
-                </a>
-            </div>
         </nav>
 
         <!-- System Stats Box -->
@@ -336,6 +203,30 @@
                     </div>
                 </div>
             </template>
+        </div>
+
+        <!-- Keyboard Shortcuts (desktop only) -->
+        <div class="flex-shrink-0 border-t border-gray-800 p-3 hidden lg:block" x-data="{ shortcutsOpen: false }">
+            <button @click="shortcutsOpen = !shortcutsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                Keyboard Shortcuts
+                <svg class="w-3.5 h-3.5 transition-transform" :class="shortcutsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="shortcutsOpen" x-collapse>
+                <div class="mt-1 px-3 space-y-1">
+                    <table class="w-full text-xs">
+                        <tbody class="text-gray-400">
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+K</kbd></td><td class="py-1">Command Palette</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+Shift+P</kbd></td><td class="py-1">Command Palette</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+S</kbd></td><td class="py-1">Save File</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+W</kbd></td><td class="py-1">Close Tab</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Alt+Z</kbd></td><td class="py-1">Toggle Word Wrap</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+B</kbd></td><td class="py-1">Toggle Sidebar</td></tr>
+                            <tr class="border-b border-gray-800/50"><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Ctrl+G</kbd></td><td class="py-1">Go to Line</td></tr>
+                            <tr><td class="py-1 pr-2"><kbd class="px-1.5 py-0.5 bg-gray-800 rounded text-gray-300 font-mono text-[10px]">Cmd+/</kbd></td><td class="py-1">Toggle Comment</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <!-- Settings link -->
