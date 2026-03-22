@@ -16,6 +16,7 @@
 <script src="/static/js/scratchpad.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
+<script src="/static/js/skills.js"></script>
 <script src="/static/js/command-palette.js"></script>
 {{end}}
 
@@ -99,6 +100,26 @@
                                   rows="6"
                                   class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 font-mono resize-y"></textarea>
                     </div>
+                </div>
+            </div>
+
+            <!-- Skills section -->
+            <div class="mt-4" x-data="{ skillsOpen: true }">
+                <button @click="skillsOpen = !skillsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
+                    Skills
+                    <svg class="w-3.5 h-3.5 transition-transform" :class="skillsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="skillsOpen" x-collapse>
+                    <div id="skills-sidebar" class="mt-1 space-y-0.5">
+                        <!-- Populated by skills.js -->
+                    </div>
+                    <button onclick="ClawIDESkills.openManager()"
+                            class="mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-300 hover:bg-gray-800 w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        Manage Skills
+                    </button>
                 </div>
             </div>
 
