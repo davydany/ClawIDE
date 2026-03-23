@@ -987,6 +987,12 @@
                 else {
                     openNewTab(targetPaneId, filePath, content);
                 }
+
+                // Track recently opened files for command palette
+                var fileName = filePath.split('/').pop();
+                if (window.ClawIDEPalette && window.ClawIDEPalette.addRecentFile) {
+                    window.ClawIDEPalette.addRecentFile(fileName, filePath);
+                }
             })
             .catch(function(err) {
                 console.error('Failed to load file:', err);
@@ -1264,6 +1270,12 @@
                 var tab = getActiveTab(targetPaneId);
                 if (tab && saveBaseURL) {
                     tab.saveURL = saveBaseURL;
+                }
+
+                // Track recently opened files for command palette
+                var fileName = filePath.split('/').pop();
+                if (window.ClawIDEPalette && window.ClawIDEPalette.addRecentFile) {
+                    window.ClawIDEPalette.addRecentFile(fileName, filePath);
                 }
             })
             .catch(function(err) {

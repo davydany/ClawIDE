@@ -16,6 +16,8 @@
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
 <script src="/static/js/docker.js"></script>
+<script src="/static/js/editor-commands.js"></script>
+<script src="/static/js/command-palette.js"></script>
 {{end}}
 
 {{define "body"}}
@@ -1581,4 +1583,6 @@ function deleteSession(projectID, sessionID) {
         </div>
     </div>
 </div>
+
+{{template "command-palette" .}}
 {{end}}
