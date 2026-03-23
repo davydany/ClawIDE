@@ -156,3 +156,42 @@ func (h *Handlers) DeleteSkill(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 }
+
+// MoveSkill moves a skill between global and project scope.
+func (h *Handlers) MoveSkill(w http.ResponseWriter, r *http.Request) {
+	scope := chi.URLParam(r, "scope")
+	skillName := chi.URLParam(r, "skillName")
+
+	var body struct {
+		TargetScope string `json:"target_scope"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if body.TargetScope != "global" && body.TargetScope != "project" {
+		http.Error(w, "target_scope must be 'global' or 'project'", http.StatusBadRequest)
+		return
+	}
+	if body.TargetScope == scope {
+		http.Error(w, "Skill is already in that scope", http.StatusBadRequest)
+		return
+	}
+
+	srcDir := h.resolveSkillsDir(r, scope)
+	dstDir := h.resolveSkillsDir(r, body.TargetScope)
+	if srcDir == "" || dstDir == "" {
+		http.Error(w, "Invalid scope", http.StatusBadRequest)
+		return
+	}
+
+	if err := skills.MoveSkill(srcDir, dstDir, skillName); err != nil {
+		log.Printf("Error moving skill %s/%s to %s: %v", scope, skillName, body.TargetScope, err)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "moved", "new_scope": body.TargetScope})
+}

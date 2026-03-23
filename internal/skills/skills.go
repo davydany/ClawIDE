@@ -136,6 +136,30 @@ func UpdateSkill(baseDir, dirName string, skill Skill) error {
 	return nil
 }
 
+// MoveSkill moves a skill from srcDir to dstDir.
+func MoveSkill(srcDir, dstDir, dirName string) error {
+	srcSkillDir := filepath.Join(srcDir, dirName)
+	skillFile := filepath.Join(srcSkillDir, "SKILL.md")
+	if _, err := os.Stat(skillFile); os.IsNotExist(err) {
+		return fmt.Errorf("source skill not found: %s", dirName)
+	}
+
+	dstSkillDir := filepath.Join(dstDir, dirName)
+	if _, err := os.Stat(dstSkillDir); err == nil {
+		return fmt.Errorf("skill already exists in target scope: %s", dirName)
+	}
+
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("creating target directory: %w", err)
+	}
+
+	if err := os.Rename(srcSkillDir, dstSkillDir); err != nil {
+		return fmt.Errorf("moving skill directory: %w", err)
+	}
+
+	return nil
+}
+
 // DeleteSkill removes a skill directory and all its contents.
 func DeleteSkill(baseDir, dirName string) error {
 	skillDir := filepath.Join(baseDir, dirName)
