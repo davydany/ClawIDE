@@ -111,6 +111,19 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Delete("/api/skills/{scope}/{skillName}", s.handlers.DeleteSkill)
 			r.Post("/api/skills/{scope}/{skillName}/move", s.handlers.MoveSkill)
 
+			// MCP Servers API
+			r.Get("/api/mcp-servers", s.handlers.ListMCPServers)
+			r.Post("/api/mcp-servers", s.handlers.CreateMCPServer)
+			r.Get("/api/mcp-servers/{scope}/{serverName}", s.handlers.GetMCPServer)
+			r.Put("/api/mcp-servers/{scope}/{serverName}", s.handlers.UpdateMCPServer)
+			r.Delete("/api/mcp-servers/{scope}/{serverName}", s.handlers.DeleteMCPServer)
+			r.Post("/api/mcp-servers/{scope}/{serverName}/move", s.handlers.MoveMCPServer)
+			r.Post("/api/mcp-servers/{scope}/{serverName}/start", s.handlers.StartMCPServer)
+			r.Post("/api/mcp-servers/{scope}/{serverName}/stop", s.handlers.StopMCPServer)
+			r.Post("/api/mcp-servers/{scope}/{serverName}/restart", s.handlers.RestartMCPServer)
+			r.Get("/api/mcp-servers/{scope}/{serverName}/logs", s.handlers.MCPServerLogs)
+			r.Get("/api/mcp-servers/{scope}/{serverName}/status", s.handlers.MCPServerStatus)
+
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
