@@ -1,10 +1,12 @@
 package git
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -20,6 +22,27 @@ type Branch struct {
 type RemoteInfo struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
+}
+
+// Clone clones a git repository from url into targetDir.
+// It supports optional branch and depth (shallow clone) parameters.
+// Returns the combined stdout/stderr output and any error.
+func Clone(ctx context.Context, url, targetDir, branch string, depth int) (string, error) {
+	args := []string{"clone"}
+	if depth > 0 {
+		args = append(args, "--depth", strconv.Itoa(depth))
+	}
+	if branch != "" {
+		args = append(args, "--branch", branch)
+	}
+	args = append(args, "--progress", url, targetDir)
+
+	cmd := exec.CommandContext(ctx, "git", args...)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return string(output), fmt.Errorf("git clone: %s: %w", strings.TrimSpace(string(output)), err)
+	}
+	return string(output), nil
 }
 
 // IsGitRepo checks whether the given path contains a git repository

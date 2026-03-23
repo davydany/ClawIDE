@@ -64,8 +64,36 @@ func Validate(req WizardRequest) ValidationResult {
 		result.Add("project_name", "Project name must start with a letter or number and contain only letters, numbers, hyphens, underscores, or dots (max 64 chars)")
 	}
 
-	// Language & Framework (not required for empty projects)
-	if !req.EmptyProject {
+	// Git clone validation
+	if req.CloneProject {
+		url := strings.TrimSpace(req.GitCloneURL)
+		if url == "" {
+			result.Add("git_clone_url", "Git URL is required")
+		} else if !isValidGitURL(url) {
+			result.Add("git_clone_url", "Invalid Git URL. Use HTTPS (https://...) or SSH (git@host:user/repo.git) format")
+		}
+
+		dirName := strings.TrimSpace(req.GitCloneDirName)
+		if dirName == "" {
+			dirName = DeriveRepoName(url)
+		}
+		if dirName != "" && !validProjectName.MatchString(dirName) {
+			result.Add("git_clone_dir_name", "Directory name must start with a letter or number and contain only letters, numbers, hyphens, underscores, or dots (max 64 chars)")
+		}
+
+		// Check target directory doesn't already exist
+		outDir := strings.TrimSpace(req.OutputDir)
+		if outDir != "" && dirName != "" {
+			expanded := expandHomePath(outDir)
+			targetPath := filepath.Join(expanded, dirName)
+			if _, err := os.Stat(targetPath); err == nil {
+				result.Add("git_clone_dir_name", fmt.Sprintf("Directory %q already exists in the output directory", dirName))
+			}
+		}
+	}
+
+	// Language & Framework (not required for empty or clone projects)
+	if !req.EmptyProject && !req.CloneProject {
 		lang := strings.TrimSpace(req.Language)
 		if lang == "" {
 			result.Add("language", "Language is required")
@@ -151,6 +179,43 @@ func validateDocPath(result *ValidationResult, field, path string) {
 		}
 	}
 	// If not a file path, assume it's direct content (markdown, text, etc.) - no validation needed
+}
+
+// validGitURL matches HTTPS and SSH git URLs.
+var validGitURL = regexp.MustCompile(`^(https?://\S+|git@\S+:\S+)$`)
+
+// isValidGitURL checks whether the given URL is a valid git SSH or HTTPS URL.
+func isValidGitURL(url string) bool {
+	return validGitURL.MatchString(url)
+}
+
+// DeriveRepoName extracts a directory name from a git URL.
+// Examples:
+//   - "https://github.com/user/my-repo.git" -> "my-repo"
+//   - "git@github.com:user/my-repo.git" -> "my-repo"
+//   - "https://github.com/user/my-repo" -> "my-repo"
+func DeriveRepoName(url string) string {
+	url = strings.TrimSpace(url)
+	if url == "" {
+		return ""
+	}
+
+	// Strip trailing slash first, then .git suffix
+	url = strings.TrimRight(url, "/")
+	url = strings.TrimSuffix(url, ".git")
+	url = strings.TrimRight(url, "/")
+
+	// For SSH URLs like git@github.com:user/repo, take after last / or :
+	var name string
+	if idx := strings.LastIndex(url, "/"); idx >= 0 {
+		name = url[idx+1:]
+	} else if idx := strings.LastIndex(url, ":"); idx >= 0 {
+		name = url[idx+1:]
+	} else {
+		name = url
+	}
+
+	return name
 }
 
 // expandHomePath expands a leading ~ to the user's home directory.

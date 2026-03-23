@@ -42,11 +42,22 @@ type Job struct {
 	mu sync.RWMutex
 }
 
+// cloneProjectSteps returns the steps for cloning a git repository.
+func cloneProjectSteps() []JobStep {
+	return []JobStep{
+		{Name: "validate", Status: JobStatusPending},
+		{Name: "clone_repository", Status: JobStatusPending},
+		{Name: "register_project", Status: JobStatusPending},
+	}
+}
+
 // NewJob creates a new pending job for the given request.
 func NewJob(req WizardRequest) *Job {
 	now := time.Now()
 	steps := defaultSteps()
-	if req.EmptyProject {
+	if req.CloneProject {
+		steps = cloneProjectSteps()
+	} else if req.EmptyProject {
 		steps = emptyProjectSteps()
 	}
 	return &Job{
