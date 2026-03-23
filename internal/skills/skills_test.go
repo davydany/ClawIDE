@@ -360,6 +360,54 @@ func TestIsUserInvocable(t *testing.T) {
 	}
 }
 
+func TestMoveSkill(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	CreateSkill(srcDir, Skill{Name: "move-me", Content: "movable"})
+
+	if err := MoveSkill(srcDir, dstDir, "move-me"); err != nil {
+		t.Fatalf("MoveSkill failed: %v", err)
+	}
+
+	// Source should be gone
+	if _, err := os.Stat(filepath.Join(srcDir, "move-me")); !os.IsNotExist(err) {
+		t.Error("Source skill directory should have been removed")
+	}
+
+	// Destination should exist
+	got, err := GetSkill(dstDir, "move-me")
+	if err != nil {
+		t.Fatalf("GetSkill from destination failed: %v", err)
+	}
+	if got.Name != "move-me" {
+		t.Errorf("Name = %q, want %q", got.Name, "move-me")
+	}
+}
+
+func TestMoveSkill_TargetExists(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	CreateSkill(srcDir, Skill{Name: "conflict", Content: "src"})
+	CreateSkill(dstDir, Skill{Name: "conflict", Content: "dst"})
+
+	err := MoveSkill(srcDir, dstDir, "conflict")
+	if err == nil {
+		t.Error("Expected error when target already exists")
+	}
+}
+
+func TestMoveSkill_SourceNotFound(t *testing.T) {
+	srcDir := t.TempDir()
+	dstDir := t.TempDir()
+
+	err := MoveSkill(srcDir, dstDir, "nonexistent")
+	if err == nil {
+		t.Error("Expected error when source skill not found")
+	}
+}
+
 func containsStr(haystack, needle string) bool {
 	return len(haystack) > 0 && len(needle) > 0 && contains(haystack, needle)
 }

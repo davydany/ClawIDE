@@ -316,6 +316,10 @@
             + '      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'
             + '      Save'
             + '    </button>'
+            + (isCreating ? '' : '<button onclick="ClawIDESkills.moveCurrentSkill()" class="px-3 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-1">'
+                + '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>'
+                + (sk.scope === 'global' ? 'Move to Project' : 'Move to Global')
+                + '</button>')
             + (isCreating ? '' : '<button onclick="ClawIDESkills.deleteCurrentSkill()" class="px-3 py-1.5 text-xs text-red-400 hover:text-white hover:bg-red-900/50 rounded-lg transition-colors flex items-center gap-1">'
                 + '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>'
                 + 'Delete'
@@ -566,6 +570,35 @@
         });
     }
 
+    function moveCurrentSkill() {
+        if (!selectedSkill || isCreating) return;
+
+        var targetScope = selectedSkill.scope === 'global' ? 'project' : 'global';
+        if (!confirm('Move skill "' + selectedSkill.name + '" to ' + targetScope + ' scope?')) {
+            return;
+        }
+
+        fetch(getAPIBase() + '/' + selectedSkill.scope + '/' + encodeURIComponent(selectedSkill.dir_name) + '/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_scope: targetScope })
+        })
+        .then(function(r) {
+            if (!r.ok) return r.text().then(function(t) { throw new Error(t); });
+            return r.json();
+        })
+        .then(function() {
+            showToast('Skill moved to ' + targetScope, 'success');
+            var dirName = selectedSkill.dir_name;
+            loadSkills(function() {
+                selectSkillByRef(targetScope, dirName);
+            });
+        })
+        .catch(function(err) {
+            showToast('Failed to move: ' + err.message, 'error');
+        });
+    }
+
     // ── Helpers ───────────────────────────────────────────────────
 
     function filterSkills(list) {
@@ -623,6 +656,7 @@
         setFilter: setFilter,
         saveCurrentSkill: saveCurrentSkill,
         deleteCurrentSkill: deleteCurrentSkill,
+        moveCurrentSkill: moveCurrentSkill,
         reload: loadSkills
     };
 })();

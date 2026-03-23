@@ -109,6 +109,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/skills/{scope}/{skillName}", s.handlers.GetSkill)
 			r.Put("/api/skills/{scope}/{skillName}", s.handlers.UpdateSkill)
 			r.Delete("/api/skills/{scope}/{skillName}", s.handlers.DeleteSkill)
+			r.Post("/api/skills/{scope}/{skillName}/move", s.handlers.MoveSkill)
 
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
