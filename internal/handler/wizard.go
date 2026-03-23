@@ -69,6 +69,13 @@ type createWizardRequest struct {
 	AIAPIKey        string  `json:"ai_api_key"`
 	AIBaseURL       string  `json:"ai_base_url"`
 	AITemperature   float32 `json:"ai_temperature"`
+
+	// Git clone fields
+	CloneProject    bool   `json:"clone_project"`
+	GitCloneURL     string `json:"git_clone_url"`
+	GitCloneBranch  string `json:"git_clone_branch"`
+	GitCloneDepth   int    `json:"git_clone_depth"`
+	GitCloneDirName string `json:"git_clone_dir_name"`
 }
 
 // wizardStatusResponse is the JSON response for job status polling.
@@ -157,6 +164,11 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 		AIAPIKey:        body.AIAPIKey,
 		AIBaseURL:       body.AIBaseURL,
 		AITemperature:   aiTemp,
+		CloneProject:    body.CloneProject,
+		GitCloneURL:     body.GitCloneURL,
+		GitCloneBranch:  body.GitCloneBranch,
+		GitCloneDepth:   body.GitCloneDepth,
+		GitCloneDirName: body.GitCloneDirName,
 	}
 
 	// Validate synchronously before creating the job
@@ -186,10 +198,14 @@ func (h *Handlers) CreateProjectFromWizard(w http.ResponseWriter, r *http.Reques
 		// On success, register the project in the store
 		snap := job.Snapshot()
 		if snap.Status == wizard.JobStatusCompleted && snap.OutputDir != "" {
+			projectName := wizReq.ProjectName
+			if projectName == "" && wizReq.CloneProject {
+				projectName = wizard.DeriveRepoName(wizReq.GitCloneURL)
+			}
 			now := time.Now()
 			project := model.Project{
 				ID:        uuid.New().String(),
-				Name:      wizReq.ProjectName,
+				Name:      projectName,
 				Path:      snap.OutputDir,
 				CreatedAt: now,
 				UpdatedAt: now,
@@ -291,6 +307,11 @@ func (h *Handlers) ValidateWizardField(w http.ResponseWriter, r *http.Request) {
 		AIAPIKey:        body.AIAPIKey,
 		AIBaseURL:       body.AIBaseURL,
 		AITemperature:   aiTemp,
+		CloneProject:    body.CloneProject,
+		GitCloneURL:     body.GitCloneURL,
+		GitCloneBranch:  body.GitCloneBranch,
+		GitCloneDepth:   body.GitCloneDepth,
+		GitCloneDirName: body.GitCloneDirName,
 	}
 
 	field := r.URL.Query().Get("field")

@@ -173,3 +173,21 @@ func TestNewJob_TemplateProject(t *testing.T) {
 	job := NewJob(req)
 	assert.Len(t, job.Steps, 7, "template project should have 7 steps")
 }
+
+func TestNewJob_CloneProject(t *testing.T) {
+	req := WizardRequest{
+		ProjectName:  "clone-test",
+		CloneProject: true,
+		GitCloneURL:  "https://github.com/user/repo.git",
+	}
+	job := NewJob(req)
+
+	assert.NotEmpty(t, job.ID)
+	assert.Equal(t, JobStatusPending, job.Status)
+	assert.Len(t, job.Steps, 3, "clone project should have 3 steps")
+
+	expectedSteps := []string{"validate", "clone_repository", "register_project"}
+	for i, expected := range expectedSteps {
+		assert.Equal(t, expected, job.Steps[i].Name, "step %d should be %s", i, expected)
+	}
+}

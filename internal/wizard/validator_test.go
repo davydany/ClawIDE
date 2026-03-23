@@ -372,6 +372,154 @@ func TestValidate_EmptyProject_StillRequiresOutputDir(t *testing.T) {
 	assert.NotContains(t, errMap, "framework")
 }
 
+// ---------------------------------------------------------------------------
+// Git Clone validation tests
+// ---------------------------------------------------------------------------
+
+func TestDeriveRepoName(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want string
+	}{
+		{"HTTPS with .git", "https://github.com/user/my-repo.git", "my-repo"},
+		{"HTTPS without .git", "https://github.com/user/my-repo", "my-repo"},
+		{"SSH with .git", "git@github.com:user/my-repo.git", "my-repo"},
+		{"SSH without .git", "git@github.com:user/my-repo", "my-repo"},
+		{"HTTPS trailing slash", "https://github.com/user/my-repo/", "my-repo"},
+		{"HTTPS with .git trailing slash", "https://github.com/user/my-repo.git/", "my-repo"},
+		{"GitLab nested group", "https://gitlab.com/group/subgroup/my-repo.git", "my-repo"},
+		{"empty string", "", ""},
+		{"whitespace", "   ", ""},
+		{"just host", "https://example.com/.git", "example.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := DeriveRepoName(tt.url)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestIsValidGitURL(t *testing.T) {
+	tests := []struct {
+		name  string
+		url   string
+		valid bool
+	}{
+		{"HTTPS github", "https://github.com/user/repo.git", true},
+		{"HTTPS without .git", "https://github.com/user/repo", true},
+		{"HTTP", "http://github.com/user/repo.git", true},
+		{"SSH", "git@github.com:user/repo.git", true},
+		{"SSH gitlab", "git@gitlab.com:group/repo.git", true},
+		{"SSH without .git", "git@github.com:user/repo", true},
+		{"empty", "", false},
+		{"just text", "not-a-url", false},
+		{"ftp", "ftp://example.com/repo.git", false},
+		{"just path", "/local/path/to/repo", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.valid, isValidGitURL(tt.url))
+		})
+	}
+}
+
+func TestValidate_CloneProject_Valid(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "cloned-repo",
+		CloneProject: true,
+		GitCloneURL:  "https://github.com/user/repo.git",
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	assert.True(t, result.IsValid(), "expected valid clone request, got errors: %v", result.Errors)
+}
+
+func TestValidate_CloneProject_SkipsLanguageFramework(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "cloned-repo",
+		CloneProject: true,
+		GitCloneURL:  "git@github.com:user/repo.git",
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	errMap := result.ErrorMap()
+	assert.NotContains(t, errMap, "language")
+	assert.NotContains(t, errMap, "framework")
+}
+
+func TestValidate_CloneProject_MissingURL(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "cloned-repo",
+		CloneProject: true,
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "git_clone_url")
+}
+
+func TestValidate_CloneProject_InvalidURL(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:  "cloned-repo",
+		CloneProject: true,
+		GitCloneURL:  "not-a-valid-url",
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "git_clone_url")
+}
+
+func TestValidate_CloneProject_InvalidDirName(t *testing.T) {
+	outDir := t.TempDir()
+	req := WizardRequest{
+		ProjectName:     "cloned-repo",
+		CloneProject:    true,
+		GitCloneURL:     "https://github.com/user/repo.git",
+		GitCloneDirName: "-invalid-name",
+		OutputDir:       outDir,
+	}
+	result := Validate(req)
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "git_clone_dir_name")
+}
+
+func TestValidate_CloneProject_DirAlreadyExists(t *testing.T) {
+	outDir := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(outDir, "existing-repo"), 0755))
+
+	req := WizardRequest{
+		ProjectName:     "cloned-repo",
+		CloneProject:    true,
+		GitCloneURL:     "https://github.com/user/existing-repo.git",
+		GitCloneDirName: "existing-repo",
+		OutputDir:       outDir,
+	}
+	result := Validate(req)
+	errMap := result.ErrorMap()
+	assert.Contains(t, errMap, "git_clone_dir_name")
+	assert.Contains(t, errMap["git_clone_dir_name"], "already exists")
+}
+
+func TestValidate_CloneProject_DerivesDirNameFromURL(t *testing.T) {
+	outDir := t.TempDir()
+	// No GitCloneDirName provided — derived from URL, should pass validation
+	req := WizardRequest{
+		ProjectName:  "cloned-repo",
+		CloneProject: true,
+		GitCloneURL:  "https://github.com/user/my-project.git",
+		OutputDir:    outDir,
+	}
+	result := Validate(req)
+	assert.True(t, result.IsValid(), "expected valid request with derived dir name, got errors: %v", result.Errors)
+}
+
 func TestValidate_EmptyProject_StillValidatesDocs(t *testing.T) {
 	outDir := t.TempDir()
 	req := WizardRequest{

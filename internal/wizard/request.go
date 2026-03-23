@@ -20,6 +20,14 @@ type WizardRequest struct {
 	DocArchitecture string `json:"doc_architecture"`
 	DocOther        string `json:"doc_other"`
 
+	// Git Clone Configuration (optional)
+	// Used when cloning an existing repository instead of generating a new project
+	CloneProject    bool   `json:"clone_project"`     // If true, clone from GitCloneURL
+	GitCloneURL     string `json:"git_clone_url"`     // SSH or HTTPS git URL
+	GitCloneBranch  string `json:"git_clone_branch"`  // Optional: branch to clone
+	GitCloneDepth   int    `json:"git_clone_depth"`   // 0 = full clone, >0 = shallow
+	GitCloneDirName string `json:"git_clone_dir_name"` // Directory name (derived from URL if empty)
+
 	// AI Configuration (optional)
 	// Controls whether AI code generation is enabled and which provider/model to use
 	AIEnabled    bool       `json:"ai_enabled"`
