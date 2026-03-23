@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/mcpserver"
 	"github.com/davydany/ClawIDE/internal/migration"
 	ptyPkg "github.com/davydany/ClawIDE/internal/pty"
 	"github.com/davydany/ClawIDE/internal/sse"
@@ -30,6 +31,7 @@ type Handlers struct {
 	updater           *updater.Updater
 	wizardJobs        *wizard.JobTracker
 	wizardGenerator   *wizard.Generator
+	mcpProcessManager *mcpserver.ProcessManager
 
 	// Project-scoped stores, keyed by projectID. Lazily initialized.
 	projectNoteStores     map[string]*store.ProjectNoteStore
@@ -53,6 +55,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		updater:               upd,
 		wizardJobs:            wizJobs,
 		wizardGenerator:       wizGen,
+		mcpProcessManager:     mcpserver.NewProcessManager(),
 		projectNoteStores:     make(map[string]*store.ProjectNoteStore),
 		projectBookmarkStores: make(map[string]*store.ProjectBookmarkStore),
 	}

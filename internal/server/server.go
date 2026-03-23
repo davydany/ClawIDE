@@ -169,6 +169,7 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
+	s.handlers.StopAllMCPProcesses()
 	s.updater.Stop()
 	s.ptyManager.CloseAll()
 	return s.http.Shutdown(ctx)
