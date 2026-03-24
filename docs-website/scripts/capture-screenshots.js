@@ -174,7 +174,157 @@ async function main() {
         }
       } catch { console.log("  ℹ Git tab not accessible — skipping git-worktrees"); }
 
-      // ---- 12. Code Snippets sidebar section ----
+      // ---- v1.1 Features ----
+      // NOTE: Each manager modal capture gets a fresh page load to avoid
+      // stale modal state. Escape/close buttons are unreliable in headless Playwright.
+
+      const projectWorkspaceURL = `${BASE_URL}/projects/${projectID}/`;
+
+      // Helper: expand a sidebar section by clicking its header button
+      async function expandSidebar(page, sectionName) {
+        return page.evaluate((name) => {
+          const buttons = Array.from(document.querySelectorAll('.sidebar-section-header, button'));
+          const btn = buttons.find(b => b.textContent.trim().startsWith(name));
+          if (btn) { btn.click(); return true; }
+          return false;
+        }, sectionName);
+      }
+
+      // Helper: click a manage button by text
+      async function clickManageButton(page, buttonText) {
+        return page.evaluate((text) => {
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const btn = buttons.find(b => b.textContent.includes(text));
+          if (btn) { btn.click(); return true; }
+          return false;
+        }, buttonText);
+      }
+
+      // Helper: fresh page load with retry
+      async function freshLoad(page, url) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await page.goto(url, WAIT_OPTIONS);
+            await page.waitForTimeout(4000);
+            return;
+          } catch (err) {
+            console.log(`    ⚠ Load attempt ${attempt + 1} failed, retrying...`);
+            await page.waitForTimeout(2000);
+          }
+        }
+        throw new Error("Failed to load workspace after 3 attempts");
+      }
+
+      // ---- 12a. Skills ----
+      try {
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "Skills")) {
+          await page.waitForTimeout(1000);
+          await capture(page, "skills", "Skills sidebar section");
+        }
+        // Skills Manager — fresh load
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "Skills")) {
+          await page.waitForTimeout(500);
+          if (await clickManageButton(page, "Manage Skills")) {
+            await page.waitForTimeout(2000);
+            await capture(page, "skills-manager", "Skills Manager panel");
+          }
+        }
+      } catch { console.log("  ℹ Skills section not accessible"); }
+
+      // ---- 12b. MCP Servers ----
+      try {
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "MCP Servers") || await expandSidebar(page, "Mcp")) {
+          await page.waitForTimeout(1000);
+          await capture(page, "mcp-servers", "MCP Servers sidebar section");
+        }
+        // MCP Servers Manager — fresh load
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "MCP Servers") || await expandSidebar(page, "Mcp")) {
+          await page.waitForTimeout(500);
+          if (await clickManageButton(page, "Manage MCP")) {
+            await page.waitForTimeout(2000);
+            await capture(page, "mcp-servers-manager", "MCP Servers Manager panel");
+          }
+        }
+      } catch { console.log("  ℹ MCP Servers section not accessible"); }
+
+      // ---- 12c. Agents ----
+      try {
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "Agents")) {
+          await page.waitForTimeout(1000);
+          await capture(page, "agents", "Agents sidebar section");
+        }
+        // Agents Manager — fresh load
+        await freshLoad(page, projectWorkspaceURL);
+        if (await expandSidebar(page, "Agents")) {
+          await page.waitForTimeout(500);
+          if (await clickManageButton(page, "Manage Agents")) {
+            await page.waitForTimeout(2000);
+            await capture(page, "agents-manager", "Agents Manager panel");
+          }
+        }
+      } catch { console.log("  ℹ Agents section not accessible"); }
+
+      // ---- 12d. Command Palette ----
+      try {
+        // File search mode — fresh load
+        await freshLoad(page, projectWorkspaceURL);
+        await page.keyboard.press("Meta+p");
+        await page.waitForTimeout(1500);
+        await capture(page, "command-palette", "Command palette in file search mode");
+
+        // Command mode — fresh load
+        await freshLoad(page, projectWorkspaceURL);
+        await page.keyboard.press("Meta+Shift+p");
+        await page.waitForTimeout(1500);
+        await capture(page, "command-palette-commands", "Command palette in command mode");
+      } catch { console.log("  ℹ Command palette not accessible"); }
+
+      // ---- 12e. Markdown Preview ----
+      try {
+        await freshLoad(page, projectWorkspaceURL);
+        // Click Files tab
+        await page.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('button'));
+          const btn = btns.find(b => b.textContent.trim() === 'Files');
+          if (btn) btn.click();
+        });
+        await page.waitForTimeout(2000);
+        // Find and click a markdown file
+        const mdFile = await page.evaluate(() => {
+          const spans = Array.from(document.querySelectorAll('span'));
+          const md = spans.find(s => {
+            const t = s.textContent.trim();
+            return (t === 'README.md' || t === 'CLAUDE.md' || t === 'CHANGELOG.md') && s.offsetParent !== null;
+          });
+          if (md) { md.click(); return md.textContent.trim(); }
+          return null;
+        });
+        if (mdFile) {
+          await page.waitForTimeout(2000);
+          // Try to activate preview toggle
+          await page.evaluate(() => {
+            const btns = Array.from(document.querySelectorAll('button'));
+            const btn = btns.find(b =>
+              b.textContent.includes('Preview') ||
+              b.getAttribute('title')?.includes('Preview') ||
+              b.getAttribute('aria-label')?.includes('Preview')
+            );
+            if (btn) btn.click();
+          });
+          await page.waitForTimeout(1500);
+        }
+        await capture(page, "markdown-preview", "Markdown preview");
+      } catch { console.log("  ℹ Markdown preview not accessible"); }
+
+      // ---- 12f. Code Snippets sidebar section ----
+      // Back to original workspace for remaining sidebar captures
+      try { await freshLoad(page, projectWorkspaceURL); } catch {}
+
       try {
         const snippetsHeader = await page.$("text=SNIPPETS");
         if (snippetsHeader && await snippetsHeader.isVisible()) {

@@ -6,6 +6,38 @@ weight: 50
 
 All notable changes to ClawIDE are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] — 2026-03-24
+
+ClawIDE v1.1 brings deep Claude Code configuration management, a command palette, and broad platform improvements. This release includes 33 commits since v1.0.0.
+
+### Added
+
+- **Agent Management**: Full CRUD for Claude Code agents with global and project-level scoping. Create, edit, delete, and move agents between scopes directly from the sidebar. Agents are stored as `.md` files with YAML frontmatter in `.claude/agents/` directories.
+- **MCP Server Management**: Configure and control Model Context Protocol servers with process lifecycle management (start/stop/restart), real-time status monitoring, and a built-in log viewer. Supports global and project-scoped configurations via `.mcp.json`.
+- **Skills Management**: Create, edit, and organize Claude Code skills — reusable slash commands stored as `SKILL.md` files. Supports scope management, version tracking, model preferences, and tool restrictions.
+- **Command Palette**: VS Code-style unified command palette with dual modes — file search (`Cmd+P`) and command execution (`Cmd+Shift+P`). Includes fuzzy matching, 30+ built-in commands for text transformation and line operations, recent history tracking, and keyboard navigation.
+- **Clone from Git**: New project type in the wizard — clone a repository by URL with optional branch, depth, and directory name. Supports GitHub, GitLab, Gitea, and any Git remote.
+- **Markdown Preview**: Live preview for `.md` files in the file editor with GitHub Flavored Markdown, syntax-highlighted code blocks via Highlight.js, and Mermaid diagram rendering.
+- **File Rename**: Rename files and folders directly from the file browser with path validation and directory traversal protection.
+- **Preferred Editor**: Select and launch an external code editor (VS Code, Sublime Text, vim, etc.) from within ClawIDE. Auto-detects available editors on the system.
+- **Open in File Explorer**: Open project directories in the system's default file explorer from within ClawIDE.
+- **Windows Support**: Added `psmux` as a terminal multiplexer for Windows, auto-selected when running on Windows. Use `--multiplexer psmux` to override on any platform.
+- **Session Auto-Creation**: Opening a project with no existing sessions automatically creates a default session, eliminating the extra click.
+- **MCP Hook Integration**: Claude Code notifications now use MCP server integration instead of bash hooks for improved reliability.
+
+### Changed
+
+- **Localhost Binding**: ClawIDE now binds to `localhost` by default instead of `0.0.0.0`. Use the new `--mobile` flag to bind to all interfaces for LAN/mobile access.
+- **Branch Support**: Improved git branch handling beyond the main branch across worktrees and feature workspaces.
+- **Sidebar Behavior**: Fixed and improved sidebar collapse/expand behavior for a smoother UX.
+
+### Fixed
+
+- **Terminal Copy**: Fixed clipboard copy when tmux mouse mode is enabled.
+- **Sidebar Collapse**: Fixed sidebar state persistence and animation when collapsing/expanding.
+
+---
+
 ## [1.0.0] — 2026-03-04
 
 The v1.0 release marks ClawIDE's graduation from early preview to a stable, full-featured IDE for managing Claude Code sessions. This release includes 48 commits since v0.1.4 with major new features, a Docker UI overhaul, and significant UX improvements.
