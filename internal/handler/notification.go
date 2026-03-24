@@ -45,9 +45,15 @@ func (h *Handlers) CreateNotification(w http.ResponseWriter, r *http.Request) {
 		req.Level = "info"
 	}
 
-	// Resolve project/feature from CWD if not provided
-	if req.ProjectID == "" && req.CWD != "" {
-		req.ProjectID, req.FeatureID = h.resolveProjectFromCWD(req.CWD)
+	// Resolve project/feature from CWD if not fully provided
+	if req.CWD != "" {
+		resolvedProjectID, resolvedFeatureID := h.resolveProjectFromCWD(req.CWD)
+		if req.ProjectID == "" {
+			req.ProjectID = resolvedProjectID
+		}
+		if req.FeatureID == "" {
+			req.FeatureID = resolvedFeatureID
+		}
 	}
 
 	n := model.Notification{
