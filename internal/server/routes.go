@@ -124,6 +124,14 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Get("/api/mcp-servers/{scope}/{serverName}/logs", s.handlers.MCPServerLogs)
 			r.Get("/api/mcp-servers/{scope}/{serverName}/status", s.handlers.MCPServerStatus)
 
+			// Agents API
+			r.Get("/api/agents", s.handlers.ListAgents)
+			r.Post("/api/agents", s.handlers.CreateAgent)
+			r.Get("/api/agents/{scope}/{agentName}", s.handlers.GetAgent)
+			r.Put("/api/agents/{scope}/{agentName}", s.handlers.UpdateAgent)
+			r.Delete("/api/agents/{scope}/{agentName}", s.handlers.DeleteAgent)
+			r.Post("/api/agents/{scope}/{agentName}/move", s.handlers.MoveAgent)
+
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
