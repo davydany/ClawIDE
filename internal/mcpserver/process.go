@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -123,7 +122,7 @@ func (pm *ProcessManager) Start(scope, name string, config MCPServerConfig) erro
 	}
 
 	// Set process group so we can kill the whole tree
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	setProcGroup(cmd)
 
 	// Capture stdout and stderr into ring buffer
 	logs := NewRingBuffer(defaultMaxLogLines)
@@ -201,14 +200,7 @@ func (pm *ProcessManager) Stop(scope, name string) error {
 	proc.mu.Unlock()
 
 	// Send SIGTERM to the process group
-	if proc.Cmd.Process != nil {
-		pgid, err := syscall.Getpgid(proc.Cmd.Process.Pid)
-		if err == nil {
-			_ = syscall.Kill(-pgid, syscall.SIGTERM)
-		} else {
-			_ = proc.Cmd.Process.Signal(syscall.SIGTERM)
-		}
-	}
+	termProcess(proc.Cmd)
 
 	// Wait up to 5 seconds for graceful exit
 	select {
@@ -218,14 +210,7 @@ func (pm *ProcessManager) Stop(scope, name string) error {
 	}
 
 	// Force kill
-	if proc.Cmd.Process != nil {
-		pgid, err := syscall.Getpgid(proc.Cmd.Process.Pid)
-		if err == nil {
-			_ = syscall.Kill(-pgid, syscall.SIGKILL)
-		} else {
-			_ = proc.Cmd.Process.Kill()
-		}
-	}
+	killProcess(proc.Cmd)
 
 	// Wait for exit after kill
 	select {
