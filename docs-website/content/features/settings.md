@@ -12,7 +12,8 @@ ClawIDE provides multiple ways to configure its behavior: CLI flags, environment
 
 | Setting | Flag | Env Var | Default | Description |
 |---------|------|---------|---------|-------------|
-| Host | `--host` | `CLAWIDE_HOST` | `0.0.0.0` | Listen address |
+| Host | `--host` | `CLAWIDE_HOST` | `localhost` | Listen address |
+| Mobile | `--mobile` | — | `false` | Bind to `0.0.0.0` for mobile/LAN access |
 | Port | `--port` | `CLAWIDE_PORT` | `9800` | Listen port |
 | Projects Dir | `--projects-dir` | `CLAWIDE_PROJECTS_DIR` | `~/projects` | Root directory for projects |
 | Max Sessions | `--max-sessions` | `CLAWIDE_MAX_SESSIONS` | `10` | Maximum concurrent terminal sessions |
@@ -48,7 +49,7 @@ CLAWIDE_PORT=8080 CLAWIDE_PROJECTS_DIR=/home/user/code ./clawide
 
 ```json
 {
-  "host": "0.0.0.0",
+  "host": "localhost",
   "port": 8080,
   "projects_dir": "/home/user/code",
   "max_sessions": 20,

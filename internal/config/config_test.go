@@ -15,7 +15,7 @@ func TestDefaultConfig(t *testing.T) {
 
 	home, _ := os.UserHomeDir()
 
-	assert.Equal(t, "0.0.0.0", cfg.Host)
+	assert.Equal(t, "localhost", cfg.Host)
 	assert.Equal(t, 9800, cfg.Port)
 	assert.Equal(t, filepath.Join(home, "projects"), cfg.ProjectsDir)
 	assert.Equal(t, 20, cfg.MaxSessions)

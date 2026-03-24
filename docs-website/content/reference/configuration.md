@@ -16,7 +16,8 @@ When the same setting is defined in multiple sources, the highest-precedence sou
 
 | Setting | Flag | Env Var | Default | Description |
 |---------|------|---------|---------|-------------|
-| Host | `--host` | `CLAWIDE_HOST` | `0.0.0.0` | Listen address for the HTTP server |
+| Host | `--host` | `CLAWIDE_HOST` | `localhost` | Listen address for the HTTP server |
+| Mobile | `--mobile` | — | `false` | Bind to `0.0.0.0` for mobile/LAN access (shows QR code) |
 | Port | `--port` | `CLAWIDE_PORT` | `9800` | Listen port for the HTTP server |
 | Projects Dir | `--projects-dir` | `CLAWIDE_PROJECTS_DIR` | `~/projects` | Root directory where projects are located |
 | Max Sessions | `--max-sessions` | `CLAWIDE_MAX_SESSIONS` | `10` | Maximum number of concurrent terminal sessions |
@@ -34,7 +35,7 @@ The config file is located at `~/.clawide/config.json`. ClawIDE reads this file 
 
 ```json
 {
-  "host": "0.0.0.0",
+  "host": "localhost",
   "port": 9800,
   "projects_dir": "~/projects",
   "max_sessions": 10,
@@ -78,6 +79,25 @@ export CLAWIDE_PORT=8080
 ```
 
 ClawIDE listens on port **3000** because CLI flags have the highest precedence.
+
+## Mobile / LAN Access
+
+By default, ClawIDE binds to `localhost`, making it accessible only from the machine it's running on. This is the safest default — your terminal sessions aren't exposed to the network.
+
+To access ClawIDE from a phone, tablet, or another device on the same network, use the `--mobile` flag:
+
+```bash
+./clawide --mobile
+```
+
+This binds the server to `0.0.0.0` (all network interfaces) and displays a QR code in the terminal that you can scan to open ClawIDE on your mobile device.
+
+If you also pass `--host`, the explicit host takes priority over `--mobile`:
+
+```bash
+# Binds to 192.168.1.5, not 0.0.0.0
+./clawide --mobile --host 192.168.1.5
+```
 
 ## CLI Flag Usage
 

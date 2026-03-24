@@ -34,6 +34,7 @@ type Config struct {
 	Multiplexer            string `json:"multiplexer"`
 	Restart                bool   `json:"-"`
 	ShowVersion            bool   `json:"-"`
+	Mobile                 bool   `json:"-"`
 }
 
 func DefaultConfig() *Config {
@@ -45,7 +46,7 @@ func DefaultConfig() *Config {
 	}
 
 	return &Config{
-		Host:           "0.0.0.0",
+		Host:           "localhost",
 		Port:           9800,
 		ProjectsDir:    filepath.Join(home, "projects"),
 		MaxSessions:    20,
@@ -73,6 +74,20 @@ func Load() (*Config, error) {
 
 	cfg.loadEnv()
 	cfg.loadFlags()
+
+	// --mobile convenience flag: bind to all interfaces for LAN access,
+	// but only if the user didn't explicitly set --host.
+	if cfg.Mobile {
+		hostExplicit := false
+		flag.Visit(func(f *flag.Flag) {
+			if f.Name == "host" {
+				hostExplicit = true
+			}
+		})
+		if !hostExplicit {
+			cfg.Host = "0.0.0.0"
+		}
+	}
 
 	// Expand ~ in paths
 	cfg.ProjectsDir = expandHome(cfg.ProjectsDir)
@@ -162,6 +177,7 @@ func (c *Config) loadFlags() {
 	flag.StringVar(&c.LogLevel, "log-level", c.LogLevel, "Log level (debug, info, warn, error)")
 	flag.StringVar(&c.DataDir, "data-dir", c.DataDir, "Data directory for state/config")
 	flag.StringVar(&c.Multiplexer, "multiplexer", c.Multiplexer, "Terminal multiplexer binary (tmux or psmux)")
+	flag.BoolVar(&c.Mobile, "mobile", false, "Bind to 0.0.0.0 for mobile/LAN access")
 	flag.BoolVar(&c.Restart, "restart", false, "Kill existing instance and restart")
 	flag.BoolVar(&c.ShowVersion, "version", false, "Print version information and exit")
 	flag.Parse()
