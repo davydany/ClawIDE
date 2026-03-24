@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/davydany/ClawIDE/internal/git"
 )
 
 // Generator orchestrates the full project generation process.
@@ -30,6 +32,9 @@ func NewGenerator(registry *TemplateRegistry, tracker *JobTracker) *Generator {
 // Generate runs the full project generation pipeline for a wizard request.
 // It tracks progress through the job system and handles rollback on failure.
 func (g *Generator) Generate(ctx context.Context, job *Job) error {
+	if job.Request.CloneProject {
+		return g.generateClone(ctx, job)
+	}
 	if job.Request.EmptyProject {
 		return g.generateEmpty(ctx, job)
 	}
@@ -212,6 +217,68 @@ func (g *Generator) generateEmpty(ctx context.Context, job *Job) error {
 
 	job.Complete(projectDir)
 	return nil
+}
+
+// generateClone clones a git repository into the project directory.
+func (g *Generator) generateClone(ctx context.Context, job *Job) error {
+	req := job.Request
+
+	dirName := strings.TrimSpace(req.GitCloneDirName)
+	if dirName == "" {
+		dirName = DeriveRepoName(req.GitCloneURL)
+	}
+	projectDir := filepath.Join(expandHomePath(req.OutputDir), dirName)
+
+	// Step 1: Validate
+	job.StartStep("validate")
+	result := Validate(req)
+	if !result.IsValid() {
+		err := fmt.Errorf("validation failed: %v", result.Errors)
+		job.FailStep("validate", err)
+		return err
+	}
+	job.CompleteStep("validate", "all checks passed")
+
+	// Step 2: Clone repository
+	job.StartStep("clone_repository")
+	cloneCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	output, err := git.Clone(cloneCtx, req.GitCloneURL, projectDir, req.GitCloneBranch, req.GitCloneDepth)
+	if err != nil {
+		friendlyErr := friendlyCloneError(err.Error(), output)
+		job.FailStep("clone_repository", fmt.Errorf("%s", friendlyErr))
+		return err
+	}
+	job.CompleteStep("clone_repository", "repository cloned")
+
+	// Step 3: Register project (actual registration happens in handler goroutine)
+	job.StartStep("register_project")
+	job.CompleteStep("register_project", "project registered")
+
+	job.Complete(projectDir)
+	return nil
+}
+
+// friendlyCloneError translates git clone error output into user-friendly messages.
+func friendlyCloneError(errMsg, output string) string {
+	combined := errMsg + " " + output
+	switch {
+	case strings.Contains(combined, "Permission denied (publickey)"):
+		return "SSH authentication failed. Make sure your SSH keys are configured and added to the remote host."
+	case strings.Contains(combined, "Repository not found") || strings.Contains(combined, "repository") && strings.Contains(combined, "not found"):
+		return "Repository not found. Check the URL and your access permissions."
+	case strings.Contains(combined, "Could not resolve host"):
+		return "Could not resolve host. Check your network connection and the URL."
+	case strings.Contains(combined, "context deadline exceeded"):
+		return "Clone timed out. The repository may be too large or the network is slow. Try enabling shallow clone."
+	case strings.Contains(combined, "Remote branch") && strings.Contains(combined, "not found"):
+		return "The specified branch was not found in the remote repository."
+	case strings.Contains(combined, "already exists and is not an empty directory"):
+		return "Target directory already exists. Choose a different directory name."
+	default:
+		return errMsg
+	}
 }
 
 // copyTemplates renders and writes all template files for the selected
