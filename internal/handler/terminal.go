@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/mcpserver"
 	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/davydany/ClawIDE/internal/tmux"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
+
+const mcpServerName = "clawide"
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  4096,
@@ -87,6 +91,9 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 						log.Printf("Failed to send agent command to %s: %v", tmuxName, err)
 					}
 				}()
+
+				// Auto-register ClawIDE MCP server in the project's .mcp.json
+				go h.ensureMCPServerRegistered(sess.WorkDir)
 			}
 		}
 	}
@@ -138,5 +145,36 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 		if err := conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 			return
 		}
+	}
+}
+
+// ensureMCPServerRegistered checks if the ClawIDE MCP server is already registered
+// in the project's .mcp.json and adds it if not present.
+func (h *Handlers) ensureMCPServerRegistered(projectDir string) {
+	mcpFilePath := mcpserver.ProjectMCPFilePath(projectDir)
+
+	if mcpserver.HasServer(mcpFilePath, mcpServerName) {
+		return
+	}
+
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Printf("Failed to get executable path for MCP registration: %v", err)
+		return
+	}
+
+	server := mcpserver.MCPServerConfig{
+		Name:    mcpServerName,
+		Command: execPath,
+		Args:    []string{"mcp-serve"},
+		Env: map[string]string{
+			"CLAWIDE_API_URL": fmt.Sprintf("http://localhost:%d", h.cfg.Port),
+		},
+	}
+
+	if err := mcpserver.CreateServer(mcpFilePath, server); err != nil {
+		log.Printf("Failed to register MCP server in %s: %v", mcpFilePath, err)
+	} else {
+		log.Printf("Registered ClawIDE MCP server in %s", mcpFilePath)
 	}
 }

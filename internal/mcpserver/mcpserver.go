@@ -69,6 +69,16 @@ func ListServers(globalPath, projectPath string) ([]MCPServerConfig, error) {
 	return all, nil
 }
 
+// HasServer checks if a server with the given name exists in a .mcp.json file.
+func HasServer(filePath, name string) bool {
+	f, err := readMCPFile(filePath)
+	if err != nil {
+		return false
+	}
+	_, exists := f.MCPServers[name]
+	return exists
+}
+
 // GetServer reads a single server from a .mcp.json file.
 func GetServer(filePath, name string) (*MCPServerConfig, error) {
 	servers, err := readServers(filePath, "")

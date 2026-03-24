@@ -11,6 +11,7 @@ import (
 
 	"github.com/davydany/ClawIDE/internal/banner"
 	"github.com/davydany/ClawIDE/internal/config"
+	"github.com/davydany/ClawIDE/internal/mcpserve"
 	"github.com/davydany/ClawIDE/internal/pidfile"
 	"github.com/davydany/ClawIDE/internal/server"
 	"github.com/davydany/ClawIDE/internal/store"
@@ -20,6 +21,12 @@ import (
 )
 
 func main() {
+	// Handle subcommands before flag parsing
+	if len(os.Args) > 1 && os.Args[1] == "mcp-serve" {
+		mcpserve.Run()
+		return
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)

@@ -284,11 +284,6 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Post("/api/editor/open", s.handlers.OpenEditor)
 	r.Post("/api/editor/open-folder", s.handlers.OpenFolder)
 
-	// Claude Code integration API
-	r.Get("/api/claude/detect", s.handlers.DetectClaudeCLI)
-	r.Post("/api/claude/setup-hook", s.handlers.SetupClaudeHook)
-	r.Delete("/api/claude/hook", s.handlers.RemoveClaudeHook)
-
 	// WebSocket endpoints (no project middleware, session ID is in URL)
 	r.Get("/ws/terminal/{sessionID}/{paneID}", s.handlers.TerminalWS)
 	r.Get("/ws/docker/{projectID}/logs/{svc}", s.handlers.DockerLogsWS)

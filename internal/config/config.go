@@ -24,7 +24,6 @@ type Config struct {
 	DataDir                string `json:"data_dir"`
 	OnboardingCompleted    bool   `json:"onboarding_completed"`
 	WorkspaceTourCompleted bool   `json:"workspace_tour_completed"`
-	ClaudeHookConfigured   bool   `json:"claude_hook_configured"`
 	MaxNotifications       int    `json:"max_notifications"`
 	SidebarPosition        string `json:"sidebar_position"`
 	SidebarWidth           int    `json:"sidebar_width"`
@@ -198,10 +197,6 @@ func (c *Config) VoiceBoxFilePath() string {
 
 func (c *Config) ScratchpadFilePath() string {
 	return filepath.Join(c.DataDir, "scratchpad.json")
-}
-
-func (c *Config) HooksDir() string {
-	return filepath.Join(c.DataDir, "hooks")
 }
 
 func (c *Config) UpdateStatePath() string {
