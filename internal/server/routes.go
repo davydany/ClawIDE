@@ -49,6 +49,9 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// System stats
 	r.Get("/api/system/stats", s.handlers.SystemStats)
 
+	// Tmux paste buffer
+	r.Get("/api/tmux/buffer", s.handlers.TmuxPasteBuffer)
+
 	// Dashboard
 	r.Get("/", s.handlers.Dashboard)
 

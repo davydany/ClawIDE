@@ -33,7 +33,6 @@
     <aside id="app-sidebar"
            class="fixed inset-y-0 {{if eq .SidebarPosition "right"}}right-0{{else}}left-0{{end}} z-50 bg-gray-900 {{if eq .SidebarPosition "right"}}border-l{{else}}border-r{{end}} border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col"
            style="width: {{.SidebarWidth}}px"
-           onclick="if (window.ClawIDESidebar && window.ClawIDESidebar.isCollapsed()) { window.ClawIDESidebar.toggleCollapse(); }"
            :class="sidebarOpen ? 'translate-x-0' : '{{if eq .SidebarPosition "right"}}translate-x-full{{else}}-translate-x-full{{end}}'">
         <!-- Expanded header -->
         <div class="sidebar-expanded-content flex items-center justify-between h-14 px-4 border-b border-gray-800 flex-shrink-0">
@@ -56,7 +55,7 @@
             </div>
         </div>
         <!-- Collapsed view: logo + expand arrow + vertical text -->
-        <div class="sidebar-collapsed-content hidden flex-col items-center h-full py-3">
+        <div class="sidebar-collapsed-content hidden flex-col items-center h-full py-3 cursor-pointer" onclick="if (window.ClawIDESidebar) { window.ClawIDESidebar.toggleCollapse(); }">
             <span class="text-xl">🦀</span>
             <button onclick="ClawIDESidebar.toggleCollapse()" class="mt-2 flex items-center justify-center w-7 h-7 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Expand sidebar (Cmd+B)">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,9 +119,9 @@
             </div>
 
             <!-- Skills section -->
-            <div class="mt-4" x-data="{ skillsOpen: true }">
+            <div class="mt-4" x-data="{ skillsOpen: false, get count() { const el = document.getElementById('skills-sidebar'); return el ? el.children.length : 0; } }">
                 <button @click="skillsOpen = !skillsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Skills
+                    <span class="flex items-center gap-1.5">Skills <span x-show="count > 0" class="text-[10px] font-medium bg-gray-700 text-gray-300 rounded-full px-1.5 py-0 normal-case" x-text="count"></span></span>
                     <svg class="w-3.5 h-3.5 transition-transform" :class="skillsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="skillsOpen" x-collapse>
@@ -140,9 +139,9 @@
             </div>
 
             <!-- MCP Servers section -->
-            <div class="mt-4" x-data="{ mcpOpen: true }">
+            <div class="mt-4" x-data="{ mcpOpen: false, get count() { const el = document.getElementById('mcp-servers-sidebar'); return el ? el.children.length : 0; } }">
                 <button @click="mcpOpen = !mcpOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    MCP Servers
+                    <span class="flex items-center gap-1.5">MCP Servers <span x-show="count > 0" class="text-[10px] font-medium bg-gray-700 text-gray-300 rounded-full px-1.5 py-0 normal-case" x-text="count"></span></span>
                     <svg class="w-3.5 h-3.5 transition-transform" :class="mcpOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="mcpOpen" x-collapse>
@@ -160,9 +159,9 @@
             </div>
 
             <!-- Agents section -->
-            <div class="mt-4" x-data="{ agentsOpen: true }">
+            <div class="mt-4" x-data="{ agentsOpen: false, get count() { const el = document.getElementById('agents-sidebar'); return el ? el.children.length : 0; } }">
                 <button @click="agentsOpen = !agentsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
-                    Agents
+                    <span class="flex items-center gap-1.5">Agents <span x-show="count > 0" class="text-[10px] font-medium bg-gray-700 text-gray-300 rounded-full px-1.5 py-0 normal-case" x-text="count"></span></span>
                     <svg class="w-3.5 h-3.5 transition-transform" :class="agentsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="agentsOpen" x-collapse>

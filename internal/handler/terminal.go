@@ -148,6 +148,17 @@ func (h *Handlers) TerminalWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TmuxPasteBuffer returns the contents of the most recent tmux paste buffer.
+func (h *Handlers) TmuxPasteBuffer(w http.ResponseWriter, r *http.Request) {
+	buf, err := tmux.GetPasteBuffer()
+	if err != nil {
+		http.Error(w, "no tmux buffer", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"text": buf})
+}
+
 // ensureMCPServerRegistered checks if the ClawIDE MCP server is already registered
 // in the project's .mcp.json and adds it if not present.
 func (h *Handlers) ensureMCPServerRegistered(projectDir string) {
