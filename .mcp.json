@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "clawide": {
+      "command": "/Users/davydany/projects/ccmux/clawide",
+      "args": [
+        "mcp-serve"
+      ],
+      "env": {
+        "CLAWIDE_API_URL": "http://localhost:9800"
+      }
+    },
+    "remotion": {
+      "command": "npx",
+      "args": [
+        "@remotion/mcp@latest"
+      ]
+    }
+  }
+}
