@@ -184,6 +184,27 @@ func (h *Handlers) UpdateProjectColor(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
 	sessions := h.store.GetSessions(project.ID)
+
+	// Auto-create a default session when opening a project with no sessions
+	if len(sessions) == 0 {
+		now := time.Now()
+		paneID := uuid.New().String()
+		sess := model.Session{
+			ID:        uuid.New().String(),
+			ProjectID: project.ID,
+			Name:      "Session " + now.Format("15:04"),
+			WorkDir:   project.Path,
+			Layout:    model.NewAgentPane(paneID),
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+		if err := h.store.AddSession(sess); err != nil {
+			log.Printf("Error auto-creating session: %v", err)
+		} else {
+			sessions = h.store.GetSessions(project.ID)
+		}
+	}
+
 	features := h.store.GetFeatures(project.ID)
 
 	isGitRepo := git.IsGitRepo(project.Path)
