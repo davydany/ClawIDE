@@ -120,6 +120,36 @@ Capture voice memos and quick text entries for reference across sessions and pro
 
 [Learn more →]({{< ref "features/voicebox" >}})
 
+## Agent Management
+
+Create and manage Claude Code agents with global and project-level scoping. Define model preferences, allowed tools, and custom instructions for specialized agent behaviors.
+
+[Learn more →]({{< ref "features/agents" >}})
+
+## MCP Servers
+
+Manage Model Context Protocol servers with full process lifecycle control — start, stop, restart, and monitor servers with real-time status tracking and log viewing.
+
+[Learn more →]({{< ref "features/mcp-servers" >}})
+
+## Skills
+
+Create and organize Claude Code skills — reusable slash commands with custom instructions, tool restrictions, and scope management.
+
+[Learn more →]({{< ref "features/skills" >}})
+
+## Command Palette
+
+VS Code-style command palette with file search (Cmd+P) and command execution (Cmd+Shift+P). Fuzzy matching, text transformations, and keyboard-driven navigation.
+
+[Learn more →]({{< ref "features/command-palette" >}})
+
+## Markdown Preview
+
+Live markdown preview with GitHub Flavored Markdown, syntax-highlighted code blocks, and Mermaid diagram rendering.
+
+[Learn more →]({{< ref "features/markdown-preview" >}})
+
 ## Dashboard
 
 The central hub for all your projects. Create new projects, import existing ones, and navigate to any project workspace.

@@ -10,7 +10,9 @@ ClawIDE integrates with Claude Code's hook system to notify you when Claude fini
 
 ## How It Works
 
-Claude Code supports lifecycle hooks — shell scripts that run when certain events occur. ClawIDE installs a "stop" hook that fires whenever Claude Code finishes processing. The hook sends a notification to ClawIDE's API with context about which project, session, and pane the task ran in.
+As of v1.1, ClawIDE uses an MCP server integration instead of bash hooks for Claude Code notifications. This provides improved reliability and tighter integration with the Claude Code runtime. The MCP server runs alongside ClawIDE and receives events directly from Claude Code sessions.
+
+For legacy setups, the bash hook approach is still supported. Claude Code supports lifecycle hooks — shell scripts that run when certain events occur. ClawIDE can install a "stop" hook that fires whenever Claude Code finishes processing. The hook sends a notification to ClawIDE's API with context about which project, session, and pane the task ran in.
 
 ## Setting Up the Hook
 

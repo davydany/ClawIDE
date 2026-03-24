@@ -11,9 +11,10 @@ The project wizard helps you scaffold new projects quickly. Choose from 15 built
 ## Creating a Project
 
 1. Click **Create Project** on the [Dashboard]({{< ref "features/dashboard" >}}).
-2. The project wizard opens with three options:
+2. The project wizard opens with four options:
    - **Template** — Pick from built-in framework templates
    - **LLM Generation** — Describe your project and let an LLM scaffold it
+   - **Clone from Git** — Clone an existing repository by URL
    - **Empty Project** — Start with a blank directory
 
 ## Framework Templates
@@ -48,6 +49,20 @@ For more customized projects:
 - **OpenAI** — GPT-4, GPT-4o
 
 Provider API keys and model preferences are configured in the settings page under the AI Agent CLI section.
+
+## Clone from Git
+
+Clone an existing repository directly into your projects directory:
+
+1. Select **Clone from Git** in the wizard.
+2. Enter the repository URL (GitHub, GitLab, Gitea, or any Git remote).
+3. Optionally configure:
+   - **Branch** — Clone a specific branch instead of the default
+   - **Depth** — Shallow clone with limited history (useful for large repos)
+   - **Directory Name** — Override the default directory name derived from the URL
+4. The wizard clones the repository asynchronously and tracks progress.
+
+The project is automatically registered in ClawIDE once cloning completes.
 
 ## Empty Project
 
