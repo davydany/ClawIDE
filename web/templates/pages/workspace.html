@@ -33,8 +33,10 @@
     <aside id="app-sidebar"
            class="fixed inset-y-0 {{if eq .SidebarPosition "right"}}right-0{{else}}left-0{{end}} z-50 bg-gray-900 {{if eq .SidebarPosition "right"}}border-l{{else}}border-r{{end}} border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col"
            style="width: {{.SidebarWidth}}px"
+           onclick="if (window.ClawIDESidebar && window.ClawIDESidebar.isCollapsed()) { window.ClawIDESidebar.toggleCollapse(); }"
            :class="sidebarOpen ? 'translate-x-0' : '{{if eq .SidebarPosition "right"}}translate-x-full{{else}}-translate-x-full{{end}}'">
-        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800 flex-shrink-0">
+        <!-- Expanded header -->
+        <div class="sidebar-expanded-content flex items-center justify-between h-14 px-4 border-b border-gray-800 flex-shrink-0">
             <a href="/" hx-boost="false" class="sidebar-header-content flex items-center gap-2 text-lg font-semibold text-white">
                 <span class="text-xl">🦀</span>
                 ClawIDE
@@ -51,6 +53,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
+            </div>
+        </div>
+        <!-- Collapsed view: logo + expand arrow + vertical text -->
+        <div class="sidebar-collapsed-content hidden flex-col items-center h-full py-3">
+            <span class="text-xl">🦀</span>
+            <button onclick="ClawIDESidebar.toggleCollapse()" class="mt-2 flex items-center justify-center w-7 h-7 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors" title="Expand sidebar (Cmd+B)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7m-8-14l7 7-7 7"/>
+                </svg>
+            </button>
+            <div class="mt-auto mb-3" style="writing-mode: vertical-lr; transform: rotate(180deg);">
+                <span class="text-xs font-semibold text-gray-500 tracking-widest uppercase">ClawIDE</span>
             </div>
         </div>
         <nav class="flex-1 overflow-y-auto p-3 space-y-1">
@@ -168,7 +182,7 @@
         </nav>
 
         <!-- System Stats Box -->
-        <div class="flex-shrink-0 border-t border-gray-800 p-3 text-xs text-gray-400"
+        <div class="sidebar-expanded-content flex-shrink-0 border-t border-gray-800 p-3 text-xs text-gray-400"
              x-data="{
                 stats: null,
                 loading: true,
@@ -285,7 +299,7 @@
         </div>
 
         <!-- Keyboard Shortcuts (desktop only) -->
-        <div class="flex-shrink-0 border-t border-gray-800 p-3 hidden lg:block" x-data="{ shortcutsOpen: false }">
+        <div class="sidebar-expanded-content flex-shrink-0 border-t border-gray-800 p-3 hidden lg:block" x-data="{ shortcutsOpen: false }">
             <button @click="shortcutsOpen = !shortcutsOpen" class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-300">
                 Keyboard Shortcuts
                 <svg class="w-3.5 h-3.5 transition-transform" :class="shortcutsOpen ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -309,7 +323,7 @@
         </div>
 
         <!-- Settings link -->
-        <div class="flex-shrink-0 border-t border-gray-800 p-3">
+        <div class="sidebar-expanded-content flex-shrink-0 border-t border-gray-800 p-3">
             <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
