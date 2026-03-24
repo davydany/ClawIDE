@@ -110,14 +110,33 @@
         }
 
         // Auto-copy on mouse selection (highlight-to-copy)
-        term.element.addEventListener('mouseup', function() {
-            // Small delay to let xterm finalize the selection
-            setTimeout(function() {
+        // Try xterm's native selection first; if empty (tmux mouse mode captures
+        // the selection instead), fall back to reading tmux's paste buffer.
+        var selectionCopyTimer = null;
+        term.onSelectionChange(function() {
+            clearTimeout(selectionCopyTimer);
+            selectionCopyTimer = setTimeout(function() {
                 var selection = term.getSelection();
                 if (selection) {
                     copyToClipboard(selection);
                 }
-            }, 10);
+            }, 150);
+        });
+
+        term.element.addEventListener('mouseup', function() {
+            setTimeout(function() {
+                var selection = term.getSelection();
+                if (selection) return; // xterm handled it
+                // Tmux mouse mode captured the selection — read from tmux buffer
+                fetch('/api/tmux/buffer').then(function(r) {
+                    if (!r.ok) return;
+                    return r.json();
+                }).then(function(data) {
+                    if (data && data.text) {
+                        copyToClipboard(data.text);
+                    }
+                }).catch(function() {});
+            }, 50);
         });
 
         // Enable keyboard copy-paste

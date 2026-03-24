@@ -83,3 +83,12 @@ func SendKeys(sessionName, keys string) error {
 func TmuxName(paneID string) string {
 	return prefix + paneID
 }
+
+// GetPasteBuffer returns the contents of the most recent tmux paste buffer.
+func GetPasteBuffer() (string, error) {
+	out, err := exec.Command(binary, "show-buffer").Output()
+	if err != nil {
+		return "", fmt.Errorf("tmux show-buffer: %w", err)
+	}
+	return string(out), nil
+}
