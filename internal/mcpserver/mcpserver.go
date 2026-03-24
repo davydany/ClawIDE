@@ -46,9 +46,34 @@ func ProjectMCPFilePath(projectPath string) string {
 	return filepath.Join(projectPath, ".mcp.json")
 }
 
-// ListServers reads both global and project .mcp.json files and returns all servers.
+// AncestorMCPFilePaths returns paths to .mcp.json files in ancestor directories
+// of the project path, walking up until the filesystem root. This mirrors how
+// Claude Code discovers MCP configs in parent directories.
+func AncestorMCPFilePaths(projectPath string) []string {
+	if projectPath == "" {
+		return nil
+	}
+
+	var paths []string
+	dir := filepath.Dir(projectPath) // start from parent of project
+	for {
+		candidate := filepath.Join(dir, ".mcp.json")
+		paths = append(paths, candidate)
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break // reached filesystem root
+		}
+		dir = parent
+	}
+	return paths
+}
+
+// ListServers reads global (~/.claude/.mcp.json), ancestor, and project .mcp.json
+// files and returns all servers. Ancestor directories are walked from the project's
+// parent up to the root, matching Claude Code's MCP discovery behavior.
 func ListServers(globalPath, projectPath string) ([]MCPServerConfig, error) {
 	var all []MCPServerConfig
+	seen := make(map[string]bool) // track file paths already read to avoid duplicates
 
 	if globalPath != "" {
 		servers, err := readServers(globalPath, "global")
@@ -56,14 +81,40 @@ func ListServers(globalPath, projectPath string) ([]MCPServerConfig, error) {
 			return nil, fmt.Errorf("reading global MCP config: %w", err)
 		}
 		all = append(all, servers...)
+		if abs, err := filepath.Abs(globalPath); err == nil {
+			seen[abs] = true
+		}
+	}
+
+	// Walk ancestor directories for .mcp.json files (Claude Code behavior)
+	if projectPath != "" {
+		projectDir := filepath.Dir(projectPath) // projectPath is {dir}/.mcp.json
+		for _, ancestor := range AncestorMCPFilePaths(projectDir) {
+			abs, err := filepath.Abs(ancestor)
+			if err != nil {
+				continue
+			}
+			if seen[abs] {
+				continue
+			}
+			seen[abs] = true
+			servers, err := readServers(ancestor, "global")
+			if err != nil && !os.IsNotExist(err) {
+				continue // skip unreadable ancestor configs
+			}
+			all = append(all, servers...)
+		}
 	}
 
 	if projectPath != "" {
-		servers, err := readServers(projectPath, "project")
-		if err != nil && !os.IsNotExist(err) {
-			return nil, fmt.Errorf("reading project MCP config: %w", err)
+		abs, _ := filepath.Abs(projectPath)
+		if !seen[abs] {
+			servers, err := readServers(projectPath, "project")
+			if err != nil && !os.IsNotExist(err) {
+				return nil, fmt.Errorf("reading project MCP config: %w", err)
+			}
+			all = append(all, servers...)
 		}
-		all = append(all, servers...)
 	}
 
 	return all, nil
