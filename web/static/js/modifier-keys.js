@@ -206,10 +206,22 @@
         }
     }
 
+    // Toggle touch text-selection mode
+    function handleSelect() {
+        if (window.ClawIDETouchTerminal && window.ClawIDETouchTerminal.setSelectMode) {
+            var next = !window.ClawIDETouchTerminal._selectModeActive;
+            window.ClawIDETouchTerminal.setSelectMode(next);
+            if (next && window.ClawIDEToast) {
+                window.ClawIDEToast.show('Drag to select text');
+            }
+        }
+    }
+
     // Action handlers for data-action buttons
     var actions = {
         copy: handleCopy,
         paste: handlePaste,
+        select: handleSelect,
         voicebox: function() {
             if (window.ClawIDEVoiceBox) window.ClawIDEVoiceBox.open();
         }

@@ -193,6 +193,22 @@
             velocityIdx = 0;
             sampleVelocity(touch.clientY);
 
+            // If toolbar "Select" mode is active, enter SELECTING immediately
+            if (window.ClawIDETouchTerminal._selectModeActive) {
+                state = STATE.SELECTING;
+                container.classList.add('touch-selecting');
+                if (term.textarea) term.textarea.focus();
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                var cell = touchToCell(startX, startY);
+                selStartCol = cell.col;
+                selStartRow = cell.row;
+                var bufferRow = term.buffer.active.viewportY + cell.row;
+                term.select(cell.col, bufferRow, 1);
+                e.preventDefault();
+                return;
+            }
+
             state = STATE.PENDING;
 
             // Start long-press timer for text selection
@@ -201,6 +217,8 @@
 
                 state = STATE.SELECTING;
                 container.classList.add('touch-selecting');
+                // Focus terminal so selection renders correctly
+                if (term.textarea) term.textarea.focus();
 
                 // Haptic feedback if available
                 if (navigator.vibrate) {
@@ -286,8 +304,14 @@
             cancelLongPress();
 
             if (state === STATE.PENDING) {
-                // Short tap — no significant movement, let xterm handle focus/click
+                // Short tap — explicitly focus the terminal textarea to trigger
+                // the virtual keyboard on mobile.  The capture-phase touch handlers
+                // combined with touch-action:none CSS break the normal
+                // tap → click → focus chain that xterm relies on.
                 state = STATE.IDLE;
+                if (term.textarea) {
+                    term.textarea.focus();
+                }
                 return;
             }
 
@@ -330,6 +354,11 @@
                 container.classList.remove('touch-selecting');
                 state = STATE.IDLE;
 
+                // Deactivate toolbar select mode after selection completes
+                if (window.ClawIDETouchTerminal._selectModeActive) {
+                    window.ClawIDETouchTerminal.setSelectMode(false);
+                }
+
                 var selection = term.getSelection();
                 if (selection) {
                     // Auto-copy and show toast notification
@@ -362,5 +391,15 @@
     // Expose globally
     window.ClawIDETouchTerminal = {
         attach: attach,
+        _selectModeActive: false,
+        setSelectMode: function(active) {
+            this._selectModeActive = active;
+            // Update toolbar button visual state
+            var btn = document.querySelector('[data-action="select"]');
+            if (btn) {
+                btn.classList.toggle('active-once', active);
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            }
+        },
     };
 })();
