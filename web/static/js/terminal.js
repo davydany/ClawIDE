@@ -41,7 +41,7 @@
                 background: '#0a0a0a',
                 foreground: '#e4e4e7',
                 cursor: '#a5b4fc',
-                selectionBackground: '#4338ca44',
+                selectionBackground: '#4338ca88',
                 black: '#18181b',
                 red: '#ef4444',
                 green: '#22c55e',
@@ -113,17 +113,32 @@
         // Try xterm's native selection first; if empty (tmux mouse mode captures
         // the selection instead), fall back to reading tmux's paste buffer.
         var selectionCopyTimer = null;
+        var lastCopiedText = '';
         term.onSelectionChange(function() {
             clearTimeout(selectionCopyTimer);
             selectionCopyTimer = setTimeout(function() {
                 var selection = term.getSelection();
-                if (selection) {
+                if (!selection) {
+                    lastCopiedText = '';
+                    return;
+                }
+                if (selection !== lastCopiedText) {
+                    lastCopiedText = selection;
                     copyToClipboard(selection);
                 }
             }, 150);
         });
 
+        var didMouseDrag = false;
+        term.element.addEventListener('mousedown', function() {
+            didMouseDrag = false;
+        });
+        term.element.addEventListener('mousemove', function() {
+            didMouseDrag = true;
+        });
+
         term.element.addEventListener('mouseup', function() {
+            if (!didMouseDrag) return; // Simple click/focus — not a selection gesture
             setTimeout(function() {
                 var selection = term.getSelection();
                 if (selection) return; // xterm handled it
