@@ -321,6 +321,205 @@ func TestReplaceChild(t *testing.T) {
 	})
 }
 
+func TestDetachPane(t *testing.T) {
+	t.Run("detach from 2-pane tree", func(t *testing.T) {
+		tree := &PaneNode{
+			Type:      "split",
+			Direction: "horizontal",
+			Ratio:     0.5,
+			First:     NewLeafPane("a"),
+			Second:    NewLeafPane("b"),
+		}
+
+		detached, newRoot := tree.DetachPane("a")
+		require.NotNil(t, detached)
+		assert.Equal(t, "a", detached.PaneID)
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "leaf", newRoot.Type)
+		assert.Equal(t, "b", newRoot.PaneID)
+	})
+
+	t.Run("detach second from 2-pane tree", func(t *testing.T) {
+		tree := &PaneNode{
+			Type:      "split",
+			Direction: "horizontal",
+			Ratio:     0.5,
+			First:     NewLeafPane("a"),
+			Second:    NewLeafPane("b"),
+		}
+
+		detached, newRoot := tree.DetachPane("b")
+		require.NotNil(t, detached)
+		assert.Equal(t, "b", detached.PaneID)
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "leaf", newRoot.Type)
+		assert.Equal(t, "a", newRoot.PaneID)
+	})
+
+	t.Run("detach from nested tree", func(t *testing.T) {
+		tree := &PaneNode{
+			Type:      "split",
+			Direction: "horizontal",
+			Ratio:     0.5,
+			First: &PaneNode{
+				Type:      "split",
+				Direction: "vertical",
+				Ratio:     0.5,
+				First:     NewLeafPane("a"),
+				Second:    NewLeafPane("b"),
+			},
+			Second: NewLeafPane("c"),
+		}
+
+		detached, newRoot := tree.DetachPane("a")
+		require.NotNil(t, detached)
+		assert.Equal(t, "a", detached.PaneID)
+		// The inner split should collapse, leaving b promoted
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "split", newRoot.Type)
+		assert.Equal(t, "b", newRoot.First.PaneID)
+		assert.Equal(t, "c", newRoot.Second.PaneID)
+	})
+
+	t.Run("detach root leaf returns nil", func(t *testing.T) {
+		tree := NewLeafPane("only")
+		detached, newRoot := tree.DetachPane("only")
+		assert.Nil(t, detached)
+		assert.Equal(t, "only", newRoot.PaneID)
+	})
+
+	t.Run("detach nonexistent returns nil", func(t *testing.T) {
+		tree := &PaneNode{
+			Type:   "split",
+			First:  NewLeafPane("a"),
+			Second: NewLeafPane("b"),
+		}
+		detached, newRoot := tree.DetachPane("missing")
+		assert.Nil(t, detached)
+		assert.NotNil(t, newRoot)
+	})
+
+	t.Run("detach from nil returns nil", func(t *testing.T) {
+		var tree *PaneNode
+		detached, newRoot := tree.DetachPane("any")
+		assert.Nil(t, detached)
+		assert.Nil(t, newRoot)
+	})
+}
+
+func TestInsertPaneAt(t *testing.T) {
+	t.Run("insert left of root leaf", func(t *testing.T) {
+		tree := NewLeafPane("target")
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "target", "left")
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "split", newRoot.Type)
+		assert.Equal(t, "horizontal", newRoot.Direction)
+		assert.Equal(t, "source", newRoot.First.PaneID)
+		assert.Equal(t, "target", newRoot.Second.PaneID)
+	})
+
+	t.Run("insert right of root leaf", func(t *testing.T) {
+		tree := NewLeafPane("target")
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "target", "right")
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "horizontal", newRoot.Direction)
+		assert.Equal(t, "target", newRoot.First.PaneID)
+		assert.Equal(t, "source", newRoot.Second.PaneID)
+	})
+
+	t.Run("insert top of leaf in split", func(t *testing.T) {
+		tree := &PaneNode{
+			Type:      "split",
+			Direction: "horizontal",
+			Ratio:     0.5,
+			First:     NewLeafPane("a"),
+			Second:    NewLeafPane("b"),
+		}
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "b", "top")
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "split", newRoot.Type)
+		// Second child should now be a split
+		assert.Equal(t, "split", newRoot.Second.Type)
+		assert.Equal(t, "vertical", newRoot.Second.Direction)
+		assert.Equal(t, "source", newRoot.Second.First.PaneID)
+		assert.Equal(t, "b", newRoot.Second.Second.PaneID)
+	})
+
+	t.Run("insert bottom", func(t *testing.T) {
+		tree := NewLeafPane("target")
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "target", "bottom")
+		require.NotNil(t, newRoot)
+		assert.Equal(t, "vertical", newRoot.Direction)
+		assert.Equal(t, "target", newRoot.First.PaneID)
+		assert.Equal(t, "source", newRoot.Second.PaneID)
+	})
+
+	t.Run("insert at nonexistent target returns unchanged", func(t *testing.T) {
+		tree := NewLeafPane("a")
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "missing", "left")
+		assert.Equal(t, "a", newRoot.PaneID)
+	})
+
+	t.Run("invalid position returns unchanged", func(t *testing.T) {
+		tree := NewLeafPane("a")
+		source := NewLeafPane("source")
+
+		newRoot := tree.InsertPaneAt(source, "a", "invalid")
+		assert.Equal(t, "a", newRoot.PaneID)
+	})
+}
+
+func TestDetachThenInsert(t *testing.T) {
+	// Simulate a full move: detach pane "a" and insert it to the right of "c"
+	tree := &PaneNode{
+		Type:      "split",
+		Direction: "horizontal",
+		Ratio:     0.5,
+		First: &PaneNode{
+			Type:      "split",
+			Direction: "vertical",
+			Ratio:     0.5,
+			First:     NewLeafPane("a"),
+			Second:    NewLeafPane("b"),
+		},
+		Second: NewLeafPane("c"),
+	}
+
+	detached, newRoot := tree.DetachPane("a")
+	require.NotNil(t, detached)
+	assert.Equal(t, "a", detached.PaneID)
+
+	// After detach: tree should be split(b, c)
+	assert.Equal(t, "split", newRoot.Type)
+	assert.Equal(t, "b", newRoot.First.PaneID)
+	assert.Equal(t, "c", newRoot.Second.PaneID)
+
+	// Insert "a" to the right of "c"
+	finalRoot := newRoot.InsertPaneAt(detached, "c", "right")
+	require.NotNil(t, finalRoot)
+
+	// Result: split(b, split(c, a))
+	assert.Equal(t, "split", finalRoot.Type)
+	assert.Equal(t, "b", finalRoot.First.PaneID)
+	assert.Equal(t, "split", finalRoot.Second.Type)
+	assert.Equal(t, "c", finalRoot.Second.First.PaneID)
+	assert.Equal(t, "a", finalRoot.Second.Second.PaneID)
+
+	// All leaves present
+	leaves := finalRoot.CollectLeaves()
+	assert.ElementsMatch(t, []string{"a", "b", "c"}, leaves)
+}
+
 func TestHasPane(t *testing.T) {
 	tree := &PaneNode{
 		Type:   "split",

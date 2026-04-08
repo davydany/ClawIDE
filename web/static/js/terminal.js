@@ -372,17 +372,36 @@
             paneID: paneID,
             sessionID: sessionID,
             closed: false,
+            resizeObserver: resizeObserver,
+            container: container,
+            sendResize: sendResize,
             sendInput: function(data) {
                 sendData(data);
             },
             paste: function() {
                 handleClipboardPaste();
             },
+            detach: function() {
+                // Disconnect observer but keep terminal and WS alive
+                this.resizeObserver.disconnect();
+            },
+            reattach: function(newContainer) {
+                this.container = newContainer;
+                newContainer.appendChild(this.term.element);
+                var self = this;
+                this.resizeObserver = new ResizeObserver(function() {
+                    self.fitAddon.fit();
+                    self.sendResize();
+                });
+                this.resizeObserver.observe(newContainer);
+                this.fitAddon.fit();
+                this.sendResize();
+            },
             destroy: function() {
                 this.closed = true;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
                 if (ws) ws.close();
-                resizeObserver.disconnect();
+                this.resizeObserver.disconnect();
                 term.dispose();
                 if (focusedPaneID === paneID) {
                     focusedPaneID = null;
@@ -417,6 +436,16 @@
             Object.keys(terminals).forEach(function(id) {
                 terminals[id].destroy();
             });
+        },
+        detachAll: function() {
+            Object.keys(terminals).forEach(function(id) {
+                terminals[id].detach();
+            });
+        },
+        reattach: function(paneID, newContainer) {
+            if (terminals[paneID]) {
+                terminals[paneID].reattach(newContainer);
+            }
         },
         getFocusedPaneID: function() {
             return focusedPaneID;
