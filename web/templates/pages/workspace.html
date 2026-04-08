@@ -991,13 +991,21 @@
 
                 <!-- Files panel -->
                 <div x-show="activeTab === 'files'" x-cloak class="h-full flex"
-                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false, fileTreeCollapsed: localStorage.getItem('editor.preferences.fileTreeCollapsed') === 'true' }"
+                     x-data="{ fileTree: [], currentFile: null, fileContent: '', loaded: false, fileTreeCollapsed: localStorage.getItem('editor.preferences.fileTreeCollapsed') === 'true', showHidden: localStorage.getItem('editor.preferences.showHidden') !== 'false' }"
                      x-effect="if (activeTab === 'files' && !loaded) { loaded = true; $nextTick(() => { window._clawIDELoadFileTree && window._clawIDELoadFileTree() }) }">
                     <div class="file-tree-sidebar border-r border-gray-800 overflow-y-auto bg-gray-900/50 flex-shrink-0"
                          :class="fileTreeCollapsed ? 'file-tree-sidebar-collapsed' : 'file-tree-sidebar-expanded'">
                         <div class="p-2 border-b border-gray-800 flex items-center justify-between">
                             <h3 x-show="!fileTreeCollapsed" class="text-xs font-semibold text-gray-500 uppercase px-2">Files</h3>
                             <div class="flex items-center gap-0.5">
+                                <button x-show="!fileTreeCollapsed"
+                                        @click="showHidden = !showHidden; localStorage.setItem('editor.preferences.showHidden', showHidden); window._clawIDELoadFileTree && window._clawIDELoadFileTree()"
+                                        class="p-0.5 rounded transition-colors"
+                                        :class="showHidden ? 'text-blue-400 hover:text-blue-300 hover:bg-gray-700' : 'text-gray-500 hover:text-white hover:bg-gray-700'"
+                                        :title="showHidden ? 'Hide hidden files' : 'Show hidden files'">
+                                    <svg x-show="showHidden" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg x-show="!showHidden" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                </button>
                                 <button x-show="!fileTreeCollapsed" id="new-file-btn" class="p-0.5 rounded text-gray-500 hover:text-white hover:bg-gray-700 transition-colors" title="New File">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                                 </button>
@@ -1017,7 +1025,8 @@
                         (function() {
                             var projectID = '{{.Project.ID}}';
                             function loadDir(path, container, depth) {
-                                fetch('/projects/' + projectID + '/api/files' + (path ? '?path=' + encodeURIComponent(path) : ''))
+                                var showHidden = localStorage.getItem('editor.preferences.showHidden') !== 'false';
+                                fetch('/projects/' + projectID + '/api/files?hidden=' + showHidden + (path ? '&path=' + encodeURIComponent(path) : ''))
                                     .then(function(r) { return r.json(); })
                                     .then(function(files) {
                                         var html = '';

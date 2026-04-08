@@ -451,7 +451,8 @@
                         self.fileSearchLoading = false;
                         return;
                     }
-                    fetch(searchAPI + '?q=' + encodeURIComponent(q))
+                    var showHidden = localStorage.getItem('editor.preferences.showHidden') !== 'false';
+                    fetch(searchAPI + '?hidden=' + showHidden + '&q=' + encodeURIComponent(q))
                         .then(function(r) { return r.ok ? r.json() : []; })
                         .then(function(results) {
                             self.fileSearchResults = results || [];
