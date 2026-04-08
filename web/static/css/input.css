@@ -134,6 +134,32 @@
     @apply border-b-indigo-500/60;
 }
 
+/* Pane drag-and-drop */
+.pane-leaf.dragging {
+    opacity: 0.4;
+}
+
+.drop-indicator {
+    position: absolute;
+    z-index: 50;
+    pointer-events: none;
+    background: rgba(99, 102, 241, 0.15);
+    transition: all 80ms ease-out;
+    border-radius: 4px;
+}
+
+.pane-toolbar[draggable="true"] {
+    cursor: grab;
+}
+
+.pane-toolbar[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.pane-toolbar[draggable="true"] button {
+    cursor: pointer;
+}
+
 /* Editor pane styles */
 .editor-pane-leaf {
     overflow: hidden;

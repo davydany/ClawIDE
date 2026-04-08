@@ -224,6 +224,83 @@ func (h *Handlers) RenamePane(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"ok":true}`))
 }
 
+type moveRequest struct {
+	TargetPaneID string `json:"target_pane_id"`
+	Position     string `json:"position"`
+}
+
+type moveResponse struct {
+	Layout *model.PaneNode `json:"layout"`
+}
+
+func (h *Handlers) MovePane(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sid")
+	paneID := chi.URLParam(r, "pid")
+
+	sess, ok := h.store.GetSession(sessionID)
+	if !ok {
+		http.Error(w, "session not found", http.StatusNotFound)
+		return
+	}
+
+	var body moveRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate position
+	switch body.Position {
+	case "left", "right", "top", "bottom":
+	default:
+		http.Error(w, "position must be 'left', 'right', 'top', or 'bottom'", http.StatusBadRequest)
+		return
+	}
+
+	// Source and target must differ
+	if paneID == body.TargetPaneID {
+		http.Error(w, "cannot move pane onto itself", http.StatusBadRequest)
+		return
+	}
+
+	// Both panes must exist
+	if !sess.Layout.HasPane(paneID) {
+		http.Error(w, "source pane not found", http.StatusNotFound)
+		return
+	}
+	if !sess.Layout.HasPane(body.TargetPaneID) {
+		http.Error(w, "target pane not found", http.StatusNotFound)
+		return
+	}
+
+	// Must have more than one pane
+	if len(sess.Layout.CollectLeaves()) < 2 {
+		http.Error(w, "cannot move the only pane", http.StatusBadRequest)
+		return
+	}
+
+	// Detach the source pane from its current position (no PTY destruction)
+	detached, newRoot := sess.Layout.DetachPane(paneID)
+	if detached == nil {
+		http.Error(w, "failed to detach source pane", http.StatusInternalServerError)
+		return
+	}
+
+	// Insert the detached pane at the target position
+	finalRoot := newRoot.InsertPaneAt(detached, body.TargetPaneID, body.Position)
+	sess.Layout = finalRoot
+	sess.UpdatedAt = time.Now()
+
+	if err := h.store.UpdateSession(sess); err != nil {
+		log.Printf("Error updating session after move: %v", err)
+		http.Error(w, "failed to save layout", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(moveResponse{Layout: sess.Layout})
+}
+
 func (h *Handlers) ResizePane(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sid")
 	paneID := chi.URLParam(r, "pid")
