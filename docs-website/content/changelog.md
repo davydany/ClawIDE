@@ -6,6 +6,30 @@ weight: 50
 
 All notable changes to ClawIDE are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.0] — 2026-04-08
+
+ClawIDE v1.2 focuses on workspace customization and quality-of-life improvements. This release includes 11 commits since v1.1.0.
+
+### Added
+
+- **Theme Support**: Light and dark mode with a manual toggle in the top bar and automatic detection of system color scheme preferences. [Learn more →]({{< ref "features/themes" >}})
+- **Movable Panes**: Drag-and-drop tab reordering to customize your workspace layout. Rearrange terminal sessions, file editors, and other tabs to match your workflow.
+- **Rename Terminal Panes**: Give terminal tabs meaningful names for better session identification when working across multiple sessions.
+- **Hidden Files Toggle**: Show or hide dotfiles and hidden directories in the file editor tree. Useful for inspecting `.env`, `.gitignore`, and other configuration files.
+- **Soft-Delete for Branches**: Deleting features and branches now sends them to a trash folder instead of permanently removing them, with the ability to restore accidentally deleted work.
+
+### Fixed
+
+- **Mobile Keyboard Handling**: Resolved issues with the virtual keyboard interfering with terminal input on mobile devices.
+- **Copy Toast**: Fixed spurious copy-to-clipboard toast notifications appearing unexpectedly.
+- **Touch Text Selection**: Improved text selection behavior on touch devices for smoother mobile editing.
+
+### Changed
+
+- Added release helper commands to the Makefile for streamlined version tagging.
+
+---
+
 ## [1.1.0] — 2026-03-24
 
 ClawIDE v1.1 brings deep Claude Code configuration management, a command palette, and broad platform improvements. This release includes 33 commits since v1.0.0.
