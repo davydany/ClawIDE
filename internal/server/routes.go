@@ -210,6 +210,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 		})
 	})
 
+	// Trash API (global, spans all projects)
+	r.Get("/api/trash", s.handlers.ListTrashedFeatures)
+	r.Post("/api/trash/{tid}/restore", s.handlers.RestoreTrashedFeature)
+	r.Delete("/api/trash/{tid}", s.handlers.PermanentlyDeleteTrashedFeature)
+
 	// Scratchpad API (global)
 	r.Get("/api/scratchpad", s.handlers.GetScratchpad)
 	r.Put("/api/scratchpad", s.handlers.UpdateScratchpad)
