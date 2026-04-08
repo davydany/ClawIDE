@@ -166,6 +166,16 @@
             };
             kebabMenu.appendChild(menuItemShell);
 
+            // Rename button
+            var menuItemRename = document.createElement('button');
+            menuItemRename.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemRename.textContent = 'Rename';
+            menuItemRename.onclick = function() {
+                kebabMenu.classList.add('hidden');
+                nameSpan.dispatchEvent(new MouseEvent('dblclick'));
+            };
+            kebabMenu.appendChild(menuItemRename);
+
             // Add separator
             var separator = document.createElement('div');
             separator.className = 'border-t border-gray-700 my-1';
