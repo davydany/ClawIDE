@@ -155,3 +155,9 @@ Live markdown preview with GitHub Flavored Markdown, syntax-highlighted code blo
 The central hub for all your projects. Create new projects, import existing ones, and navigate to any project workspace.
 
 [Learn more →]({{< ref "features/dashboard" >}})
+
+## Themes
+
+Switch between light and dark mode with a toggle in the top bar. ClawIDE auto-detects your system color scheme on first launch.
+
+[Learn more →]({{< ref "features/themes" >}})
