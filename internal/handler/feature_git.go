@@ -7,6 +7,7 @@ import (
 
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
+	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -92,8 +93,9 @@ func (h *Handlers) FeatureGitCommit(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "committed"})
 }
 
-// FeaturePullMain fetches origin and merges the active base branch into
-// the feature's worktree.
+// FeaturePullMain fetches origin and merges a branch into the workspace.
+// For feature-type workspaces, it pulls the project's active/main branch.
+// For branch-type workspaces, it accepts an optional source_branch parameter.
 // POST /projects/{id}/features/{fid}/api/pull-main
 func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
@@ -105,8 +107,23 @@ func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use the project's active branch, falling back to detection
-	branch := project.ActiveBranch
+	var branch string
+
+	if feature.IsClone() {
+		// Branch-type: accept source_branch from request body.
+		var req struct {
+			SourceBranch string `json:"source_branch"`
+		}
+		if r.Body != nil {
+			json.NewDecoder(r.Body).Decode(&req)
+		}
+		branch = req.SourceBranch
+	}
+
+	// Fall back to project's active branch or auto-detect.
+	if branch == "" {
+		branch = project.ActiveBranch
+	}
 	if branch == "" {
 		detected, err := git.DetectMainBranch(project.Path)
 		if err != nil {
@@ -126,8 +143,11 @@ func (h *Handlers) FeaturePullMain(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"status": "pulled"})
 }
 
-// FeatureMerge merges the feature branch into the main branch, then
-// cleans up the feature (worktree, sessions, branch, store record).
+// FeatureMerge merges the workspace branch into a target branch.
+// For feature-type workspaces: merges into main in the project root, then
+// cleans up the worktree, branch, sessions, and store record.
+// For branch-type workspaces: merges into a specified target branch within
+// the clone, pushes to origin, and keeps the workspace intact.
 // POST /projects/{id}/features/{fid}/api/merge
 func (h *Handlers) FeatureMerge(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
@@ -138,6 +158,17 @@ func (h *Handlers) FeatureMerge(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "feature not found", http.StatusNotFound)
 		return
 	}
+
+	if feature.IsClone() {
+		h.branchMerge(w, r, project, feature)
+		return
+	}
+	h.featureMerge(w, r, project, feature)
+}
+
+// featureMerge handles the merge-and-cleanup flow for worktree-backed features.
+func (h *Handlers) featureMerge(w http.ResponseWriter, r *http.Request, project model.Project, feature model.Feature) {
+	featureID := feature.ID
 
 	// 1. Resolve the base branch (project's active branch or auto-detect).
 	mainBranch := project.ActiveBranch
@@ -209,4 +240,52 @@ func (h *Handlers) FeatureMerge(w http.ResponseWriter, r *http.Request) {
 		"status":   "merged",
 		"redirect": "/projects/" + project.ID + "/",
 	})
+}
+
+// branchMerge handles the merge flow for clone-backed branch workspaces.
+// It merges the branch into a user-specified target within the clone and
+// pushes to origin. The workspace is kept intact.
+func (h *Handlers) branchMerge(w http.ResponseWriter, r *http.Request, project model.Project, feature model.Feature) {
+	var req struct {
+		TargetBranch string `json:"target_branch"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.TargetBranch == "" {
+		http.Error(w, "target_branch is required", http.StatusBadRequest)
+		return
+	}
+
+	clonePath := feature.WorktreePath
+
+	// 1. Fetch latest from origin.
+	if err := git.FetchAll(clonePath); err != nil {
+		log.Printf("Error fetching in clone %s: %v", clonePath, err)
+	}
+
+	// 2. Checkout target branch in the clone.
+	if err := git.CheckoutBranch(clonePath, req.TargetBranch); err != nil {
+		http.Error(w, "failed to checkout target branch: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Merge the workspace branch into the target.
+	if err := git.Merge(clonePath, feature.BranchName); err != nil {
+		// Abort and switch back to the workspace branch.
+		git.CheckoutBranch(clonePath, feature.BranchName)
+		http.Error(w, err.Error(), http.StatusConflict)
+		return
+	}
+
+	// 4. Push the target branch to origin.
+	if err := git.PushBranch(clonePath, "origin", req.TargetBranch); err != nil {
+		// Switch back to workspace branch even on push failure.
+		git.CheckoutBranch(clonePath, feature.BranchName)
+		http.Error(w, "merge succeeded but push failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 5. Switch back to the workspace branch.
+	git.CheckoutBranch(clonePath, feature.BranchName)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "merged"})
 }

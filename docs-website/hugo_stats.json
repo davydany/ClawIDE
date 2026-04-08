@@ -54,7 +54,6 @@
       "[&_ul]:space-y-1",
       "active",
       "backdrop-blur",
-      "bg-amber-500",
       "bg-claw-100",
       "bg-claw-50",
       "bg-claw-600",
@@ -167,7 +166,6 @@
       "min-h-screen",
       "min-w-0",
       "ml-2",
-      "mr-1",
       "mr-2",
       "mt-1",
       "mt-2",
@@ -228,7 +226,6 @@
       "text-6xl",
       "text-7xl",
       "text-9xl",
-      "text-amber-950",
       "text-center",
       "text-claw-600",
       "text-gray-300",
@@ -245,7 +242,6 @@
       "text-xs",
       "to-transparent",
       "toc",
-      "top-0",
       "top-7",
       "top-[7rem]",
       "tracking-wider",
@@ -264,8 +260,7 @@
       "w-64",
       "w-full",
       "xl:block",
-      "z-40",
-      "z-50"
+      "z-40"
     ],
     "ids": [
       "010--2024-12-01",

@@ -235,7 +235,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, dockerLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, dockerLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -266,31 +266,49 @@
                     </button>
                     <div x-show="mobileMenu" x-cloak @click.away="mobileMenu = false"
                          class="absolute right-0 top-full mt-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                        <!-- Review & Merge -->
+                        {{if not .Feature.IsClone}}
+                        <!-- Review & Merge (feature type only) -->
                         <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') }); mobileMenu=false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-green-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                             Review & Merge
                         </button>
-                        <!-- Quick Merge -->
+                        <!-- Quick Merge (feature type only) -->
                         <button @click="if(confirm('Quick merge {{.Feature.BranchName}} into the main branch?')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST'}).then(r=>{if(r.ok||r.redirected){window.location.href='/projects/{{.Project.ID}}/'}else{r.text().then(t=>alert('Merge failed: '+t))}}) }; mobileMenu=false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-yellow-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             Quick Merge
                         </button>
-                        <!-- Delete Feature -->
-                        <button @click="if(confirm('Delete feature {{.Feature.Name}}? This cannot be undone.')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{.Project.ID}}/'}) }; mobileMenu=false"
+                        {{else}}
+                        <!-- Merge Into (branch type only) -->
+                        <button @click="let target = prompt('Merge {{.Feature.BranchName}} into which branch?', '{{.Feature.BaseBranch}}'); if(target) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/merge', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({target_branch:target})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{alert('Merged successfully')}).catch(e=>{alert('Merge failed: '+e.message)}) }; mobileMenu=false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-green-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            Merge Into...
+                        </button>
+                        {{end}}
+                        <!-- Delete -->
+                        <button @click="if(confirm('Delete {{if .Feature.IsClone}}branch{{else}}feature{{end}} {{.Feature.Name}}? This cannot be undone.')) { fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{.Project.ID}}/'}) }; mobileMenu=false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            Delete Feature
+                            Delete {{if .Feature.IsClone}}Branch{{else}}Feature{{end}}
                         </button>
                         <div class="border-t border-gray-800 my-1"></div>
-                        <!-- Pull Latest -->
+                        {{if .Feature.IsClone}}
+                        <!-- Pull From (branch type) -->
+                        <button @click="if(pullingMain) return; let src = prompt('Pull from which branch?', '{{.Feature.BaseBranch}}'); if(!src) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/pull-main', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({source_branch:src})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); mobileMenu = false"
+                                class="flex items-center gap-2 w-full px-3 py-2 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span x-text="pullingMain ? 'Pulling...' : 'Pull From...'"></span>
+                        </button>
+                        {{else}}
+                        <!-- Pull Latest (feature type) -->
                         <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{.Project.ID}}/features/{{.Feature.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); mobileMenu = false"
                                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             <span x-text="pullingMain ? 'Pulling...' : 'Pull Latest'"></span>
                         </button>
+                        {{end}}
                     </div>
                 </div>
             </div>
@@ -521,7 +539,7 @@
                     <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/" hx-boost="false"
                        class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ID $.ActiveFeatureID}}text-white {{if not .Color}}border-purple-400{{end}}{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}"
                        {{if and (eq .ID $.ActiveFeatureID) .Color}}style="border-bottom-color: {{.Color}}; background-color: {{.Color}}15;"{{end}}>
-                        {{if .Color}}<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{.Color}}"></span>{{else}}<svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>{{end}}
+                        {{if .Color}}<span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: {{.Color}}"></span>{{else if .IsClone}}<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3v12M18 9a3 3 0 01-3 3h-3l-3-3M6 21a3 3 0 003-3V9"/></svg>{{else}}<svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>{{end}}
                         {{.Name}}
                     </a>
                     <button @click.stop="featureMenu = featureMenu === '{{.ID}}' ? '' : '{{.ID}}'"
@@ -533,6 +551,18 @@
                          class="fixed mt-0.5 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1"
                          x-ref="menu{{.ID}}"
                          :style="{ top: $el.parentElement.getBoundingClientRect().bottom + 'px', left: $el.parentElement.getBoundingClientRect().left + 'px' }">
+                        {{if .IsClone}}
+                        <button @click="if(pullingMain) return; let src = prompt('Pull from which branch?', '{{.BaseBranch}}'); if(!src) return; pullingMain = true; fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/pull-main', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({source_branch:src})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Pull From...
+                        </button>
+                        <button @click="let target = prompt('Merge {{.BranchName}} into which branch?', '{{.BaseBranch}}'); if(target) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/merge', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({target_branch:target})}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{alert('Merged successfully')}).catch(e=>{alert('Merge failed: '+e.message)}) }; featureMenu=''"
+                                class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-green-400 hover:bg-gray-800 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            Merge Into...
+                        </button>
+                        {{else}}
                         <button @click="if(pullingMain) return; pullingMain = true; fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/api/pull-main', {method:'POST'}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error(t)}); return r.json()}).then(()=>{pullingMain=false; location.reload()}).catch(e=>{pullingMain=false; alert('Pull failed: '+e.message)}); featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-blue-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -548,10 +578,11 @@
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             Quick Merge
                         </button>
-                        <button @click="if(confirm('Delete feature {{.Name}}? This cannot be undone.')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{$.Project.ID}}/'}) }; featureMenu=''"
+                        {{end}}
+                        <button @click="if(confirm('Delete {{if .IsClone}}branch{{else}}feature{{end}} {{.Name}}? This cannot be undone.')) { fetch('/projects/{{$.Project.ID}}/features/{{.ID}}/', {method:'DELETE', headers:{'HX-Request':'true'}}).then(()=>{window.location.href='/projects/{{$.Project.ID}}/'}) }; featureMenu=''"
                                 class="flex items-center gap-2 w-full px-3 py-1.5 text-xs text-red-400 hover:bg-gray-800 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            Delete Feature
+                            Delete {{if .IsClone}}Branch{{else}}Feature{{end}}
                         </button>
                         {{if $.Project.Color}}
                         <div class="border-t border-gray-700 mt-1 pt-1 px-2 pb-1">
@@ -569,26 +600,64 @@
                 </button>
             </div>
 
-            <!-- New Feature Modal (accessible from both mobile and desktop) -->
+            <!-- New Workspace Modal (accessible from both mobile and desktop) -->
             <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
                 <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4" x-text="workspaceType === 'branch' ? 'New Branch' : 'New Feature'">New Feature</h3>
                     <form method="POST" action="/projects/{{.Project.ID}}/features/">
+                        <input type="hidden" name="type" :value="workspaceType">
+                        <input type="hidden" name="prefix" :value="workspaceType === 'branch' ? branchPrefix : ''">
                         <div class="space-y-3">
+                            <!-- Type toggle -->
                             <div>
-                                <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
-                                <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
+                                <label class="block text-xs text-gray-400 mb-1">Type</label>
+                                <div class="flex bg-gray-800 rounded p-0.5">
+                                    <button type="button" @click="workspaceType = 'feature'"
+                                            :class="workspaceType === 'feature' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                                            class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors">Feature</button>
+                                    <button type="button" @click="workspaceType = 'branch'"
+                                            :class="workspaceType === 'branch' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                                            class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors">Branch</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1" x-text="workspaceType === 'branch' ? 'Branch Name' : 'Feature Name'">Feature Name</label>
+                                <input type="text" name="name" x-model="featureName" required
+                                       :placeholder="workspaceType === 'branch' ? 'e.g. fix-login-bug' : 'e.g. Add OAuth2 Support'"
                                        class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <!-- Prefix dropdown (branch type only) -->
+                            <div x-show="workspaceType === 'branch'" x-cloak>
+                                <label class="block text-xs text-gray-400 mb-1">Branch Prefix</label>
+                                <select x-model="branchPrefix"
+                                        class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-indigo-500">
+                                    <option value="">None</option>
+                                    <option value="feature">feature/</option>
+                                    <option value="hotfix">hotfix/</option>
+                                    <option value="bugfix">bugfix/</option>
+                                    <option value="experiment">experiment/</option>
+                                    <option value="release">release/</option>
+                                    <option value="chore">chore/</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
                                 <input type="text" name="base_branch" x-model="featureBase" placeholder="{{if .ActiveBranch}}{{.ActiveBranch}}{{else}}Leave empty for current branch{{end}}"
                                        class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                             </div>
+                            <!-- Branch preview (branch type only) -->
+                            <div x-show="workspaceType === 'branch' && featureName" x-cloak class="text-xs text-gray-500">
+                                Branch: <span class="text-indigo-400" x-text="(branchPrefix ? branchPrefix + '/' : '') + featureName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '')"></span>
+                            </div>
+                            <!-- Clone info note -->
+                            <div x-show="workspaceType === 'branch'" x-cloak class="text-[10px] text-gray-600">
+                                Creates a full independent clone of the repository.
+                            </div>
                         </div>
                         <div class="flex justify-end gap-2 mt-4">
                             <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
-                            <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                            <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
+                                    x-text="workspaceType === 'branch' ? 'Create Branch' : 'Create Feature'">Create Feature</button>
                         </div>
                     </form>
                 </div>
@@ -670,11 +739,13 @@
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Commit
                 </button>
+                {{if not .Feature.IsClone}}
                 <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') })"
                         :class="activeTab === 'review' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     Review
                 </button>
+                {{end}}
                 <button @click="activeTab = 'docker'"
                         :class="activeTab === 'docker' ? 'text-white border-indigo-400' : 'text-gray-400 border-transparent hover:text-gray-200'"
                         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
