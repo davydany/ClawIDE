@@ -51,7 +51,8 @@
     }
 
     function fetchSuggestions(dirPath) {
-        var url = config.filesAPI + (dirPath ? '?path=' + encodeURIComponent(dirPath) : '');
+        var showHidden = localStorage.getItem('editor.preferences.showHidden') !== 'false';
+        var url = config.filesAPI + '?hidden=' + showHidden + (dirPath ? '&path=' + encodeURIComponent(dirPath) : '');
         fetch(url)
             .then(function(r) {
                 if (!r.ok) {
