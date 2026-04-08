@@ -21,13 +21,13 @@
          x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-2">
-        <div class="w-full max-w-lg bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden" @click.stop>
+        <div class="w-full max-w-lg bg-surface-base border border-th-border-strong rounded-xl shadow-2xl overflow-hidden" @click.stop>
             <!-- Search input -->
-            <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-th-border">
                 <!-- Command mode indicator -->
-                <span x-show="isCommandMode" class="flex-shrink-0 text-xs font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">&gt;</span>
+                <span x-show="isCommandMode" class="flex-shrink-0 text-xs font-mono text-accent-text bg-accent-hover/10 px-1.5 py-0.5 rounded">&gt;</span>
                 <!-- Search icon (file mode only) -->
-                <svg x-show="!isCommandMode" class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg x-show="!isCommandMode" class="w-4 h-4 text-th-text-faint flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input id="command-palette-search"
@@ -36,9 +36,9 @@
                        @input="onSearchInput()"
                        :placeholder="isCommandMode ? 'Type a command...' : 'Search files by name...'"
                        autocomplete="off"
-                       class="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+                       class="flex-1 bg-transparent text-sm text-th-text-primary placeholder-th-text-faint focus:outline-none"
                        aria-label="Search files and commands">
-                <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-gray-500 bg-gray-800 border border-gray-700 rounded">Esc</kbd>
+                <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-th-text-faint bg-surface-raised border border-th-border-strong rounded">Esc</kbd>
             </div>
 
             <!-- Results container -->
@@ -52,7 +52,7 @@
                         <!-- Recent files header (when showing recents) -->
                         <template x-if="!fileQuery && recentFiles.length > 0">
                             <div class="px-3 pt-2 pb-1">
-                                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Recently Opened</span>
+                                <span class="text-[10px] font-semibold text-th-text-faint uppercase tracking-wider">Recently Opened</span>
                             </div>
                         </template>
 
@@ -63,16 +63,16 @@
                                     <button @click="openFileResult(file)"
                                             @mouseenter="selectedIndex = index"
                                             :data-palette-index="index"
-                                            :class="selectedIndex === index ? 'bg-indigo-600/20 text-white' : 'text-gray-300 hover:bg-gray-800/50'"
+                                            :class="selectedIndex === index ? 'bg-accent/20 text-th-text-primary' : 'text-th-text-tertiary hover:bg-surface-raised/50'"
                                             class="w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors"
                                             role="option"
                                             :aria-selected="selectedIndex === index">
                                         <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center" x-html="fileIcon(file.name, false)"></span>
                                         <div class="flex-1 min-w-0 flex items-baseline gap-2 truncate">
-                                            <span class="text-white font-medium" x-text="file.name"></span>
-                                            <span class="text-gray-500 text-xs truncate" x-text="fileDirPath(file.path, file.name)"></span>
+                                            <span class="text-th-text-primary font-medium" x-text="file.name"></span>
+                                            <span class="text-th-text-faint text-xs truncate" x-text="fileDirPath(file.path, file.name)"></span>
                                         </div>
-                                        <span class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400" title="Recently opened"></span>
+                                        <span class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-accent-text" title="Recently opened"></span>
                                     </button>
                                 </template>
                             </div>
@@ -80,8 +80,8 @@
 
                         <!-- Empty state: no query, no recents -->
                         <template x-if="!fileQuery && recentFiles.length === 0">
-                            <div class="px-4 py-8 text-center text-sm text-gray-500">
-                                <svg class="w-8 h-8 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="px-4 py-8 text-center text-sm text-th-text-faint">
+                                <svg class="w-8 h-8 mx-auto mb-2 text-th-text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                                 Type to search for files
@@ -95,20 +95,20 @@
                                     <button @click="openFileResult(result)"
                                             @mouseenter="selectedIndex = index"
                                             :data-palette-index="index"
-                                            :class="selectedIndex === index ? 'bg-indigo-600/20 text-white' : 'text-gray-300 hover:bg-gray-800/50'"
+                                            :class="selectedIndex === index ? 'bg-accent/20 text-th-text-primary' : 'text-th-text-tertiary hover:bg-surface-raised/50'"
                                             class="w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors"
                                             role="option"
                                             :aria-selected="selectedIndex === index">
                                         <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center" x-html="fileIcon(result.name, result.is_dir)"></span>
                                         <div class="flex-1 min-w-0 flex items-baseline gap-2 truncate">
-                                            <span class="text-white font-medium" x-html="highlightMatch(result.name, fileQuery)"></span>
-                                            <span class="text-gray-500 text-xs truncate" x-html="highlightMatch(fileDirPath(result.path, result.name), fileQuery)"></span>
+                                            <span class="text-th-text-primary font-medium" x-html="highlightMatch(result.name, fileQuery)"></span>
+                                            <span class="text-th-text-faint text-xs truncate" x-html="highlightMatch(fileDirPath(result.path, result.name), fileQuery)"></span>
                                         </div>
                                         <template x-if="!result.is_dir">
-                                            <span class="flex-shrink-0 text-[10px] text-gray-600 font-mono" x-text="formatSize(result.size)"></span>
+                                            <span class="flex-shrink-0 text-[10px] text-th-text-ghost font-mono" x-text="formatSize(result.size)"></span>
                                         </template>
                                         <template x-if="result.is_dir">
-                                            <span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-500">dir</span>
+                                            <span class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-surface-raised text-th-text-faint">dir</span>
                                         </template>
                                     </button>
                                 </template>
@@ -117,14 +117,14 @@
 
                         <!-- No results -->
                         <template x-if="fileQuery && fileSearchResults.length === 0 && !fileSearchLoading">
-                            <div class="px-4 py-8 text-center text-sm text-gray-500">
+                            <div class="px-4 py-8 text-center text-sm text-th-text-faint">
                                 No files found
                             </div>
                         </template>
 
                         <!-- Loading indicator -->
                         <template x-if="fileSearchLoading">
-                            <div class="px-4 py-3 text-center text-sm text-gray-500">
+                            <div class="px-4 py-3 text-center text-sm text-th-text-faint">
                                 <svg class="w-4 h-4 animate-spin inline-block mr-2" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -141,7 +141,7 @@
                 <template x-if="isCommandMode">
                     <div>
                         <template x-if="filteredCommands.length === 0">
-                            <div class="px-4 py-8 text-center text-sm text-gray-500">
+                            <div class="px-4 py-8 text-center text-sm text-th-text-faint">
                                 No commands found
                             </div>
                         </template>
@@ -149,7 +149,7 @@
                         <!-- Recent commands header -->
                         <template x-if="!commandQuery && recentCommands.length > 0">
                             <div class="px-3 pt-2 pb-1">
-                                <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Recent</span>
+                                <span class="text-[10px] font-semibold text-th-text-faint uppercase tracking-wider">Recent</span>
                             </div>
                         </template>
 
@@ -157,30 +157,30 @@
                             <div>
                                 <!-- Separator between recent and all commands -->
                                 <template x-if="!commandQuery && recentCommands.length > 0 && index === recentCommands.length">
-                                    <div class="px-3 pt-3 pb-1 border-t border-gray-800">
-                                        <span class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">All Commands</span>
+                                    <div class="px-3 pt-3 pb-1 border-t border-th-border">
+                                        <span class="text-[10px] font-semibold text-th-text-faint uppercase tracking-wider">All Commands</span>
                                     </div>
                                 </template>
 
                                 <button @click="executeCommand(cmd)"
                                         @mouseenter="selectedIndex = index"
                                         :data-palette-index="index"
-                                        :class="selectedIndex === index ? 'bg-indigo-600/20 text-white' : 'text-gray-300 hover:bg-gray-800/50'"
+                                        :class="selectedIndex === index ? 'bg-accent/20 text-th-text-primary' : 'text-th-text-tertiary hover:bg-surface-raised/50'"
                                         class="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors"
                                         role="option"
                                         :aria-selected="selectedIndex === index">
-                                    <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-500" x-html="cmd.icon || ''"></span>
+                                    <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center text-th-text-faint" x-html="cmd.icon || ''"></span>
                                     <div class="flex-1 min-w-0">
                                         <span x-text="cmd.name"></span>
                                     </div>
                                     <span x-show="cmd.category"
                                           x-text="cmd.category"
-                                          class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-500"></span>
+                                          class="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-surface-raised text-th-text-faint"></span>
                                     <span x-show="cmd.shortcut"
                                           x-text="cmd.shortcut"
-                                          class="flex-shrink-0 text-[10px] font-mono text-gray-600"></span>
+                                          class="flex-shrink-0 text-[10px] font-mono text-th-text-ghost"></span>
                                     <span x-show="isRecentCommand(cmd)"
-                                          class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-indigo-400"
+                                          class="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-accent-text"
                                           title="Recently used"></span>
                                 </button>
                             </div>
@@ -190,15 +190,15 @@
             </div>
 
             <!-- Footer -->
-            <div class="flex items-center justify-between px-4 py-2 border-t border-gray-800 text-[10px] text-gray-600">
+            <div class="flex items-center justify-between px-4 py-2 border-t border-th-border text-[10px] text-th-text-ghost">
                 <div class="flex items-center gap-3">
-                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">&#8593;&#8595;</kbd> navigate</span>
-                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">&#8629;</kbd> select</span>
-                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-gray-800 rounded">esc</kbd> close</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-surface-raised rounded">&#8593;&#8595;</kbd> navigate</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-surface-raised rounded">&#8629;</kbd> select</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 bg-surface-raised rounded">esc</kbd> close</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <template x-if="!isCommandMode">
-                        <span class="text-gray-600">Type <kbd class="px-1 py-0.5 bg-gray-800 rounded text-gray-500">&gt;</kbd> for commands</span>
+                        <span class="text-th-text-ghost">Type <kbd class="px-1 py-0.5 bg-surface-raised rounded text-th-text-faint">&gt;</kbd> for commands</span>
                     </template>
                     <template x-if="isCommandMode">
                         <span x-text="filteredCommands.length + ' commands'"></span>
@@ -210,7 +210,7 @@
 
     <!-- Mobile FAB button (hidden on desktop) -->
     <button @click="openPalette()"
-            class="md:hidden fixed right-4 bottom-20 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 active:bg-indigo-500 transition-colors"
+            class="md:hidden fixed right-4 bottom-20 z-50 w-14 h-14 flex items-center justify-center rounded-full bg-accent text-th-text-primary shadow-lg shadow-accent/30 active:bg-accent-hover transition-colors"
             aria-label="Open command palette"
             style="bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem)">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

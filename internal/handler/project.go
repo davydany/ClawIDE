@@ -43,6 +43,8 @@ func (h *Handlers) ListProjects(w http.ResponseWriter, r *http.Request) {
 	starredProjects, unstarredProjects := splitAndSortProjects(h.store.GetProjects())
 	data := map[string]any{
 		"Title":           "ClawIDE - Projects",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"StarredProjects": starredProjects,
 		"Projects":        unstarredProjects,
 	}
@@ -236,6 +238,8 @@ func (h *Handlers) ProjectWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]any{
 		"Title":              project.Name + " - ClawIDE",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"Project":            project,
 		"Sessions":           sessions,
 		"Features":           features,

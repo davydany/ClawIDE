@@ -69,7 +69,7 @@
         if (!list) return;
 
         if (snippets.length === 0) {
-            list.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">No snippets yet</div>';
+            list.innerHTML = '<div class="text-th-text-faint text-xs p-3 text-center">No snippets yet</div>';
             return;
         }
 

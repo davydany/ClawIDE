@@ -113,6 +113,20 @@ func WorktreeDir(repoPath, branch string) string {
 	return filepath.Join(parent, base+"-worktrees", branch)
 }
 
+// CloneDir returns the conventional directory for a branch clone given
+// the project repo path and branch name. The convention is:
+//
+//	{parent}/{project}-branches/{branch}/
+//
+// For example, if repoPath is /home/user/projects/myapp and branch is
+// "hotfix/login-fix", the clone directory will be
+// /home/user/projects/myapp-branches/hotfix/login-fix/
+func CloneDir(repoPath, branch string) string {
+	parent := filepath.Dir(repoPath)
+	base := filepath.Base(repoPath)
+	return filepath.Join(parent, base+"-branches", branch)
+}
+
 // CreateWorktree creates a new git worktree for the given branch. If
 // targetDir is empty, the conventional directory layout is used. The
 // branch must already exist (local or remote).

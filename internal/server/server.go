@@ -17,19 +17,21 @@ import (
 	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/davydany/ClawIDE/internal/tmpl"
 	"github.com/davydany/ClawIDE/internal/tmux"
+	"github.com/davydany/ClawIDE/internal/trash"
 	"github.com/davydany/ClawIDE/internal/updater"
 	"github.com/davydany/ClawIDE/internal/version"
 	"github.com/davydany/ClawIDE/internal/wizard"
 )
 
 type Server struct {
-	cfg        *config.Config
-	store      *store.Store
-	renderer   *tmpl.Renderer
-	ptyManager *pty.Manager
-	handlers   *handler.Handlers
-	http       *http.Server
-	updater    *updater.Updater
+	cfg           *config.Config
+	store         *store.Store
+	renderer      *tmpl.Renderer
+	ptyManager    *pty.Manager
+	handlers      *handler.Handlers
+	http          *http.Server
+	updater       *updater.Updater
+	trashCleaner  *trash.Cleaner
 }
 
 func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
@@ -111,6 +113,10 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 
 	upd.Start()
 
+	tc := trash.NewCleaner(st)
+	tc.Start()
+	s.trashCleaner = tc
+
 	return s
 }
 
@@ -170,6 +176,7 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down server...")
 	s.handlers.StopAllMCPProcesses()
+	s.trashCleaner.Stop()
 	s.updater.Stop()
 	s.ptyManager.CloseAll()
 	return s.http.Shutdown(ctx)

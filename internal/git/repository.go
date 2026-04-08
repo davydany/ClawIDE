@@ -217,3 +217,38 @@ func CreateTrackingBranch(repoPath, localName, remoteBranch string) error {
 	}
 	return nil
 }
+
+// CloneLocal creates a local clone of repoPath into targetDir with the
+// specified branch checked out. After cloning, it updates the clone's
+// origin remote URL to match the original repo's origin so that push/pull
+// operations target the real remote rather than the local path.
+func CloneLocal(repoPath, targetDir, branch string) error {
+	if err := os.MkdirAll(filepath.Dir(targetDir), 0o755); err != nil {
+		return fmt.Errorf("creating clone parent directory: %w", err)
+	}
+
+	ctx := context.Background()
+	if _, err := Clone(ctx, repoPath, targetDir, branch, 0); err != nil {
+		return err
+	}
+
+	// Re-point origin to the real remote URL instead of the local path.
+	remotes, err := ListRemotes(repoPath)
+	if err == nil {
+		for _, r := range remotes {
+			if r.Name == "origin" {
+				cmd := exec.Command("git", "remote", "set-url", "origin", r.URL)
+				cmd.Dir = targetDir
+				cmd.Run() // best-effort
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// RemoveClone deletes a cloned repository directory and all its contents.
+func RemoveClone(clonePath string) error {
+	return os.RemoveAll(clonePath)
+}

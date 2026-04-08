@@ -2,6 +2,157 @@
 (function() {
     'use strict';
 
+    var TERMINAL_THEMES = {
+        default: {
+            background: '#0a0a0a',
+            foreground: '#e4e4e7',
+            cursor: '#a5b4fc',
+            selectionBackground: '#4338ca88',
+            black: '#18181b',
+            red: '#ef4444',
+            green: '#22c55e',
+            yellow: '#eab308',
+            blue: '#3b82f6',
+            magenta: '#a855f7',
+            cyan: '#06b6d4',
+            white: '#e4e4e7',
+            brightBlack: '#52525b',
+            brightRed: '#f87171',
+            brightGreen: '#4ade80',
+            brightYellow: '#facc15',
+            brightBlue: '#60a5fa',
+            brightMagenta: '#c084fc',
+            brightCyan: '#22d3ee',
+            brightWhite: '#fafafa',
+        },
+        claude: {
+            background: '#1a1510',
+            foreground: '#ece5d8',
+            cursor: '#e89e7e',
+            selectionBackground: '#6b4c2a88',
+            black: '#1a1510',
+            red: '#e5736a',
+            green: '#7eba6b',
+            yellow: '#d4a643',
+            blue: '#6a9fd4',
+            magenta: '#b888c8',
+            cyan: '#5bb8b0',
+            white: '#ece5d8',
+            brightBlack: '#635143',
+            brightRed: '#f0918a',
+            brightGreen: '#9cd48a',
+            brightYellow: '#e4bf65',
+            brightBlue: '#8ab8e8',
+            brightMagenta: '#d0a5dc',
+            brightCyan: '#7dd0c8',
+            brightWhite: '#f5f0e8',
+        },
+        mono: {
+            background: '#000000',
+            foreground: '#e5e5e5',
+            cursor: '#ffffff',
+            selectionBackground: '#40404088',
+            black: '#000000',
+            red: '#ff6b6b',
+            green: '#69db7c',
+            yellow: '#ffd43b',
+            blue: '#74c0fc',
+            magenta: '#da77f2',
+            cyan: '#66d9e8',
+            white: '#e5e5e5',
+            brightBlack: '#525252',
+            brightRed: '#ff8787',
+            brightGreen: '#8ce99a',
+            brightYellow: '#ffe066',
+            brightBlue: '#a5d8ff',
+            brightMagenta: '#e599f7',
+            brightCyan: '#99e9f2',
+            brightWhite: '#ffffff',
+        },
+    };
+
+    var TERMINAL_THEMES_LIGHT = {
+        default: {
+            background: '#ffffff',
+            foreground: '#1e293b',
+            cursor: '#4f46e5',
+            selectionBackground: '#c7d2fe88',
+            black: '#1e293b',
+            red: '#dc2626',
+            green: '#16a34a',
+            yellow: '#ca8a04',
+            blue: '#2563eb',
+            magenta: '#9333ea',
+            cyan: '#0891b2',
+            white: '#f8fafc',
+            brightBlack: '#64748b',
+            brightRed: '#ef4444',
+            brightGreen: '#22c55e',
+            brightYellow: '#eab308',
+            brightBlue: '#3b82f6',
+            brightMagenta: '#a855f7',
+            brightCyan: '#06b6d4',
+            brightWhite: '#ffffff',
+        },
+        claude: {
+            background: '#ffffff',
+            foreground: '#2a2219',
+            cursor: '#c96842',
+            selectionBackground: '#fde8de88',
+            black: '#1a1510',
+            red: '#c53030',
+            green: '#2f855a',
+            yellow: '#b7791f',
+            blue: '#2b6cb0',
+            magenta: '#805ad5',
+            cyan: '#0e7490',
+            white: '#faf8f5',
+            brightBlack: '#7d6e5c',
+            brightRed: '#e53e3e',
+            brightGreen: '#38a169',
+            brightYellow: '#d69e2e',
+            brightBlue: '#4299e1',
+            brightMagenta: '#9f7aea',
+            brightCyan: '#0891b2',
+            brightWhite: '#ffffff',
+        },
+        mono: {
+            background: '#ffffff',
+            foreground: '#171717',
+            cursor: '#404040',
+            selectionBackground: '#e5e5e588',
+            black: '#0a0a0a',
+            red: '#dc2626',
+            green: '#16a34a',
+            yellow: '#ca8a04',
+            blue: '#2563eb',
+            magenta: '#9333ea',
+            cyan: '#0891b2',
+            white: '#fafafa',
+            brightBlack: '#525252',
+            brightRed: '#ef4444',
+            brightGreen: '#22c55e',
+            brightYellow: '#eab308',
+            brightBlue: '#3b82f6',
+            brightMagenta: '#a855f7',
+            brightCyan: '#06b6d4',
+            brightWhite: '#ffffff',
+        },
+    };
+
+    function getCurrentThemeName() {
+        return document.documentElement.dataset.theme || 'default';
+    }
+
+    function getCurrentMode() {
+        return document.documentElement.dataset.mode || 'dark';
+    }
+
+    function getTerminalTheme() {
+        var pool = (getCurrentMode() === 'light') ? TERMINAL_THEMES_LIGHT : TERMINAL_THEMES;
+        return pool[getCurrentThemeName()] || TERMINAL_THEMES['default'];
+    }
+
     const terminals = {}; // keyed by paneID
     let focusedPaneID = null;
     const dataInterceptors = [];
@@ -37,28 +188,7 @@
             cursorBlink: true,
             fontSize: 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            theme: {
-                background: '#0a0a0a',
-                foreground: '#e4e4e7',
-                cursor: '#a5b4fc',
-                selectionBackground: '#4338ca88',
-                black: '#18181b',
-                red: '#ef4444',
-                green: '#22c55e',
-                yellow: '#eab308',
-                blue: '#3b82f6',
-                magenta: '#a855f7',
-                cyan: '#06b6d4',
-                white: '#e4e4e7',
-                brightBlack: '#52525b',
-                brightRed: '#f87171',
-                brightGreen: '#4ade80',
-                brightYellow: '#facc15',
-                brightBlue: '#60a5fa',
-                brightMagenta: '#c084fc',
-                brightCyan: '#22d3ee',
-                brightWhite: '#fafafa',
-            },
+            theme: getTerminalTheme(),
             allowProposedApi: true,
         });
 
@@ -372,17 +502,36 @@
             paneID: paneID,
             sessionID: sessionID,
             closed: false,
+            resizeObserver: resizeObserver,
+            container: container,
+            sendResize: sendResize,
             sendInput: function(data) {
                 sendData(data);
             },
             paste: function() {
                 handleClipboardPaste();
             },
+            detach: function() {
+                // Disconnect observer but keep terminal and WS alive
+                this.resizeObserver.disconnect();
+            },
+            reattach: function(newContainer) {
+                this.container = newContainer;
+                newContainer.appendChild(this.term.element);
+                var self = this;
+                this.resizeObserver = new ResizeObserver(function() {
+                    self.fitAddon.fit();
+                    self.sendResize();
+                });
+                this.resizeObserver.observe(newContainer);
+                this.fitAddon.fit();
+                this.sendResize();
+            },
             destroy: function() {
                 this.closed = true;
                 if (reconnectTimer) clearTimeout(reconnectTimer);
                 if (ws) ws.close();
-                resizeObserver.disconnect();
+                this.resizeObserver.disconnect();
                 term.dispose();
                 if (focusedPaneID === paneID) {
                     focusedPaneID = null;
@@ -417,6 +566,16 @@
             Object.keys(terminals).forEach(function(id) {
                 terminals[id].destroy();
             });
+        },
+        detachAll: function() {
+            Object.keys(terminals).forEach(function(id) {
+                terminals[id].detach();
+            });
+        },
+        reattach: function(paneID, newContainer) {
+            if (terminals[paneID]) {
+                terminals[paneID].reattach(newContainer);
+            }
         },
         getFocusedPaneID: function() {
             return focusedPaneID;
@@ -462,8 +621,22 @@
         },
         addDataInterceptor: function(fn) {
             dataInterceptors.push(fn);
+        },
+        setTheme: function(themeName, mode) {
+            var pool = (mode === 'light') ? TERMINAL_THEMES_LIGHT : TERMINAL_THEMES;
+            var theme = pool[themeName] || TERMINAL_THEMES['default'];
+            Object.keys(terminals).forEach(function(id) {
+                terminals[id].term.options.theme = theme;
+            });
         }
     };
+
+    // Listen for theme changes
+    window.addEventListener('clawide:theme-changed', function(e) {
+        var themeName = e.detail && e.detail.theme || 'default';
+        var mode = e.detail && e.detail.mode || 'dark';
+        window.ClawIDETerminal.setTheme(themeName, mode);
+    });
 
     // Close all WebSocket connections before page navigation to prevent
     // HTTP/1.1 connection exhaustion (Chrome allows max 6 per host).
