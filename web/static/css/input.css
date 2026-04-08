@@ -316,6 +316,32 @@
     @apply border-b-accent-border/60;
 }
 
+/* Pane drag-and-drop */
+.pane-leaf.dragging {
+    opacity: 0.4;
+}
+
+.drop-indicator {
+    position: absolute;
+    z-index: 50;
+    pointer-events: none;
+    background: rgba(99, 102, 241, 0.15);
+    transition: all 80ms ease-out;
+    border-radius: 4px;
+}
+
+.pane-toolbar[draggable="true"] {
+    cursor: grab;
+}
+
+.pane-toolbar[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.pane-toolbar[draggable="true"] button {
+    cursor: pointer;
+}
+
 /* Editor pane styles */
 .editor-pane-leaf {
     overflow: hidden;
@@ -571,6 +597,14 @@
     @apply text-xs text-th-text-muted truncate cursor-default;
     max-width: 120px;
     outline: none;
+    border-radius: 3px;
+    padding: 1px 4px;
+    transition: background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.pane-name:hover {
+    @apply text-gray-300 bg-gray-800/60;
+    cursor: pointer;
 }
 
 .pane-name[contenteditable="true"] {
@@ -604,6 +638,14 @@
     @apply text-sm text-th-text-tertiary truncate cursor-default;
     max-width: 140px;
     outline: none;
+    border-radius: 3px;
+    padding: 1px 4px;
+    transition: background-color 120ms ease-out, color 120ms ease-out;
+}
+
+.carousel-pane-name:hover {
+    @apply text-gray-200 bg-gray-800/60;
+    cursor: pointer;
 }
 
 .carousel-pane-name[contenteditable="true"] {

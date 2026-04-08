@@ -16,6 +16,56 @@
     // Carousel state per session: { currentIndex, paneNodes, container, projectID }
     var carouselState = {};
 
+    // --- Drag-and-drop state (desktop only) ---
+    var dragState = null; // { paneID, sessionID, projectID, leafEl, pending }
+
+    function getDropPosition(e, rect) {
+        var x = (e.clientX - rect.left) / rect.width;
+        var y = (e.clientY - rect.top) / rect.height;
+        var dL = x, dR = 1 - x, dT = y, dB = 1 - y;
+        var min = Math.min(dL, dR, dT, dB);
+        if (min === dL) return 'left';
+        if (min === dR) return 'right';
+        if (min === dT) return 'top';
+        return 'bottom';
+    }
+
+    function showDropIndicator(leafEl, position) {
+        // Remove existing indicator from this leaf
+        var existing = leafEl.querySelector('.drop-indicator');
+        if (existing) existing.remove();
+
+        var indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+
+        switch (position) {
+            case 'left':
+                indicator.style.cssText = 'left:0;top:0;width:50%;height:100%;border-right:2px solid rgba(99,102,241,0.6);';
+                break;
+            case 'right':
+                indicator.style.cssText = 'left:50%;top:0;width:50%;height:100%;border-left:2px solid rgba(99,102,241,0.6);';
+                break;
+            case 'top':
+                indicator.style.cssText = 'left:0;top:0;width:100%;height:50%;border-bottom:2px solid rgba(99,102,241,0.6);';
+                break;
+            case 'bottom':
+                indicator.style.cssText = 'left:0;top:50%;width:100%;height:50%;border-top:2px solid rgba(99,102,241,0.6);';
+                break;
+        }
+
+        leafEl.appendChild(indicator);
+    }
+
+    function removeDropIndicator(leafEl) {
+        var existing = leafEl.querySelector('.drop-indicator');
+        if (existing) existing.remove();
+    }
+
+    function removeAllDropIndicators() {
+        var indicators = document.querySelectorAll('.drop-indicator');
+        indicators.forEach(function(el) { el.remove(); });
+    }
+
     // --- Render entry point ---
 
     function renderLayout(container, layoutJSON, sessionID, projectID) {
@@ -166,6 +216,16 @@
             };
             kebabMenu.appendChild(menuItemShell);
 
+            // Rename button
+            var menuItemRename = document.createElement('button');
+            menuItemRename.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemRename.textContent = 'Rename';
+            menuItemRename.onclick = function() {
+                kebabMenu.classList.add('hidden');
+                nameSpan.dispatchEvent(new MouseEvent('dblclick'));
+            };
+            kebabMenu.appendChild(menuItemRename);
+
             // Add separator
             var separator = document.createElement('div');
             separator.className = 'border-t border-th-border-strong my-1';
@@ -209,6 +269,75 @@
             toolbar.appendChild(toolbarRight);
 
             leafEl.appendChild(toolbar);
+
+            // --- Drag-and-drop support (desktop only) ---
+            if (!isPhoneLayout()) {
+                // Make toolbar draggable
+                toolbar.setAttribute('draggable', 'true');
+
+                // Prevent buttons from initiating drag
+                var toolbarButtons = toolbar.querySelectorAll('button');
+                toolbarButtons.forEach(function(btn) {
+                    btn.setAttribute('draggable', 'false');
+                });
+
+                toolbar.addEventListener('dragstart', function(e) {
+                    if (isPhoneLayout()) { e.preventDefault(); return; }
+                    // Need at least 2 panes to move
+                    if (activeLayouts[sessionID] && activeLayouts[sessionID].length < 2) {
+                        e.preventDefault();
+                        return;
+                    }
+                    dragState = {
+                        paneID: node.pane_id,
+                        sessionID: sessionID,
+                        projectID: projectID,
+                        leafEl: leafEl,
+                        pending: false
+                    };
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', node.pane_id);
+                    // Defer adding class so the drag image captures the original look
+                    requestAnimationFrame(function() {
+                        leafEl.classList.add('dragging');
+                    });
+                });
+
+                toolbar.addEventListener('dragend', function() {
+                    leafEl.classList.remove('dragging');
+                    removeAllDropIndicators();
+                    dragState = null;
+                });
+
+                // Drop zone listeners on the leaf element
+                leafEl.style.position = 'relative'; // for absolute-positioned indicator
+
+                leafEl.addEventListener('dragover', function(e) {
+                    if (!dragState || dragState.paneID === node.pane_id || dragState.pending) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    var rect = leafEl.getBoundingClientRect();
+                    var position = getDropPosition(e, rect);
+                    showDropIndicator(leafEl, position);
+                });
+
+                leafEl.addEventListener('dragleave', function(e) {
+                    // Only remove if actually leaving the leaf (not entering a child)
+                    if (!leafEl.contains(e.relatedTarget)) {
+                        removeDropIndicator(leafEl);
+                    }
+                });
+
+                leafEl.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (!dragState || dragState.paneID === node.pane_id || dragState.pending) return;
+                    var rect = leafEl.getBoundingClientRect();
+                    var position = getDropPosition(e, rect);
+                    removeAllDropIndicators();
+                    dragState.pending = true;
+                    movePane(projectID, sessionID, dragState.paneID, node.pane_id, position);
+                });
+            }
 
             // xterm container
             var xtermContainer = document.createElement('div');
@@ -625,6 +754,84 @@
         });
     }
 
+    function movePane(projectID, sessionID, sourcePaneID, targetPaneID, position) {
+        fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + sourcePaneID + '/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_pane_id: targetPaneID, position: position }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var container = document.getElementById('session-panes-' + sessionID);
+            if (container) {
+                rerenderWithTerminalPreservation(container, data.layout, sessionID, projectID);
+            }
+        })
+        .catch(function(err) {
+            console.error('Failed to move pane:', err);
+        })
+        .finally(function() {
+            if (dragState) dragState.pending = false;
+            dragState = null;
+        });
+    }
+
+    // Re-render the layout while preserving live terminal instances (no WS reconnect)
+    function rerenderWithTerminalPreservation(container, layoutJSON, sessionID, projectID) {
+        var oldPaneIDs = activeLayouts[sessionID] || [];
+
+        // Detach all live terminals (disconnect ResizeObserver but keep xterm + WS)
+        oldPaneIDs.forEach(function(paneID) {
+            var ts = window.ClawIDETerminal.get(paneID);
+            if (ts) {
+                ts.detach();
+            }
+        });
+
+        // Clear the container and rebuild DOM from new layout
+        container.innerHTML = '';
+        container.dataset.layout = JSON.stringify(layoutJSON);
+
+        var newPaneIDs = [];
+        buildNode(container, layoutJSON, sessionID, projectID, newPaneIDs);
+        activeLayouts[sessionID] = newPaneIDs;
+
+        // Reattach preserved terminals into their new containers
+        requestAnimationFrame(function() {
+            newPaneIDs.forEach(function(paneID) {
+                var paneContainer = document.getElementById('pane-' + paneID);
+                if (!paneContainer) return;
+
+                var ts = window.ClawIDETerminal.get(paneID);
+                if (ts) {
+                    // Reattach existing terminal to new container
+                    window.ClawIDETerminal.reattach(paneID, paneContainer);
+                    paneContainer.dataset.initialized = 'true';
+                } else {
+                    // New pane (shouldn't happen in a move, but be safe)
+                    initPaneTerminal(sessionID, paneID);
+                }
+            });
+
+            // Destroy terminals for panes that no longer exist in the layout
+            oldPaneIDs.forEach(function(paneID) {
+                if (newPaneIDs.indexOf(paneID) === -1) {
+                    window.ClawIDETerminal.destroy(paneID);
+                }
+            });
+
+            // Restore focus
+            if (newPaneIDs.length > 0) {
+                var focusedID = window.ClawIDETerminal.getFocusedPaneID();
+                if (focusedID && newPaneIDs.indexOf(focusedID) !== -1) {
+                    window.ClawIDETerminal.focusPane(focusedID);
+                } else {
+                    window.ClawIDETerminal.setFocusedPaneID(newPaneIDs[0]);
+                }
+            }
+        });
+    }
+
     function renamePane(projectID, sessionID, paneID, name) {
         fetch('/projects/' + projectID + '/sessions/' + sessionID + '/panes/' + paneID + '/rename', {
             method: 'PATCH',
@@ -641,6 +848,7 @@
         render: renderLayout,
         splitPane: splitPane,
         closePane: closePane,
+        movePane: movePane,
         renamePane: renamePane,
         isPhoneLayout: isPhoneLayout,
         navigateCarousel: navigateCarousel,

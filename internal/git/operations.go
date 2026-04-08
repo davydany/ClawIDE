@@ -150,6 +150,16 @@ func PullFromBranch(repoPath, remote, branch string) error {
 	return nil
 }
 
+// PushBranch pushes a local branch to the given remote.
+func PushBranch(repoPath, remote, branch string) error {
+	cmd := exec.Command("git", "push", remote, branch)
+	cmd.Dir = repoPath
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git push %s %s: %s: %w", remote, branch, strings.TrimSpace(string(output)), err)
+	}
+	return nil
+}
+
 // DeleteBranch safely deletes a local branch. Uses -d (not -D) so git
 // will refuse if the branch has unmerged commits.
 func DeleteBranch(repoPath, branch string) error {
@@ -375,4 +385,25 @@ func SanitizeBranchName(name string) string {
 		slug = "unnamed"
 	}
 	return "feature/" + slug
+}
+
+// SanitizeBranchNameWithPrefix converts a human-readable name into a valid
+// git branch name using the given prefix. If prefix is empty, no prefix is
+// applied. Examples:
+//
+//	("login fix", "hotfix") → "hotfix/login-fix"
+//	("login fix", "")       → "login-fix"
+func SanitizeBranchNameWithPrefix(name, prefix string) string {
+	slug := strings.ToLower(strings.TrimSpace(name))
+	slug = branchSlugRe.ReplaceAllString(slug, "-")
+	slug = strings.Trim(slug, "-")
+	if slug == "" {
+		slug = "unnamed"
+	}
+	prefix = strings.TrimSpace(prefix)
+	prefix = strings.TrimSuffix(prefix, "/")
+	if prefix == "" {
+		return slug
+	}
+	return prefix + "/" + slug
 }
