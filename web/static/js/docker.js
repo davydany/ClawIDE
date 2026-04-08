@@ -158,7 +158,7 @@
         if (health === 'starting') return 'bg-amber-500';
         if (state === 'paused') return 'bg-amber-500';
         if (state === 'running') return 'bg-green-500';
-        return 'bg-gray-500';
+        return 'bg-th-text-faint';
     }
 
     function healthLabel(svc) {
@@ -181,7 +181,7 @@
         if (color === 'bg-green-500') return 'text-green-400 bg-green-900/30';
         if (color === 'bg-amber-500') return 'text-amber-400 bg-amber-900/30';
         if (color === 'bg-red-500') return 'text-red-400 bg-red-900/30';
-        return 'text-gray-400 bg-gray-800';
+        return 'text-th-text-muted bg-surface-raised';
     }
 
     // Build a lookup map from runtime services keyed by compose service name.
@@ -214,7 +214,7 @@
             var isRunning = runtime && runtime.state && runtime.state.toLowerCase() === 'running';
             var escapedName = escapeHtml(svc.name);
 
-            html += '<div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">';
+            html += '<div class="bg-surface-base border border-th-border rounded-lg overflow-hidden">';
 
             // ── Header: two-part layout ──
             html += '<div class="flex items-start justify-between p-3">';
@@ -225,15 +225,15 @@
             // Row 1: chevron + status dot + service name
             html += '<div class="flex items-center gap-2">';
             // Chevron
-            html += '<svg id="' + svcId + '-chevron" class="w-3 h-3 text-gray-500 transition-transform flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>';
+            html += '<svg id="' + svcId + '-chevron" class="w-3 h-3 text-th-text-faint transition-transform flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd"/></svg>';
             // Status dot
             if (runtime) {
                 html += '<span class="w-2 h-2 rounded-full flex-shrink-0 ' + healthColor(runtime) + '"></span>';
             } else {
-                html += '<span class="w-2 h-2 rounded-full flex-shrink-0 bg-gray-600"></span>';
+                html += '<span class="w-2 h-2 rounded-full flex-shrink-0 bg-th-border-muted"></span>';
             }
             // Service name
-            html += '<span class="text-sm font-mono text-white font-medium">' + escapedName + '</span>';
+            html += '<span class="text-sm font-mono text-th-text-primary font-medium">' + escapedName + '</span>';
             html += '</div>';
 
             // Row 2: health badge + status text + image/build + ports (indented under name)
@@ -244,13 +244,13 @@
             }
             // Status text
             if (runtime && runtime.status) {
-                html += '<span class="text-xs text-gray-500">' + escapeHtml(runtime.status) + '</span>';
+                html += '<span class="text-xs text-th-text-faint">' + escapeHtml(runtime.status) + '</span>';
             } else {
-                html += '<span class="text-xs text-gray-600 italic">Not running</span>';
+                html += '<span class="text-xs text-th-text-ghost italic">Not running</span>';
             }
             // Image or build badge
             if (svc.image) {
-                html += '<span class="text-xs bg-indigo-900/40 text-indigo-300 px-1.5 py-0.5 rounded truncate max-w-[200px]">' + escapeHtml(svc.image) + '</span>';
+                html += '<span class="text-xs bg-accent-muted/40 text-accent-text px-1.5 py-0.5 rounded truncate max-w-[200px]">' + escapeHtml(svc.image) + '</span>';
             } else if (svc.build) {
                 html += '<span class="text-xs bg-amber-900/40 text-amber-300 px-1.5 py-0.5 rounded truncate max-w-[200px]">build: ' + escapeHtml(svc.build) + '</span>';
             }
@@ -258,7 +258,7 @@
             if (svc.ports) {
                 svc.ports.forEach(function(port) {
                     if (port.container_port) {
-                        html += '<span class="text-xs font-mono bg-indigo-900/30 text-indigo-300 px-1.5 py-0.5 rounded">:' + port.container_port + '</span>';
+                        html += '<span class="text-xs font-mono bg-accent-muted/30 text-accent-text px-1.5 py-0.5 rounded">:' + port.container_port + '</span>';
                     }
                 });
             }
@@ -289,22 +289,22 @@
             html += '</div>'; // end header
 
             // ── Detail section (hidden by default) ──
-            html += '<div id="' + svcId + '-detail" class="hidden border-t border-gray-800 px-3 py-2 space-y-2 text-xs">';
+            html += '<div id="' + svcId + '-detail" class="hidden border-t border-th-border px-3 py-2 space-y-2 text-xs">';
             if (svc.container_name) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Container</span><span class="text-gray-300 font-mono">' + escapeHtml(svc.container_name) + '</span></div>';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Container</span><span class="text-th-text-tertiary font-mono">' + escapeHtml(svc.container_name) + '</span></div>';
             }
             if (svc.command) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Command</span><span class="text-gray-300 font-mono break-all">' + escapeHtml(svc.command) + '</span></div>';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Command</span><span class="text-th-text-tertiary font-mono break-all">' + escapeHtml(svc.command) + '</span></div>';
             }
             if (svc.restart) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Restart</span><span class="text-gray-300">' + escapeHtml(svc.restart) + '</span></div>';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Restart</span><span class="text-th-text-tertiary">' + escapeHtml(svc.restart) + '</span></div>';
             }
             // Healthcheck
             if (svc.healthcheck) {
                 var hc = svc.healthcheck;
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Healthcheck</span><div>';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Healthcheck</span><div>';
                 if (hc.test) {
-                    html += '<span class="text-gray-300 font-mono break-all">' + escapeHtml(hc.test) + '</span>';
+                    html += '<span class="text-th-text-tertiary font-mono break-all">' + escapeHtml(hc.test) + '</span>';
                 }
                 if (hc.disabled) {
                     html += '<span class="text-red-400 ml-1">(disabled)</span>';
@@ -318,51 +318,51 @@
                 if (badges.length > 0) {
                     html += '<div class="flex flex-wrap gap-1 mt-1">';
                     badges.forEach(function(b) {
-                        html += '<span class="bg-gray-800 text-gray-400 font-mono px-1.5 py-0.5 rounded">' + escapeHtml(b) + '</span>';
+                        html += '<span class="bg-surface-raised text-th-text-muted font-mono px-1.5 py-0.5 rounded">' + escapeHtml(b) + '</span>';
                     });
                     html += '</div>';
                 }
                 html += '</div></div>';
             }
             if (svc.depends_on && svc.depends_on.length > 0) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Depends on</span><div class="flex flex-wrap gap-1">';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Depends on</span><div class="flex flex-wrap gap-1">';
                 svc.depends_on.forEach(function(dep) {
-                    html += '<span class="bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">' + escapeHtml(dep) + '</span>';
+                    html += '<span class="bg-surface-raised text-th-text-muted px-1.5 py-0.5 rounded">' + escapeHtml(dep) + '</span>';
                 });
                 html += '</div></div>';
             }
             if (svc.environment && svc.environment.length > 0) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Environment</span><div class="flex flex-wrap gap-1">';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Environment</span><div class="flex flex-wrap gap-1">';
                 svc.environment.forEach(function(env) {
-                    html += '<span class="bg-gray-800 text-gray-400 font-mono px-1.5 py-0.5 rounded">' + escapeHtml(env) + '</span>';
+                    html += '<span class="bg-surface-raised text-th-text-muted font-mono px-1.5 py-0.5 rounded">' + escapeHtml(env) + '</span>';
                 });
                 html += '</div></div>';
             }
             if (svc.volumes && svc.volumes.length > 0) {
-                html += '<div class="flex gap-2"><span class="text-gray-500 w-28 flex-shrink-0">Volumes</span><div class="flex flex-col gap-0.5">';
+                html += '<div class="flex gap-2"><span class="text-th-text-faint w-28 flex-shrink-0">Volumes</span><div class="flex flex-col gap-0.5">';
                 svc.volumes.forEach(function(vol) {
-                    html += '<span class="text-gray-400 font-mono">' + escapeHtml(vol) + '</span>';
+                    html += '<span class="text-th-text-muted font-mono">' + escapeHtml(vol) + '</span>';
                 });
                 html += '</div></div>';
             }
             html += '</div>';
 
             // ── Inline logs container (hidden by default) ──
-            html += '<div id="' + svcId + '-logs" class="hidden border-t border-gray-800">';
+            html += '<div id="' + svcId + '-logs" class="hidden border-t border-th-border">';
             html += '<div class="flex items-center justify-between px-3 py-2">';
-            html += '<span class="text-xs text-gray-500">Logs (last 250 lines)</span>';
-            html += '<button onclick="ClawIDEDocker.closeLogs(\'' + escapedName + '\')" class="text-xs text-gray-500 hover:text-white transition-colors">Close</button>';
+            html += '<span class="text-xs text-th-text-faint">Logs (last 250 lines)</span>';
+            html += '<button onclick="ClawIDEDocker.closeLogs(\'' + escapedName + '\')" class="text-xs text-th-text-faint hover:text-th-text-primary transition-colors">Close</button>';
             html += '</div>';
-            html += '<pre id="' + svcId + '-logs-output" class="px-3 pb-3 text-xs font-mono text-gray-400 max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
+            html += '<pre id="' + svcId + '-logs-output" class="px-3 pb-3 text-xs font-mono text-th-text-muted max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
             html += '</div>';
 
             // ── Inline build output container (hidden by default) ──
-            html += '<div id="' + svcId + '-build" class="hidden border-t border-gray-800">';
+            html += '<div id="' + svcId + '-build" class="hidden border-t border-th-border">';
             html += '<div class="flex items-center justify-between px-3 py-2">';
             html += '<span class="text-xs text-purple-400">Build Output</span>';
-            html += '<button onclick="ClawIDEDocker.closeBuild(\'' + escapedName + '\')" class="text-xs text-gray-500 hover:text-white transition-colors">Close</button>';
+            html += '<button onclick="ClawIDEDocker.closeBuild(\'' + escapedName + '\')" class="text-xs text-th-text-faint hover:text-th-text-primary transition-colors">Close</button>';
             html += '</div>';
-            html += '<pre id="' + svcId + '-build-output" class="px-3 pb-3 text-xs font-mono text-gray-400 max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
+            html += '<pre id="' + svcId + '-build-output" class="px-3 pb-3 text-xs font-mono text-th-text-muted max-h-80 overflow-y-auto whitespace-pre-wrap"></pre>';
             html += '</div>';
 
             html += '</div>'; // end card
@@ -444,7 +444,7 @@
         setButtonsBusy(true, 'up');
         var container = document.getElementById('docker-compose-services');
         if (container) {
-            container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Starting services...</div>';
+            container.innerHTML = '<div class="text-th-text-muted text-sm px-4 py-3">Starting services...</div>';
         }
 
         fetch(apiBase(projectID) + '/api/docker/up', { method: 'POST' })
@@ -471,7 +471,7 @@
         setButtonsBusy(true, 'down');
         var container = document.getElementById('docker-compose-services');
         if (container) {
-            container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Stopping services...</div>';
+            container.innerHTML = '<div class="text-th-text-muted text-sm px-4 py-3">Stopping services...</div>';
         }
 
         fetch(apiBase(projectID) + '/api/docker/down', { method: 'POST' })
@@ -498,7 +498,7 @@
         setButtonsBusy(true, 'restart');
         var container = document.getElementById('docker-compose-services');
         if (container) {
-            container.innerHTML = '<div class="text-gray-400 text-sm px-4 py-3">Restarting services...</div>';
+            container.innerHTML = '<div class="text-th-text-muted text-sm px-4 py-3">Restarting services...</div>';
         }
 
         fetch(apiBase(projectID) + '/api/docker/restart', { method: 'POST' })

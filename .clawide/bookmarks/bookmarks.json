@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "id": "148edb4c-34c7-49ed-857d-e6e079398b4a",
+      "name": "Test",
+      "order": 0,
+      "created_at": "2026-02-15T23:47:35.953431-05:00",
+      "updated_at": "2026-02-15T23:47:35.953431-05:00"
+    }
+  ],
+  "bookmarks": [
+    {
+      "id": "21c194c7-36c7-4b76-bc81-9eed1c77d34d",
+      "project_id": "720f695f-c49b-4e8d-a642-c03c943fb77d",
+      "name": "GitHub",
+      "url": "https://github.com/davydany/ClawIDE",
+      "in_bar": true,
+      "order": 0,
+      "created_at": "2026-02-14T23:14:58.568461-05:00",
+      "updated_at": "2026-02-16T20:39:49.383856-05:00"
+    },
+    {
+      "id": "2fe972e9-7bb1-4d91-b805-9b0813d747de",
+      "project_id": "720f695f-c49b-4e8d-a642-c03c943fb77d",
+      "name": "ClawIDE Website",
+      "url": "https://www.clawide.app",
+      "in_bar": true,
+      "order": 0,
+      "created_at": "2026-02-16T20:39:08.871472-05:00",
+      "updated_at": "2026-02-16T20:39:51.116738-05:00"
+    }
+  ]
+}

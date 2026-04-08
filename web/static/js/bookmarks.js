@@ -205,7 +205,7 @@
         if (!list) return;
 
         if (bookmarks.length === 0) {
-            list.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">No bookmarks yet</div>';
+            list.innerHTML = '<div class="text-th-text-faint text-xs p-3 text-center">No bookmarks yet</div>';
             return;
         }
 
@@ -214,7 +214,7 @@
             var bm = bookmarks[i];
             var domain = getDomain(bm.url);
             var faviconUrl = getFaviconUrl(bm.url);
-            var starClass = bm.starred ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400';
+            var starClass = bm.starred ? 'text-yellow-400' : 'text-th-text-ghost hover:text-yellow-400';
             var starFill = bm.starred ? 'currentColor' : 'none';
 
             html += '<div class="bookmark-item group" data-id="' + bm.id + '">';
@@ -233,20 +233,20 @@
             }
 
             // Name as link
-            html += '    <a href="' + escapeHTML(bm.url) + '" target="_blank" rel="noopener" class="text-xs text-white font-medium truncate hover:text-indigo-300 transition-colors" title="' + escapeHTML(bm.url) + '">' + escapeHTML(bm.name) + '</a>';
+            html += '    <a href="' + escapeHTML(bm.url) + '" target="_blank" rel="noopener" class="text-xs text-th-text-primary font-medium truncate hover:text-accent-text transition-colors" title="' + escapeHTML(bm.url) + '">' + escapeHTML(bm.name) + '</a>';
 
             // Actions
             html += '    <div class="flex items-center gap-1 flex-shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-white transition-colors" title="Edit" data-bookmark-edit="' + bm.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-th-text-primary transition-colors" title="Edit" data-bookmark-edit="' + bm.id + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
             html += '      </button>';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-red-400 transition-colors" title="Delete" data-bookmark-delete="' + bm.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-red-400 transition-colors" title="Delete" data-bookmark-delete="' + bm.id + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
             html += '      </button>';
             html += '    </div>';
 
             html += '  </div>';
-            html += '  <div class="text-[10px] text-gray-500 mt-0.5 truncate pl-6">' + escapeHTML(domain) + '</div>';
+            html += '  <div class="text-[10px] text-th-text-faint mt-0.5 truncate pl-6">' + escapeHTML(domain) + '</div>';
             html += '</div>';
         }
         list.innerHTML = html;
@@ -301,16 +301,16 @@
             var faviconUrl = getFaviconUrl(bm.url);
 
             html += '<a href="' + escapeHTML(bm.url) + '" target="_blank" rel="noopener"';
-            html += '   class="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"';
+            html += '   class="flex items-center gap-1 px-2 py-1.5 text-xs text-th-text-muted hover:text-th-text-primary transition-colors rounded hover:bg-surface-raised"';
             html += '   title="' + escapeHTML(bm.name) + '">';
 
             if (bm.emoji) {
                 html += '<span class="text-sm">' + escapeHTML(bm.emoji) + '</span>';
             } else if (faviconUrl) {
                 html += '<img src="' + escapeHTML(faviconUrl) + '" class="w-4 h-4" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">';
-                html += '<svg style="display:none" class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
+                html += '<svg style="display:none" class="w-3.5 h-3.5 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
             } else {
-                html += '<svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
+                html += '<svg class="w-3.5 h-3.5 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
             }
 
             html += '<span class="max-w-[80px] truncate">' + escapeHTML(bm.name) + '</span>';

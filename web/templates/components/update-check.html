@@ -2,8 +2,8 @@
 <div x-data="updateCheck()" x-init="init()" class="relative">
     <!-- Update icon button -->
     <button @click="toggle()"
-            :class="updateAvailable ? 'text-blue-400 hover:text-blue-300' : 'text-gray-400 hover:text-gray-300'"
-            class="p-1.5 rounded transition-colors hover:bg-gray-800"
+            :class="updateAvailable ? 'text-blue-400 hover:text-blue-300' : 'text-th-text-muted hover:text-th-text-tertiary'"
+            class="p-1.5 rounded transition-colors hover:bg-surface-raised"
             :title="updateAvailable ? 'Update available: v' + latestVersion : 'Up to date'">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -22,30 +22,30 @@
          x-transition:leave="transition ease-in duration-100"
          x-transition:leave-start="opacity-100 scale-100"
          x-transition:leave-end="opacity-0 scale-95"
-         class="absolute right-0 top-full mt-2 w-72 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+         class="absolute right-0 top-full mt-2 w-72 bg-surface-base border border-th-border-strong rounded-lg shadow-xl z-50">
 
         <!-- Header -->
-        <div class="px-4 py-3 border-b border-gray-800">
-            <h3 class="text-sm font-semibold text-white">Version Information</h3>
+        <div class="px-4 py-3 border-b border-th-border">
+            <h3 class="text-sm font-semibold text-th-text-primary">Version Information</h3>
         </div>
 
         <!-- Content -->
         <div class="px-4 py-3 space-y-3">
             <!-- Current version -->
             <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-400">Current version</span>
-                <span class="text-sm font-medium text-white font-mono" x-text="currentVersion || '—'"></span>
+                <span class="text-xs text-th-text-muted">Current version</span>
+                <span class="text-sm font-medium text-th-text-primary font-mono" x-text="currentVersion || '—'"></span>
             </div>
 
             <!-- Latest version -->
             <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-400">Latest version</span>
-                <span class="text-sm font-medium text-white font-mono" x-text="latestVersion || '—'"></span>
+                <span class="text-xs text-th-text-muted">Latest version</span>
+                <span class="text-sm font-medium text-th-text-primary font-mono" x-text="latestVersion || '—'"></span>
             </div>
 
             <!-- Status -->
-            <div class="pt-2 border-t border-gray-800">
-                <div x-show="checking" class="flex items-center gap-2 text-xs text-gray-400">
+            <div class="pt-2 border-t border-th-border">
+                <div x-show="checking" class="flex items-center gap-2 text-xs text-th-text-muted">
                     <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
@@ -57,7 +57,7 @@
                     </svg>
                     Update available
                 </div>
-                <div x-show="!checking && !updateAvailable" class="flex items-center gap-2 text-xs text-gray-500">
+                <div x-show="!checking && !updateAvailable" class="flex items-center gap-2 text-xs text-th-text-faint">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
@@ -67,16 +67,16 @@
         </div>
 
         <!-- Footer with actions -->
-        <div class="px-4 py-3 border-t border-gray-800 flex items-center gap-2">
+        <div class="px-4 py-3 border-t border-th-border flex items-center gap-2">
             <button @click="checkNow()"
                     :disabled="checking"
-                    class="flex-1 text-xs font-medium px-3 py-1.5 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50 transition-colors">
+                    class="flex-1 text-xs font-medium px-3 py-1.5 rounded bg-surface-raised text-th-text-tertiary hover:bg-surface-overlay disabled:opacity-50 transition-colors">
                 <span x-show="!checking">Check Now</span>
                 <span x-show="checking">Checking...</span>
             </button>
             <button x-show="updateAvailable" @click="applyUpdate()"
                     :disabled="installing"
-                    class="flex-1 text-xs font-medium px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 transition-colors">
+                    class="flex-1 text-xs font-medium px-3 py-1.5 rounded bg-blue-600 text-th-text-primary hover:bg-blue-500 disabled:opacity-50 transition-colors">
                 <span x-show="!installing">Update Now</span>
                 <span x-show="installing">Installing...</span>
             </button>

@@ -111,7 +111,7 @@ var ClawIDEColor = (function() {
         container.innerHTML = '';
 
         var label = document.createElement('p');
-        label.className = 'text-[10px] text-gray-500 uppercase mb-1.5';
+        label.className = 'text-[10px] text-th-text-faint uppercase mb-1.5';
         label.textContent = 'Feature Color';
         container.appendChild(label);
 
@@ -135,9 +135,9 @@ var ClawIDEColor = (function() {
 
         // Clear button
         var clearBtn = document.createElement('button');
-        clearBtn.className = 'w-5 h-5 rounded-full border border-gray-600 hover:ring-2 ring-white/50 flex items-center justify-center';
+        clearBtn.className = 'w-5 h-5 rounded-full border border-th-border-muted hover:ring-2 ring-white/50 flex items-center justify-center';
         clearBtn.title = 'Clear color';
-        clearBtn.innerHTML = '<svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        clearBtn.innerHTML = '<svg class="w-3 h-3 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
         clearBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();

@@ -214,9 +214,9 @@
 
         pane.editorContainer.innerHTML = '';
         var empty = document.createElement('div');
-        empty.className = 'flex items-center justify-center h-full text-gray-500';
+        empty.className = 'flex items-center justify-center h-full text-th-text-faint';
         empty.innerHTML = '<div class="text-center">' +
-            '<svg class="w-10 h-10 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<svg class="w-10 h-10 mx-auto mb-2 text-th-text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>' +
             '</svg>' +
             '<p class="text-xs">Select a file</p>' +
@@ -262,9 +262,9 @@
         if (!editorLayout) {
             var empty = document.createElement('div');
             empty.id = 'editor-empty-state';
-            empty.className = 'flex items-center justify-center flex-1 text-gray-500';
+            empty.className = 'flex items-center justify-center flex-1 text-th-text-faint';
             empty.innerHTML = '<div class="text-center">' +
-                '<svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                '<svg class="w-12 h-12 mx-auto mb-3 text-th-text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                 '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>' +
                 '</svg>' +
                 '<p class="text-sm">Select a file to edit</p>' +
@@ -361,7 +361,7 @@
         previewGroup.className = 'editor-preview-group hidden';
 
         var previewSideBtn = document.createElement('button');
-        previewSideBtn.className = 'editor-preview-btn editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        previewSideBtn.className = 'editor-preview-btn editor-control-btn text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
         previewSideBtn.dataset.tooltip = 'Side-by-side Preview';
         previewSideBtn.innerHTML = ICON_PREVIEW_SIDE;
         previewSideBtn.onclick = function(e) {
@@ -374,7 +374,7 @@
         previewGroup.appendChild(previewSideBtn);
 
         var previewOnlyBtn = document.createElement('button');
-        previewOnlyBtn.className = 'editor-preview-btn editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        previewOnlyBtn.className = 'editor-preview-btn editor-control-btn text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
         previewOnlyBtn.dataset.tooltip = 'Full Preview';
         previewOnlyBtn.innerHTML = ICON_PREVIEW;
         previewOnlyBtn.onclick = function(e) {
@@ -401,7 +401,7 @@
         header._previewSeparator = separator;
 
         var splitHBtn = document.createElement('button');
-        splitHBtn.className = 'editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        splitHBtn.className = 'editor-control-btn text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
         splitHBtn.dataset.tooltip = 'Split Horizontal';
         splitHBtn.innerHTML = ICON_SPLIT_H;
         splitHBtn.onclick = function(e) {
@@ -411,7 +411,7 @@
         controls.appendChild(splitHBtn);
 
         var splitVBtn = document.createElement('button');
-        splitVBtn.className = 'editor-control-btn text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        splitVBtn.className = 'editor-control-btn text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
         splitVBtn.dataset.tooltip = 'Split Vertical';
         splitVBtn.innerHTML = ICON_SPLIT_V;
         splitVBtn.onclick = function(e) {
@@ -421,7 +421,7 @@
         controls.appendChild(splitVBtn);
 
         var closeBtn = document.createElement('button');
-        closeBtn.className = 'editor-control-btn text-gray-500 hover:text-red-400 px-1 transition-colors';
+        closeBtn.className = 'editor-control-btn text-th-text-faint hover:text-red-400 px-1 transition-colors';
         closeBtn.dataset.tooltip = 'Close Pane';
         closeBtn.innerHTML = ICON_CLOSE;
         closeBtn.onclick = function(e) {
@@ -513,7 +513,7 @@
         if (!tab.wrapperEl) return null;
 
         var container = document.createElement('div');
-        container.className = 'md-preview-container note-markdown-preview text-sm text-gray-300';
+        container.className = 'md-preview-container note-markdown-preview text-sm text-th-text-tertiary';
         tab.wrapperEl.appendChild(container);
         tab.previewEl = container;
         return container;
@@ -681,7 +681,7 @@
                 // Preview indicator for active .md tabs
                 if (tab.previewMode && tab.previewMode !== 'off' && isMarkdownFile(tab.filePath)) {
                     var previewIcon = document.createElement('span');
-                    previewIcon.className = 'text-indigo-400 flex items-center';
+                    previewIcon.className = 'text-accent-text flex items-center';
                     previewIcon.innerHTML = '<svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
                     tabEl.appendChild(previewIcon);
                 }
@@ -735,7 +735,7 @@
         if (!tab) return;
 
         // Remove empty state placeholder if present
-        var placeholder = pane.editorContainer.querySelector('.text-gray-500');
+        var placeholder = pane.editorContainer.querySelector('.text-th-text-faint');
         if (placeholder && !placeholder.classList.contains('editor-tab-wrapper')) {
             pane.editorContainer.innerHTML = '';
         }

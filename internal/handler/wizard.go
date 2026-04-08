@@ -33,6 +33,8 @@ func (h *Handlers) ShowWizard(w http.ResponseWriter, r *http.Request) {
 	// Render wizard HTML page
 	data := map[string]any{
 		"Title":       "New Project - ClawIDE",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"Languages":   languages,
 		"ProjectsDir": h.cfg.ProjectsDir,
 	}

@@ -114,11 +114,11 @@
         // Update tab styles
         if (tabProject && tabGlobal) {
             if (scope === 'project') {
-                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300';
-                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800';
+                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-accent/30 text-accent-text';
+                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised';
             } else {
-                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800';
-                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300';
+                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised';
+                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-accent/30 text-accent-text';
             }
         }
 
@@ -157,7 +157,7 @@
         if (!list) return;
 
         if (notes.length === 0) {
-            list.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">No notes yet</div>';
+            list.innerHTML = '<div class="text-th-text-faint text-xs p-3 text-center">No notes yet</div>';
             return;
         }
 
@@ -167,7 +167,7 @@
             var preview = note.content.length > 80 ? note.content.substring(0, 80) + '...' : note.content;
             html += '<div class="note-item" data-id="' + note.id + '">';
             html += '  <div class="flex items-center justify-between gap-2">';
-            html += '    <span class="text-xs text-white font-medium truncate">' + escapeHTML(note.title) + '</span>';
+            html += '    <span class="text-xs text-th-text-primary font-medium truncate">' + escapeHTML(note.title) + '</span>';
             html += '    <div class="flex items-center gap-1 flex-shrink-0">';
             // Git status badge
             if (gitStatusLoaded && window.ClawIDEGit) {
@@ -177,15 +177,15 @@
                     html += '      ' + window.ClawIDEGit.renderBadge(gitSt);
                 }
             }
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-white transition-colors" title="Edit" data-note-edit="' + note.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-th-text-primary transition-colors" title="Edit" data-note-edit="' + note.id + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
             html += '      </button>';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-red-400 transition-colors" title="Delete" data-note-delete="' + note.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-red-400 transition-colors" title="Delete" data-note-delete="' + note.id + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
             html += '      </button>';
             html += '    </div>';
             html += '  </div>';
-            html += '  <div class="text-[10px] text-gray-500 mt-0.5 truncate">' + escapeHTML(preview) + '</div>';
+            html += '  <div class="text-[10px] text-th-text-faint mt-0.5 truncate">' + escapeHTML(preview) + '</div>';
             html += '</div>';
         }
         list.innerHTML = html;
@@ -283,15 +283,15 @@
     }
 
     function renderMarkdown(text) {
-        if (!text) return '<span class="text-gray-500">Nothing to preview</span>';
+        if (!text) return '<span class="text-th-text-faint">Nothing to preview</span>';
 
         // Minimal markdown renderer: headings, bold, italic, code, links, line breaks
         var html = escapeHTML(text);
 
         // Headings (### > ## > #)
-        html = html.replace(/^### (.+)$/gm, '<strong class="text-sm text-white">$1</strong>');
-        html = html.replace(/^## (.+)$/gm, '<strong class="text-sm text-white">$1</strong>');
-        html = html.replace(/^# (.+)$/gm, '<strong class="text-base text-white">$1</strong>');
+        html = html.replace(/^### (.+)$/gm, '<strong class="text-sm text-th-text-primary">$1</strong>');
+        html = html.replace(/^## (.+)$/gm, '<strong class="text-sm text-th-text-primary">$1</strong>');
+        html = html.replace(/^# (.+)$/gm, '<strong class="text-base text-th-text-primary">$1</strong>');
 
         // Bold
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -300,10 +300,10 @@
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
         // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-1 rounded text-[10px]">$1</code>');
+        html = html.replace(/`([^`]+)`/g, '<code class="bg-surface-overlay px-1 rounded text-[10px]">$1</code>');
 
         // Links
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-indigo-400 hover:underline">$1</a>');
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-accent-text hover:underline">$1</a>');
 
         // Line breaks
         html = html.replace(/\n/g, '<br>');

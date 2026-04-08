@@ -41,7 +41,7 @@
         var statsEl = document.getElementById('review-stats');
         var diffEl = document.getElementById('review-diff-container');
 
-        if (listEl) listEl.innerHTML = '<div class="text-gray-500 text-xs p-2">Loading...</div>';
+        if (listEl) listEl.innerHTML = '<div class="text-th-text-faint text-xs p-2">Loading...</div>';
 
         fetch(baseURL + '/api/review/files')
             .then(function(r) { return r.json(); })
@@ -56,7 +56,7 @@
 
                 if (changedFiles.length === 0) {
                     if (diffEl) {
-                        diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg><p class="text-sm">No changes to review</p></div></div>';
+                        diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-th-text-faint"><div class="text-center"><svg class="w-12 h-12 mx-auto mb-3 text-th-text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg><p class="text-sm">No changes to review</p></div></div>';
                     }
                 } else {
                     // Auto-select first file
@@ -72,7 +72,7 @@
     // --- Render stats ---
     function renderStats(container) {
         if (!container || !stats) return;
-        container.innerHTML = '<span class="text-gray-400 text-xs">' +
+        container.innerHTML = '<span class="text-th-text-muted text-xs">' +
             stats.files_changed + ' file' + (stats.files_changed !== 1 ? 's' : '') + ' changed' +
             (stats.insertions ? ', <span class="text-green-400">+' + stats.insertions + '</span>' : '') +
             (stats.deletions ? ', <span class="text-red-400">-' + stats.deletions + '</span>' : '') +
@@ -84,7 +84,7 @@
         if (!container) return;
 
         if (changedFiles.length === 0) {
-            container.innerHTML = '<div class="text-gray-500 text-xs p-2">No changes</div>';
+            container.innerHTML = '<div class="text-th-text-faint text-xs p-2">No changes</div>';
             return;
         }
 
@@ -98,7 +98,7 @@
                 case 'D': statusClass = 'bg-red-600'; statusLabel = 'D'; break;
                 case 'R': statusClass = 'bg-purple-600'; statusLabel = 'R'; break;
                 case 'C': statusClass = 'bg-blue-600'; statusLabel = 'C'; break;
-                default: statusClass = 'bg-gray-600'; break;
+                default: statusClass = 'bg-th-border-muted'; break;
             }
 
             var isSelected = f.path === selectedFilePath;
@@ -106,10 +106,10 @@
             var dir = f.path.substring(0, f.path.length - fname.length);
 
             html += '<div class="review-file-item flex items-center gap-2 px-3 py-1.5 cursor-pointer text-xs transition-colors ' +
-                (isSelected ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800') +
+                (isSelected ? 'bg-surface-overlay text-th-text-primary' : 'text-th-text-tertiary hover:bg-surface-raised') +
                 '" data-path="' + f.path + '" onclick="ClawIDEMergeReview.loadDiff(\'' + f.path.replace(/'/g, "\\'") + '\')">' +
-                '<span class="px-1 py-0.5 text-[10px] font-mono font-semibold rounded text-white ' + statusClass + '">' + statusLabel + '</span>' +
-                '<span class="truncate"><span class="text-gray-500">' + dir + '</span>' + fname + '</span>' +
+                '<span class="px-1 py-0.5 text-[10px] font-mono font-semibold rounded text-th-text-primary ' + statusClass + '">' + statusLabel + '</span>' +
+                '<span class="truncate"><span class="text-th-text-faint">' + dir + '</span>' + fname + '</span>' +
                 '</div>';
         });
 
@@ -124,18 +124,18 @@
         var items = document.querySelectorAll('.review-file-item');
         items.forEach(function(el) {
             if (el.getAttribute('data-path') === filePath) {
-                el.classList.add('bg-gray-700', 'text-white');
-                el.classList.remove('text-gray-300', 'hover:bg-gray-800');
+                el.classList.add('bg-surface-overlay', 'text-th-text-primary');
+                el.classList.remove('text-th-text-tertiary', 'hover:bg-surface-raised');
             } else {
-                el.classList.remove('bg-gray-700', 'text-white');
-                el.classList.add('text-gray-300', 'hover:bg-gray-800');
+                el.classList.remove('bg-surface-overlay', 'text-th-text-primary');
+                el.classList.add('text-th-text-tertiary', 'hover:bg-surface-raised');
             }
         });
 
         var diffEl = document.getElementById('review-diff-container');
         if (!diffEl) return;
 
-        diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500 text-sm">Loading diff...</div>';
+        diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-th-text-faint text-sm">Loading diff...</div>';
 
         // Find the file entry to handle renames
         var fileEntry = null;
@@ -164,7 +164,7 @@
 
                 // Handle binary files
                 if (featureContent === null || mainContent === null) {
-                    diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500"><div class="text-center"><svg class="w-10 h-10 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-sm">Binary file — cannot display diff</p></div></div>';
+                    diffEl.innerHTML = '<div class="flex items-center justify-center h-full text-th-text-faint"><div class="text-center"><svg class="w-10 h-10 mx-auto mb-2 text-th-text-ghost" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><p class="text-sm">Binary file — cannot display diff</p></div></div>';
                     return;
                 }
 
@@ -228,7 +228,7 @@
         command = command.replace(/\{FEATURE_BRANCH\}/g, featureBranch);
         command = command.replace(/\{DIFF_RANGE\}/g, mainBranch + '...' + featureBranch);
 
-        termEl.innerHTML = '<div class="p-3 font-mono text-xs text-gray-400"><div class="text-green-400 mb-1">$ ' + escapeHtml(command) + '</div><div class="text-gray-500">Running AI review...</div></div>';
+        termEl.innerHTML = '<div class="p-3 font-mono text-xs text-th-text-muted"><div class="text-green-400 mb-1">$ ' + escapeHtml(command) + '</div><div class="text-th-text-faint">Running AI review...</div></div>';
 
         // Show the bottom panel
         var bottomPanel = document.getElementById('review-bottom-panel');
@@ -266,14 +266,14 @@
         if (!container) return;
 
         if (annotations.length === 0) {
-            container.innerHTML = '<div class="text-gray-500 text-xs p-3">No annotations yet</div>';
+            container.innerHTML = '<div class="text-th-text-faint text-xs p-3">No annotations yet</div>';
             return;
         }
 
         var html = '';
         annotations.forEach(function(a) {
-            var severityClass = 'border-gray-700';
-            var severityBadge = 'bg-gray-600';
+            var severityClass = 'border-th-border-strong';
+            var severityBadge = 'bg-th-border-muted';
             switch (a.severity) {
                 case 'error': severityClass = 'border-red-800'; severityBadge = 'bg-red-600'; break;
                 case 'warning': severityClass = 'border-yellow-800'; severityBadge = 'bg-yellow-600'; break;
@@ -281,12 +281,12 @@
                 case 'suggestion': severityClass = 'border-green-800'; severityBadge = 'bg-green-600'; break;
             }
 
-            html += '<div class="annotation-card p-2 mb-1 rounded border ' + severityClass + ' cursor-pointer hover:bg-gray-800/50 transition-colors" onclick="ClawIDEMergeReview.loadDiff(\'' + a.file.replace(/'/g, "\\'") + '\')">' +
+            html += '<div class="annotation-card p-2 mb-1 rounded border ' + severityClass + ' cursor-pointer hover:bg-surface-raised/50 transition-colors" onclick="ClawIDEMergeReview.loadDiff(\'' + a.file.replace(/'/g, "\\'") + '\')">' +
                 '<div class="flex items-center gap-2 mb-1">' +
-                '<span class="px-1.5 py-0.5 text-[10px] font-semibold rounded text-white ' + severityBadge + '">' + (a.severity || 'info') + '</span>' +
-                '<span class="text-[10px] text-gray-500 truncate">' + a.file + ':' + a.line + (a.end_line ? '-' + a.end_line : '') + '</span>' +
+                '<span class="px-1.5 py-0.5 text-[10px] font-semibold rounded text-th-text-primary ' + severityBadge + '">' + (a.severity || 'info') + '</span>' +
+                '<span class="text-[10px] text-th-text-faint truncate">' + a.file + ':' + a.line + (a.end_line ? '-' + a.end_line : '') + '</span>' +
                 '</div>' +
-                '<p class="text-xs text-gray-300">' + escapeHtml(a.comment) + '</p>' +
+                '<p class="text-xs text-th-text-tertiary">' + escapeHtml(a.comment) + '</p>' +
                 '</div>';
         });
 

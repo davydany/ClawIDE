@@ -154,3 +154,110 @@ func (n *PaneNode) HasPane(paneID string) bool {
 	t, _ := n.FindPane(paneID)
 	return t != nil
 }
+
+// replaceInTree walks the tree and replaces old with replacement.
+func replaceInTree(root, old, replacement *PaneNode) {
+	if root == nil || root.Type != "split" {
+		return
+	}
+	if root.First == old {
+		root.First = replacement
+		return
+	}
+	if root.Second == old {
+		root.Second = replacement
+		return
+	}
+	replaceInTree(root.First, old, replacement)
+	replaceInTree(root.Second, old, replacement)
+}
+
+// DetachPane removes a leaf pane from the tree by collapsing its parent split.
+// Returns (detachedLeaf, newRoot). If the pane is the root (only pane), returns (nil, n).
+// If the pane is not found, returns (nil, n).
+func (n *PaneNode) DetachPane(paneID string) (*PaneNode, *PaneNode) {
+	if n == nil {
+		return nil, n
+	}
+	// Root is the target leaf — can't detach the only pane
+	if n.Type == "leaf" && n.PaneID == paneID {
+		return nil, n
+	}
+
+	target, parent := n.FindPane(paneID)
+	if target == nil || parent == nil {
+		return nil, n
+	}
+
+	// Determine the surviving sibling
+	var sibling *PaneNode
+	if parent.First == target {
+		sibling = parent.Second
+	} else {
+		sibling = parent.First
+	}
+
+	// Replace parent with sibling in the tree
+	if n == parent {
+		// Parent is root — sibling becomes the new root
+		return target, sibling
+	}
+	replaceInTree(n, parent, sibling)
+	return target, n
+}
+
+// InsertPaneAt inserts sourceLeaf adjacent to the pane identified by targetPaneID.
+// position must be "left", "right", "top", or "bottom".
+// Returns the new root of the tree.
+func (n *PaneNode) InsertPaneAt(sourceLeaf *PaneNode, targetPaneID, position string) *PaneNode {
+	if n == nil || sourceLeaf == nil {
+		return n
+	}
+
+	// Map position to direction and ordering
+	var direction string
+	var sourceIsFirst bool
+	switch position {
+	case "left":
+		direction = "horizontal"
+		sourceIsFirst = true
+	case "right":
+		direction = "horizontal"
+		sourceIsFirst = false
+	case "top":
+		direction = "vertical"
+		sourceIsFirst = true
+	case "bottom":
+		direction = "vertical"
+		sourceIsFirst = false
+	default:
+		return n
+	}
+
+	target, parent := n.FindPane(targetPaneID)
+	if target == nil {
+		return n
+	}
+
+	// Create a split node wrapping source and target
+	splitNode := &PaneNode{
+		Type:      "split",
+		Direction: direction,
+		Ratio:     0.5,
+	}
+	if sourceIsFirst {
+		splitNode.First = sourceLeaf
+		splitNode.Second = target
+	} else {
+		splitNode.First = target
+		splitNode.Second = sourceLeaf
+	}
+
+	// Replace target in tree with the new split
+	if parent == nil {
+		// Target is root
+		return splitNode
+	}
+	parent.ReplaceChild(target, splitNode)
+	return n
+}

@@ -24,7 +24,7 @@
     };
 
     function renderBadge(status) {
-        var colors = badgeColors[status] || { bg: 'bg-gray-500/20', text: 'text-gray-400', label: status };
+        var colors = badgeColors[status] || { bg: 'bg-th-text-faint/20', text: 'text-th-text-muted', label: status };
         return '<span class="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-mono font-bold ' +
             colors.bg + ' ' + colors.text + '" title="' + colors.label + '">' + escapeHTML(status) + '</span>';
     }
@@ -83,7 +83,7 @@
         if (!status) return '';
 
         if (!status.is_git_repo) {
-            return '<div class="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-[10px] text-gray-400">' +
+            return '<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-overlay/50 rounded text-[10px] text-th-text-muted">' +
                 '<svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
                 'Not a git repository &mdash; git features disabled</div>';
         }
@@ -106,7 +106,7 @@
     // --- Refresh Button HTML ---
 
     function renderRefreshButton(type) {
-        return '<button class="p-1 rounded text-gray-500 hover:text-white transition-colors" title="Refresh git status" data-git-refresh="' + type + '">' +
+        return '<button class="p-1 rounded text-th-text-faint hover:text-th-text-primary transition-colors" title="Refresh git status" data-git-refresh="' + type + '">' +
             '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' +
             '</button>';
     }
@@ -144,10 +144,10 @@
 
         var typeLabel = type === 'notes' ? 'Notes' : 'Bookmarks';
         var html = '';
-        html += '<div class="bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-full max-w-md mx-4">';
-        html += '  <div class="flex items-center justify-between px-4 py-3 border-b border-gray-700">';
-        html += '    <h3 class="text-sm font-medium text-white">Commit ' + typeLabel + ' Changes</h3>';
-        html += '    <button class="p-1 rounded text-gray-400 hover:text-white transition-colors" data-git-commit-close>';
+        html += '<div class="bg-surface-raised border border-th-border-strong rounded-lg shadow-xl w-full max-w-md mx-4">';
+        html += '  <div class="flex items-center justify-between px-4 py-3 border-b border-th-border-strong">';
+        html += '    <h3 class="text-sm font-medium text-th-text-primary">Commit ' + typeLabel + ' Changes</h3>';
+        html += '    <button class="p-1 rounded text-th-text-muted hover:text-th-text-primary transition-colors" data-git-commit-close>';
         html += '      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
         html += '    </button>';
         html += '  </div>';
@@ -155,30 +155,30 @@
         // File list with checkboxes
         html += '  <div class="px-4 py-3 max-h-48 overflow-y-auto">';
         html += '    <div class="flex items-center gap-2 mb-2">';
-        html += '      <input type="checkbox" id="git-select-all" checked class="rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500">';
-        html += '      <label for="git-select-all" class="text-xs text-gray-400">Select all</label>';
+        html += '      <input type="checkbox" id="git-select-all" checked class="rounded border-th-border-muted bg-surface-overlay text-accent focus:ring-accent-border">';
+        html += '      <label for="git-select-all" class="text-xs text-th-text-muted">Select all</label>';
         html += '    </div>';
         for (var j = 0; j < filePaths.length; j++) {
             var path = filePaths[j];
             var st = fileMap[path];
             var shortPath = path.replace(/^\.clawide\/(notes|bookmarks)\//, '');
-            html += '    <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-700/50 rounded px-1">';
-            html += '      <input type="checkbox" checked class="rounded border-gray-600 bg-gray-700 text-indigo-500 focus:ring-indigo-500" value="' + escapeHTML(path) + '" data-git-file>';
+            html += '    <label class="flex items-center gap-2 py-1 cursor-pointer hover:bg-surface-overlay/50 rounded px-1">';
+            html += '      <input type="checkbox" checked class="rounded border-th-border-muted bg-surface-overlay text-accent focus:ring-accent-border" value="' + escapeHTML(path) + '" data-git-file>';
             html += '      ' + renderBadge(st);
-            html += '      <span class="text-xs text-gray-300 truncate" title="' + escapeHTML(path) + '">' + escapeHTML(shortPath) + '</span>';
+            html += '      <span class="text-xs text-th-text-tertiary truncate" title="' + escapeHTML(path) + '">' + escapeHTML(shortPath) + '</span>';
             html += '    </label>';
         }
         html += '  </div>';
 
         // Commit message
-        html += '  <div class="px-4 py-3 border-t border-gray-700">';
-        html += '    <input type="text" id="git-commit-message" placeholder="Commit message..." class="w-full px-3 py-2 text-xs bg-gray-900 border border-gray-600 rounded text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none">';
+        html += '  <div class="px-4 py-3 border-t border-th-border-strong">';
+        html += '    <input type="text" id="git-commit-message" placeholder="Commit message..." class="w-full px-3 py-2 text-xs bg-surface-base border border-th-border-muted rounded text-th-text-primary placeholder-th-text-faint focus:border-accent-border focus:ring-1 focus:ring-accent-border outline-none">';
         html += '  </div>';
 
         // Actions
-        html += '  <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-gray-700">';
-        html += '    <button class="px-3 py-1.5 text-xs text-gray-400 hover:text-white transition-colors rounded" data-git-commit-close>Cancel</button>';
-        html += '    <button class="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors" data-git-commit-submit>Commit</button>';
+        html += '  <div class="flex items-center justify-end gap-2 px-4 py-3 border-t border-th-border-strong">';
+        html += '    <button class="px-3 py-1.5 text-xs text-th-text-muted hover:text-th-text-primary transition-colors rounded" data-git-commit-close>Cancel</button>';
+        html += '    <button class="px-3 py-1.5 text-xs bg-accent hover:bg-accent-hover text-th-text-primary rounded transition-colors" data-git-commit-submit>Commit</button>';
         html += '  </div>';
         html += '</div>';
 
@@ -317,7 +317,7 @@
         var count = getChangeCount(type);
         if (count === 0) return '';
 
-        return '<button class="flex items-center gap-1 px-2 py-1 text-[10px] bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 rounded transition-colors" title="Commit changes" data-git-commit-open="' + type + '">' +
+        return '<button class="flex items-center gap-1 px-2 py-1 text-[10px] bg-accent/20 hover:bg-accent/40 text-accent-text rounded transition-colors" title="Commit changes" data-git-commit-open="' + type + '">' +
             '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>' +
             '<span>' + count + ' change' + (count !== 1 ? 's' : '') + '</span>' +
             '</button>';
