@@ -235,7 +235,9 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteFeature removes a feature, its worktree, and all associated sessions.
+// DeleteFeature soft-deletes a feature by moving it to the trash bin.
+// The git branch is preserved so the feature can be restored later.
+// Trashed features are automatically purged after 30 days.
 // DELETE /projects/{id}/features/{fid}/
 func (h *Handlers) DeleteFeature(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
@@ -259,12 +261,27 @@ func (h *Handlers) DeleteFeature(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Remove the git worktree.
+	// Remove the git worktree but keep the branch for future restoration.
 	if err := git.RemoveWorktree(project.Path, feature.WorktreePath); err != nil {
 		log.Printf("Error removing worktree %s: %v", feature.WorktreePath, err)
 	}
 
-	// Delete the feature (cascades to sessions via store).
+	// Move the feature to trash.
+	tf := model.TrashedFeature{
+		ID:          uuid.New().String(),
+		Feature:     feature,
+		ProjectID:   project.ID,
+		ProjectName: project.Name,
+		ProjectPath: project.Path,
+		TrashedAt:   time.Now(),
+	}
+	if err := h.store.AddTrashedFeature(tf); err != nil {
+		log.Printf("Error trashing feature: %v", err)
+		http.Error(w, "failed to trash feature", http.StatusInternalServerError)
+		return
+	}
+
+	// Delete the feature from the active store (cascades to sessions).
 	if err := h.store.DeleteFeature(featureID); err != nil {
 		log.Printf("Error deleting feature: %v", err)
 		http.Error(w, "failed to delete feature", http.StatusInternalServerError)

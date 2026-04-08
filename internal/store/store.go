@@ -11,9 +11,10 @@ import (
 )
 
 type State struct {
-	Projects []model.Project `json:"projects"`
-	Sessions []model.Session `json:"sessions"`
-	Features []model.Feature `json:"features"`
+	Projects        []model.Project        `json:"projects"`
+	Sessions        []model.Session        `json:"sessions"`
+	Features        []model.Feature        `json:"features"`
+	TrashedFeatures []model.TrashedFeature `json:"trashed_features,omitempty"`
 }
 
 type Store struct {
@@ -124,6 +125,14 @@ func (s *Store) DeleteProject(id string) error {
 				}
 			}
 			s.state.Features = filteredFeatures
+			// Also remove trashed features for this project
+			filteredTrashed := s.state.TrashedFeatures[:0]
+			for _, tf := range s.state.TrashedFeatures {
+				if tf.ProjectID != id {
+					filteredTrashed = append(filteredTrashed, tf)
+				}
+			}
+			s.state.TrashedFeatures = filteredTrashed
 			return s.save()
 		}
 	}
@@ -281,6 +290,67 @@ func (s *Store) DeleteFeatureSessionsByFeatureID(featureID string) error {
 	}
 	s.state.Sessions = filtered
 	return s.save()
+}
+
+// --------------- Trash operations ---------------
+
+func (s *Store) GetTrashedFeatures() []model.TrashedFeature {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]model.TrashedFeature, len(s.state.TrashedFeatures))
+	copy(out, s.state.TrashedFeatures)
+	return out
+}
+
+func (s *Store) GetTrashedFeature(id string) (model.TrashedFeature, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, tf := range s.state.TrashedFeatures {
+		if tf.ID == id {
+			return tf, true
+		}
+	}
+	return model.TrashedFeature{}, false
+}
+
+func (s *Store) AddTrashedFeature(tf model.TrashedFeature) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state.TrashedFeatures = append(s.state.TrashedFeatures, tf)
+	return s.save()
+}
+
+func (s *Store) DeleteTrashedFeature(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, tf := range s.state.TrashedFeatures {
+		if tf.ID == id {
+			s.state.TrashedFeatures = append(s.state.TrashedFeatures[:i], s.state.TrashedFeatures[i+1:]...)
+			return s.save()
+		}
+	}
+	return fmt.Errorf("trashed feature %s not found", id)
+}
+
+// DeleteExpiredTrashedFeatures removes all trashed features older than cutoff
+// and returns the number of items removed.
+func (s *Store) DeleteExpiredTrashedFeatures(cutoff time.Time) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	kept := s.state.TrashedFeatures[:0]
+	removed := 0
+	for _, tf := range s.state.TrashedFeatures {
+		if tf.TrashedAt.Before(cutoff) {
+			removed++
+		} else {
+			kept = append(kept, tf)
+		}
+	}
+	if removed == 0 {
+		return 0, nil
+	}
+	s.state.TrashedFeatures = kept
+	return removed, s.save()
 }
 
 func (s *Store) load() error {
