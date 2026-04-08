@@ -15,6 +15,8 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 	if !h.cfg.OnboardingCompleted {
 		data := map[string]any{
 			"Title": "Welcome to ClawIDE",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		}
 		if err := h.renderer.RenderHTMX(w, r, "welcome", "welcome", data); err != nil {
 			log.Printf("Error rendering welcome: %v", err)
@@ -59,6 +61,8 @@ func (h *Handlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]any{
 		"Title":           "ClawIDE - Dashboard",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"StarredProjects": starredProjects,
 		"Projects":        unstarredProjects,
 		"Discovered":      discovered,

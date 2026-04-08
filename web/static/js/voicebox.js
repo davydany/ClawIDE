@@ -115,7 +115,7 @@
         if (!historyList) return;
 
         if (history.length === 0) {
-            historyList.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">No history yet</div>';
+            historyList.innerHTML = '<div class="text-th-text-faint text-xs p-3 text-center">No history yet</div>';
             return;
         }
 
@@ -127,20 +127,20 @@
 
             html += '<div class="voicebox-history-item" data-id="' + entry.id + '">';
             html += '  <div class="flex items-center justify-between gap-2">';
-            html += '    <span class="text-[10px] text-gray-500 flex-shrink-0">' + timeAgo + '</span>';
+            html += '    <span class="text-[10px] text-th-text-faint flex-shrink-0">' + timeAgo + '</span>';
             html += '    <div class="flex items-center gap-0.5 flex-shrink-0">';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-green-400 transition-colors" title="Re-send to terminal" data-resend="' + entry.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-green-400 transition-colors" title="Re-send to terminal" data-resend="' + entry.id + '">';
             html += '        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 01-4 4H4"/></svg>';
             html += '      </button>';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-blue-400 transition-colors" title="Copy to clipboard" data-copy="' + entry.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-blue-400 transition-colors" title="Copy to clipboard" data-copy="' + entry.id + '">';
             html += '        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
             html += '      </button>';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-red-400 transition-colors" title="Delete" data-delete="' + entry.id + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-red-400 transition-colors" title="Delete" data-delete="' + entry.id + '">';
             html += '        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
             html += '      </button>';
             html += '    </div>';
             html += '  </div>';
-            html += '  <div class="text-xs text-gray-300 mt-0.5 font-mono break-all">' + escapeHTML(preview) + '</div>';
+            html += '  <div class="text-xs text-th-text-tertiary mt-0.5 font-mono break-all">' + escapeHTML(preview) + '</div>';
             html += '</div>';
         }
         historyList.innerHTML = html;

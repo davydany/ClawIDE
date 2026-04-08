@@ -1,16 +1,16 @@
 {{define "wizard"}}
 <dialog id="wizardModal"
-        class="bg-gray-900 text-gray-100 rounded-xl shadow-2xl border border-gray-700 p-0 w-full max-w-3xl backdrop:bg-black/50"
+        class="bg-surface-base text-th-text-secondary rounded-xl shadow-2xl border border-th-border-strong p-0 w-full max-w-3xl backdrop:bg-black/50"
         x-data="projectWizard()"
         @close="resetWizard()">
 
     <div class="flex flex-col max-h-[90vh]">
         <!-- Header with step indicator -->
-        <div class="px-6 pt-6 pb-4 border-b border-gray-800">
+        <div class="px-6 pt-6 pb-4 border-b border-th-border">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-white">New Project</h3>
+                <h3 class="text-lg font-semibold text-th-text-primary">New Project</h3>
                 <button type="button" @click="closeWizard()"
-                        class="p-1 rounded text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+                        class="p-1 rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -23,7 +23,7 @@
                     <div class="flex items-center">
                         <div class="flex flex-col items-center">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200"
-                                 :class="step > s.n ? 'bg-indigo-600 text-white' : step === s.n ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 ring-offset-2 ring-offset-gray-900' : 'bg-gray-800 text-gray-500 border border-gray-700'">
+                                 :class="step > s.n ? 'bg-accent text-th-text-primary' : step === s.n ? 'bg-accent text-th-text-primary ring-2 ring-accent-border ring-offset-2 ring-offset-surface-base' : 'bg-surface-raised text-th-text-faint border border-th-border-strong'">
                                 <template x-if="step > s.n">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -34,12 +34,12 @@
                                 </template>
                             </div>
                             <span class="text-xs mt-1.5 transition-colors duration-200"
-                                  :class="step >= s.n ? 'text-gray-200' : 'text-gray-600'"
+                                  :class="step >= s.n ? 'text-th-text-secondary' : 'text-th-text-ghost'"
                                   x-text="s.label"></span>
                         </div>
                         <template x-if="i < wizardSteps().length - 1">
                             <div class="w-16 sm:w-24 h-px mx-2 mb-5 transition-colors duration-200"
-                                 :class="step > s.n ? 'bg-indigo-600' : 'bg-gray-700'"></div>
+                                 :class="step > s.n ? 'bg-accent' : 'bg-surface-overlay'"></div>
                         </template>
                     </div>
                 </template>
@@ -54,48 +54,48 @@
                 <div class="space-y-4">
                     <!-- Project Name -->
                     <div>
-                        <label for="wizard-name" class="block text-sm font-medium text-gray-300 mb-1">Project Name <span class="text-red-400">*</span></label>
+                        <label for="wizard-name" class="block text-sm font-medium text-th-text-tertiary mb-1">Project Name <span class="text-red-400">*</span></label>
                         <input type="text" id="wizard-name" x-model="name"
                                @input="clearError('project_name')"
-                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                               :class="errors.project_name ? 'border-red-500' : 'border-gray-700'"
+                               class="w-full px-3 py-2 bg-surface-raised border rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent transition-colors"
+                               :class="errors.project_name ? 'border-red-500' : 'border-th-border-strong'"
                                placeholder="my-awesome-project">
                         <p x-show="errors.project_name" x-text="errors.project_name" class="text-xs text-red-400 mt-1"></p>
-                        <p x-show="!errors.project_name" class="text-xs text-gray-500 mt-1">Letters, numbers, hyphens, underscores, dots. Max 64 characters.</p>
+                        <p x-show="!errors.project_name" class="text-xs text-th-text-faint mt-1">Letters, numbers, hyphens, underscores, dots. Max 64 characters.</p>
                     </div>
 
                     <!-- Description -->
                     <div>
-                        <label for="wizard-desc" class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                        <label for="wizard-desc" class="block text-sm font-medium text-th-text-tertiary mb-1">Description</label>
                         <textarea id="wizard-desc" x-model="description" rows="2"
-                                  class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                  class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent resize-none"
                                   placeholder="A brief description of your project"></textarea>
                     </div>
 
                     <!-- Parent Directory -->
                     <div>
-                        <label for="wizard-path" class="block text-sm font-medium text-gray-300 mb-1">Parent Directory <span class="text-red-400">*</span></label>
+                        <label for="wizard-path" class="block text-sm font-medium text-th-text-tertiary mb-1">Parent Directory <span class="text-red-400">*</span></label>
                         <input type="text" id="wizard-path" x-model="parentDir"
                                @input="clearError('output_dir')"
-                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-colors"
-                               :class="errors.output_dir ? 'border-red-500' : 'border-gray-700'"
+                               class="w-full px-3 py-2 bg-surface-raised border rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent font-mono text-sm transition-colors"
+                               :class="errors.output_dir ? 'border-red-500' : 'border-th-border-strong'"
                                placeholder="~/projects">
                         <p x-show="errors.output_dir" x-text="errors.output_dir" class="text-xs text-red-400 mt-1"></p>
-                        <p x-show="!errors.output_dir" class="text-xs text-gray-500 mt-1">The project folder will be created inside this directory.</p>
+                        <p x-show="!errors.output_dir" class="text-xs text-th-text-faint mt-1">The project folder will be created inside this directory.</p>
                     </div>
 
                     <!-- Supporting Documentation (Collapsible) -->
-                    <div class="border border-gray-800 rounded-lg overflow-hidden">
+                    <div class="border border-th-border rounded-lg overflow-hidden">
                         <button type="button" @click="showDocs = !showDocs"
-                                class="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors">
+                                class="w-full flex items-center justify-between px-4 py-3 text-sm text-th-text-tertiary hover:text-th-text-primary hover:bg-surface-raised/50 transition-colors">
                             <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                 </svg>
                                 Supporting Documentation
-                                <span class="text-xs text-gray-600">(optional)</span>
+                                <span class="text-xs text-th-text-ghost">(optional)</span>
                             </span>
-                            <svg class="w-4 h-4 text-gray-500 transition-transform duration-200"
+                            <svg class="w-4 h-4 text-th-text-faint transition-transform duration-200"
                                  :class="showDocs ? 'rotate-180' : ''"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -109,38 +109,38 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-y-0"
                              x-transition:leave-end="opacity-0 -translate-y-2">
-                            <div class="px-4 pb-4 space-y-3 border-t border-gray-800 pt-3">
-                                <p class="text-xs text-gray-500">Paste documentation to include in your project. These will be saved to <code class="text-gray-400">docs/supporting/</code>.</p>
+                            <div class="px-4 pb-4 space-y-3 border-t border-th-border pt-3">
+                                <p class="text-xs text-th-text-faint">Paste documentation to include in your project. These will be saved to <code class="text-th-text-muted">docs/supporting/</code>.</p>
 
                                 <!-- PRD -->
                                 <div>
-                                    <label for="wizard-doc-prd" class="block text-xs font-medium text-gray-400 mb-1">Product Requirements (PRD)</label>
+                                    <label for="wizard-doc-prd" class="block text-xs font-medium text-th-text-muted mb-1">Product Requirements (PRD)</label>
                                     <textarea id="wizard-doc-prd" x-model="docPrd" rows="3"
-                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent resize-y text-sm"
                                               placeholder="Paste your PRD content here..."></textarea>
                                 </div>
 
                                 <!-- UI/UX Design -->
                                 <div>
-                                    <label for="wizard-doc-uiux" class="block text-xs font-medium text-gray-400 mb-1">UI/UX Design</label>
+                                    <label for="wizard-doc-uiux" class="block text-xs font-medium text-th-text-muted mb-1">UI/UX Design</label>
                                     <textarea id="wizard-doc-uiux" x-model="docUiux" rows="3"
-                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent resize-y text-sm"
                                               placeholder="Paste your UI/UX design specs here..."></textarea>
                                 </div>
 
                                 <!-- System Architecture -->
                                 <div>
-                                    <label for="wizard-doc-arch" class="block text-xs font-medium text-gray-400 mb-1">System Architecture</label>
+                                    <label for="wizard-doc-arch" class="block text-xs font-medium text-th-text-muted mb-1">System Architecture</label>
                                     <textarea id="wizard-doc-arch" x-model="docArchitecture" rows="3"
-                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent resize-y text-sm"
                                               placeholder="Paste your architecture documentation here..."></textarea>
                                 </div>
 
                                 <!-- Other -->
                                 <div>
-                                    <label for="wizard-doc-other" class="block text-xs font-medium text-gray-400 mb-1">Other Documentation</label>
+                                    <label for="wizard-doc-other" class="block text-xs font-medium text-th-text-muted mb-1">Other Documentation</label>
                                     <textarea id="wizard-doc-other" x-model="docOther" rows="3"
-                                              class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y text-sm"
+                                              class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent resize-y text-sm"
                                               placeholder="Any additional documentation..."></textarea>
                                 </div>
                             </div>
@@ -152,7 +152,7 @@
             <!-- Step 2: Project Type Selection -->
             <div x-show="step === 2" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="space-y-4">
-                    <p class="text-sm text-gray-400">Choose how you want to set up your project.</p>
+                    <p class="text-sm text-th-text-muted">Choose how you want to set up your project.</p>
 
                     <div class="grid gap-4 sm:grid-cols-3">
                         <!-- Template / AI option -->
@@ -160,23 +160,23 @@
                                 @click="projectType = 'template'"
                                 class="text-left p-5 rounded-lg border-2 transition-all duration-150"
                                 :class="projectType === 'template'
-                                    ? 'bg-indigo-900/30 border-indigo-500 shadow-sm shadow-indigo-500/10'
-                                    : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'">
+                                    ? 'bg-accent-muted/30 border-accent-border shadow-sm shadow-accent-border/10'
+                                    : 'bg-surface-raised/50 border-th-border-strong hover:border-th-border-muted hover:bg-surface-raised'">
                             <div class="flex items-start justify-between">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 text-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                                         </svg>
                                         <p class="text-sm font-medium"
-                                           :class="projectType === 'template' ? 'text-white' : 'text-gray-200'">From Template / AI</p>
+                                           :class="projectType === 'template' ? 'text-th-text-primary' : 'text-th-text-secondary'">From Template / AI</p>
                                     </div>
                                     <p class="text-xs"
-                                       :class="projectType === 'template' ? 'text-indigo-200' : 'text-gray-500'">Start with a language and framework scaffold. Optionally use AI to generate starter code.</p>
+                                       :class="projectType === 'template' ? 'text-accent-text' : 'text-th-text-faint'">Start with a language and framework scaffold. Optionally use AI to generate starter code.</p>
                                 </div>
                                 <div x-show="projectType === 'template'"
-                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                    <svg class="w-3 h-3 text-th-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
@@ -188,23 +188,23 @@
                                 @click="projectType = 'empty'"
                                 class="text-left p-5 rounded-lg border-2 transition-all duration-150"
                                 :class="projectType === 'empty'
-                                    ? 'bg-indigo-900/30 border-indigo-500 shadow-sm shadow-indigo-500/10'
-                                    : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'">
+                                    ? 'bg-accent-muted/30 border-accent-border shadow-sm shadow-accent-border/10'
+                                    : 'bg-surface-raised/50 border-th-border-strong hover:border-th-border-muted hover:bg-surface-raised'">
                             <div class="flex items-start justify-between">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 text-th-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                         </svg>
                                         <p class="text-sm font-medium"
-                                           :class="projectType === 'empty' ? 'text-white' : 'text-gray-200'">Empty Project</p>
+                                           :class="projectType === 'empty' ? 'text-th-text-primary' : 'text-th-text-secondary'">Empty Project</p>
                                     </div>
                                     <p class="text-xs"
-                                       :class="projectType === 'empty' ? 'text-indigo-200' : 'text-gray-500'">Just a project directory with CLAUDE.md, supporting docs, and git initialized. No framework or dependencies.</p>
+                                       :class="projectType === 'empty' ? 'text-accent-text' : 'text-th-text-faint'">Just a project directory with CLAUDE.md, supporting docs, and git initialized. No framework or dependencies.</p>
                                 </div>
                                 <div x-show="projectType === 'empty'"
-                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                    <svg class="w-3 h-3 text-th-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
@@ -216,8 +216,8 @@
                                 @click="projectType = 'clone'"
                                 class="text-left p-5 rounded-lg border-2 transition-all duration-150"
                                 :class="projectType === 'clone'
-                                    ? 'bg-indigo-900/30 border-indigo-500 shadow-sm shadow-indigo-500/10'
-                                    : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'">
+                                    ? 'bg-accent-muted/30 border-accent-border shadow-sm shadow-accent-border/10'
+                                    : 'bg-surface-raised/50 border-th-border-strong hover:border-th-border-muted hover:bg-surface-raised'">
                             <div class="flex items-start justify-between">
                                 <div class="min-w-0">
                                     <div class="flex items-center gap-2 mb-2">
@@ -225,14 +225,14 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                                         </svg>
                                         <p class="text-sm font-medium"
-                                           :class="projectType === 'clone' ? 'text-white' : 'text-gray-200'">Clone from Git URL</p>
+                                           :class="projectType === 'clone' ? 'text-th-text-primary' : 'text-th-text-secondary'">Clone from Git URL</p>
                                     </div>
                                     <p class="text-xs"
-                                       :class="projectType === 'clone' ? 'text-indigo-200' : 'text-gray-500'">Clone an existing repository using HTTPS or SSH. Supports public and private repos.</p>
+                                       :class="projectType === 'clone' ? 'text-accent-text' : 'text-th-text-faint'">Clone an existing repository using HTTPS or SSH. Supports public and private repos.</p>
                                 </div>
                                 <div x-show="projectType === 'clone'"
-                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
-                                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     class="flex-shrink-0 ml-2 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                    <svg class="w-3 h-3 text-th-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                     </svg>
                                 </div>
@@ -245,52 +245,52 @@
             <!-- Step 3: Git Clone Options (clone path only) -->
             <div x-show="step === 3 && projectType === 'clone'" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="space-y-4">
-                    <p class="text-sm text-gray-400">Enter the repository URL to clone.</p>
+                    <p class="text-sm text-th-text-muted">Enter the repository URL to clone.</p>
 
                     <!-- Git URL -->
                     <div>
-                        <label for="wizard-git-url" class="block text-sm font-medium text-gray-300 mb-1">Git URL <span class="text-red-400">*</span></label>
+                        <label for="wizard-git-url" class="block text-sm font-medium text-th-text-tertiary mb-1">Git URL <span class="text-red-400">*</span></label>
                         <input type="text" id="wizard-git-url" x-model="gitCloneURL"
                                @input="deriveCloneDirName(); clearError('git_clone_url')"
-                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-colors"
-                               :class="errors.git_clone_url ? 'border-red-500' : 'border-gray-700'"
+                               class="w-full px-3 py-2 bg-surface-raised border rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent font-mono text-sm transition-colors"
+                               :class="errors.git_clone_url ? 'border-red-500' : 'border-th-border-strong'"
                                placeholder="https://github.com/user/repo.git or git@github.com:user/repo.git">
                         <p x-show="errors.git_clone_url" x-text="errors.git_clone_url" class="text-xs text-red-400 mt-1"></p>
-                        <p x-show="!errors.git_clone_url" class="text-xs text-gray-500 mt-1">Supports HTTPS and SSH URLs.</p>
+                        <p x-show="!errors.git_clone_url" class="text-xs text-th-text-faint mt-1">Supports HTTPS and SSH URLs.</p>
                     </div>
 
                     <!-- Directory Name -->
                     <div>
-                        <label for="wizard-clone-dir" class="block text-sm font-medium text-gray-300 mb-1">Directory Name</label>
+                        <label for="wizard-clone-dir" class="block text-sm font-medium text-th-text-tertiary mb-1">Directory Name</label>
                         <input type="text" id="wizard-clone-dir" x-model="gitCloneDirName"
                                @input="clearError('git_clone_dir_name')"
-                               class="w-full px-3 py-2 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-sm transition-colors"
-                               :class="errors.git_clone_dir_name ? 'border-red-500' : 'border-gray-700'"
+                               class="w-full px-3 py-2 bg-surface-raised border rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent font-mono text-sm transition-colors"
+                               :class="errors.git_clone_dir_name ? 'border-red-500' : 'border-th-border-strong'"
                                placeholder="auto-derived from URL">
                         <p x-show="errors.git_clone_dir_name" x-text="errors.git_clone_dir_name" class="text-xs text-red-400 mt-1"></p>
-                        <p x-show="!errors.git_clone_dir_name" class="text-xs text-gray-500 mt-1">The repository will be cloned into this directory inside the parent directory.</p>
+                        <p x-show="!errors.git_clone_dir_name" class="text-xs text-th-text-faint mt-1">The repository will be cloned into this directory inside the parent directory.</p>
                     </div>
 
                     <!-- Branch (optional) -->
                     <div>
-                        <label for="wizard-clone-branch" class="block text-sm font-medium text-gray-300 mb-1">Branch <span class="text-xs text-gray-600">(optional)</span></label>
+                        <label for="wizard-clone-branch" class="block text-sm font-medium text-th-text-tertiary mb-1">Branch <span class="text-xs text-th-text-ghost">(optional)</span></label>
                         <input type="text" id="wizard-clone-branch" x-model="gitCloneBranch"
-                               class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                               class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent text-sm"
                                placeholder="default branch">
-                        <p class="text-xs text-gray-500 mt-1">Leave empty to clone the default branch.</p>
+                        <p class="text-xs text-th-text-faint mt-1">Leave empty to clone the default branch.</p>
                     </div>
 
                     <!-- Shallow clone toggle -->
                     <div class="flex items-center gap-3 py-2">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" x-model="gitShallowClone" class="sr-only peer">
-                            <div class="w-9 h-5 bg-gray-700 peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:bg-indigo-600 transition-colors">
+                            <div class="w-9 h-5 bg-surface-overlay peer-focus:ring-2 peer-focus:ring-accent-border rounded-full peer peer-checked:bg-accent transition-colors">
                                 <div class="absolute top-[2px] left-[2px] w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
                             </div>
                         </label>
                         <div>
-                            <span class="text-sm text-gray-300">Shallow clone</span>
-                            <p class="text-xs text-gray-500">Only fetch the latest commit (faster for large repos).</p>
+                            <span class="text-sm text-th-text-tertiary">Shallow clone</span>
+                            <p class="text-xs text-th-text-faint">Only fetch the latest commit (faster for large repos).</p>
                         </div>
                     </div>
                 </div>
@@ -301,15 +301,15 @@
                 <div class="space-y-4">
                     <!-- Language tabs -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Language</label>
+                        <label class="block text-sm font-medium text-th-text-tertiary mb-2">Language</label>
                         <div class="flex flex-wrap gap-1.5">
                             <template x-for="lang in languages" :key="lang.id">
                                 <button type="button"
                                         @click="selectLanguage(lang.id)"
                                         class="px-3 py-1.5 text-sm rounded-lg border transition-all duration-150"
                                         :class="selectedLanguage === lang.id
-                                            ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm shadow-indigo-500/20'
-                                            : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'">
+                                            ? 'bg-accent text-th-text-primary border-accent-border shadow-sm shadow-accent-border/20'
+                                            : 'bg-surface-raised text-th-text-tertiary border-th-border-strong hover:border-th-border-muted hover:text-th-text-primary'">
                                     <span x-text="lang.name"></span>
                                 </button>
                             </template>
@@ -319,27 +319,27 @@
 
                     <!-- Framework cards -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Framework</label>
+                        <label class="block text-sm font-medium text-th-text-tertiary mb-2">Framework</label>
                         <div class="grid gap-3 sm:grid-cols-2">
                             <template x-for="fw in currentFrameworks()" :key="fw.id">
                                 <button type="button"
                                         @click="selectedFramework = fw.id; clearError('framework')"
                                         class="text-left p-4 rounded-lg border-2 transition-all duration-150"
                                         :class="selectedFramework === fw.id
-                                            ? 'bg-indigo-900/30 border-indigo-500 shadow-sm shadow-indigo-500/10'
-                                            : 'bg-gray-800/50 border-gray-700 hover:border-gray-600 hover:bg-gray-800'">
+                                            ? 'bg-accent-muted/30 border-accent-border shadow-sm shadow-accent-border/10'
+                                            : 'bg-surface-raised/50 border-th-border-strong hover:border-th-border-muted hover:bg-surface-raised'">
                                     <div class="flex items-start justify-between">
                                         <div class="min-w-0">
                                             <p class="text-sm font-medium truncate"
-                                               :class="selectedFramework === fw.id ? 'text-white' : 'text-gray-200'"
+                                               :class="selectedFramework === fw.id ? 'text-th-text-primary' : 'text-th-text-secondary'"
                                                x-text="fw.name"></p>
                                             <p class="text-xs mt-1 line-clamp-2"
-                                               :class="selectedFramework === fw.id ? 'text-indigo-200' : 'text-gray-500'"
+                                               :class="selectedFramework === fw.id ? 'text-accent-text' : 'text-th-text-faint'"
                                                x-text="fw.description"></p>
                                         </div>
                                         <div x-show="selectedFramework === fw.id"
-                                             class="flex-shrink-0 ml-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
-                                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                             class="flex-shrink-0 ml-2 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                                            <svg class="w-3 h-3 text-th-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                                             </svg>
                                         </div>
@@ -352,23 +352,23 @@
 
                     <!-- Enable AI Code Generation -->
                     <div class="space-y-4">
-                        <div class="flex items-start gap-3 p-4 bg-gray-800/30 border border-gray-800 rounded-lg">
+                        <div class="flex items-start gap-3 p-4 bg-surface-raised/30 border border-th-border rounded-lg">
                             <input type="checkbox" id="wizard-ai" x-model="enableAI" @change="loadAIProviders()"
-                                   class="mt-0.5 w-4 h-4 rounded border-gray-600 bg-gray-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-0">
+                                   class="mt-0.5 w-4 h-4 rounded border-th-border-muted bg-surface-raised text-accent focus:ring-accent-border focus:ring-offset-0">
                             <div>
-                                <label for="wizard-ai" class="text-sm font-medium text-gray-200 cursor-pointer">Enable AI code generation</label>
-                                <p class="text-xs text-gray-500 mt-0.5">Use Claude or other models to generate starter code beyond the template boilerplate.</p>
+                                <label for="wizard-ai" class="text-sm font-medium text-th-text-secondary cursor-pointer">Enable AI code generation</label>
+                                <p class="text-xs text-th-text-faint mt-0.5">Use Claude or other models to generate starter code beyond the template boilerplate.</p>
                             </div>
                         </div>
 
                         <!-- AI Provider & Model Selection (shown when AI is enabled) -->
                         <template x-if="enableAI">
-                            <div x-transition class="space-y-4 p-4 bg-gray-800/20 border border-gray-700 rounded-lg">
+                            <div x-transition class="space-y-4 p-4 bg-surface-raised/20 border border-th-border-strong rounded-lg">
                                 <!-- Provider Selection -->
                                 <div>
-                                    <label for="wizard-ai-provider" class="block text-sm font-medium text-gray-300 mb-2">AI Provider</label>
+                                    <label for="wizard-ai-provider" class="block text-sm font-medium text-th-text-tertiary mb-2">AI Provider</label>
                                     <select id="wizard-ai-provider" x-model="aiProvider" @change="loadAIModels()"
-                                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                            class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary focus:ring-2 focus:ring-accent-border focus:border-transparent">
                                         <template x-for="provider in aiProviders" :key="provider.id">
                                             <option :value="provider.id" x-text="provider.name"></option>
                                         </template>
@@ -377,9 +377,9 @@
 
                                 <!-- Model Selection -->
                                 <div>
-                                    <label for="wizard-ai-model" class="block text-sm font-medium text-gray-300 mb-2">Model</label>
+                                    <label for="wizard-ai-model" class="block text-sm font-medium text-th-text-tertiary mb-2">Model</label>
                                     <select id="wizard-ai-model" x-model="aiModel"
-                                            class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                            class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary focus:ring-2 focus:ring-accent-border focus:border-transparent">
                                         <option value="">Select a model...</option>
                                         <template x-for="model in aiModels" :key="model.id">
                                             <option :value="model.id" x-text="model.name"></option>
@@ -389,21 +389,21 @@
 
                                 <!-- API Key -->
                                 <div>
-                                    <label for="wizard-ai-key" class="block text-sm font-medium text-gray-300 mb-2">API Key</label>
+                                    <label for="wizard-ai-key" class="block text-sm font-medium text-th-text-tertiary mb-2">API Key</label>
                                     <input type="password" id="wizard-ai-key" x-model="aiAPIKey"
-                                           class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                           class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent"
                                            placeholder="Your API key for the selected provider">
-                                    <p class="text-xs text-gray-500 mt-1">Your API key is used only for this project creation and not stored.</p>
+                                    <p class="text-xs text-th-text-faint mt-1">Your API key is used only for this project creation and not stored.</p>
                                 </div>
 
                                 <!-- Base URL (for Ollama) -->
                                 <template x-if="aiProvider === 'ollama'">
                                     <div x-transition>
-                                        <label for="wizard-ai-baseurl" class="block text-sm font-medium text-gray-300 mb-2">Ollama Base URL</label>
+                                        <label for="wizard-ai-baseurl" class="block text-sm font-medium text-th-text-tertiary mb-2">Ollama Base URL</label>
                                         <input type="text" id="wizard-ai-baseurl" x-model="aiBaseURL"
-                                               class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                               class="w-full px-3 py-2 bg-surface-raised border border-th-border-strong rounded-lg text-th-text-primary placeholder-th-text-faint focus:ring-2 focus:ring-accent-border focus:border-transparent"
                                                placeholder="http://localhost:11434">
-                                        <p class="text-xs text-gray-500 mt-1">URL where your Ollama instance is running.</p>
+                                        <p class="text-xs text-th-text-faint mt-1">URL where your Ollama instance is running.</p>
                                     </div>
                                 </template>
                             </div>
@@ -416,25 +416,25 @@
             <div x-show="step === 4" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
                 <div class="space-y-5">
                     <!-- Summary -->
-                    <div class="bg-gray-800/50 border border-gray-800 rounded-lg p-4">
+                    <div class="bg-surface-raised/50 border border-th-border rounded-lg p-4">
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <div>
-                                <span class="text-gray-500">Project</span>
-                                <p class="text-white font-medium" x-text="name"></p>
+                                <span class="text-th-text-faint">Project</span>
+                                <p class="text-th-text-primary font-medium" x-text="name"></p>
                             </div>
                             <div>
-                                <span class="text-gray-500">Type</span>
-                                <p class="text-white font-medium" x-text="projectType === 'empty' ? 'Empty Project' : projectType === 'clone' ? 'Clone from Git' : selectedLanguageName() + ' / ' + selectedFrameworkName()"></p>
+                                <span class="text-th-text-faint">Type</span>
+                                <p class="text-th-text-primary font-medium" x-text="projectType === 'empty' ? 'Empty Project' : projectType === 'clone' ? 'Clone from Git' : selectedLanguageName() + ' / ' + selectedFrameworkName()"></p>
                             </div>
                             <template x-if="projectType === 'clone'">
                                 <div class="col-span-2">
-                                    <span class="text-gray-500">Git URL</span>
-                                    <p class="text-white font-mono text-xs truncate" x-text="gitCloneURL"></p>
+                                    <span class="text-th-text-faint">Git URL</span>
+                                    <p class="text-th-text-primary font-mono text-xs truncate" x-text="gitCloneURL"></p>
                                 </div>
                             </template>
                             <div class="col-span-2">
-                                <span class="text-gray-500">Location</span>
-                                <p class="text-white font-mono text-xs" x-text="parentDir + '/' + (projectType === 'clone' ? (gitCloneDirName || name) : name)"></p>
+                                <span class="text-th-text-faint">Location</span>
+                                <p class="text-th-text-primary font-mono text-xs" x-text="parentDir + '/' + (projectType === 'clone' ? (gitCloneDirName || name) : name)"></p>
                             </div>
                         </div>
                     </div>
@@ -442,12 +442,12 @@
                     <!-- Overall progress bar -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-gray-300" x-text="jobStatusLabel()"></span>
-                            <span class="text-sm font-mono text-gray-400" x-text="progressPercent() + '%'"></span>
+                            <span class="text-sm text-th-text-tertiary" x-text="jobStatusLabel()"></span>
+                            <span class="text-sm font-mono text-th-text-muted" x-text="progressPercent() + '%'"></span>
                         </div>
-                        <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-2 bg-surface-raised rounded-full overflow-hidden">
                             <div class="h-full rounded-full transition-all duration-500 ease-out"
-                                 :class="jobStatus === 'failed' || jobStatus === 'rolled_back' ? 'bg-red-500' : jobStatus === 'completed' ? 'bg-green-500' : 'bg-indigo-500'"
+                                 :class="jobStatus === 'failed' || jobStatus === 'rolled_back' ? 'bg-red-500' : jobStatus === 'completed' ? 'bg-green-500' : 'bg-accent-hover'"
                                  :style="'width: ' + progressPercent() + '%'"></div>
                         </div>
                     </div>
@@ -464,7 +464,7 @@
                                         </svg>
                                     </template>
                                     <template x-if="js.status === 'running'">
-                                        <svg class="w-5 h-5 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <svg class="w-5 h-5 text-accent-text animate-spin" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                                         </svg>
@@ -475,15 +475,15 @@
                                         </svg>
                                     </template>
                                     <template x-if="js.status === 'pending'">
-                                        <div class="w-3 h-3 mx-1 rounded-full bg-gray-700"></div>
+                                        <div class="w-3 h-3 mx-1 rounded-full bg-surface-overlay"></div>
                                     </template>
                                 </div>
                                 <!-- Step name -->
                                 <span class="text-sm"
-                                      :class="js.status === 'completed' ? 'text-gray-300' : js.status === 'running' ? 'text-white font-medium' : js.status === 'failed' ? 'text-red-400' : 'text-gray-600'"
+                                      :class="js.status === 'completed' ? 'text-th-text-tertiary' : js.status === 'running' ? 'text-th-text-primary font-medium' : js.status === 'failed' ? 'text-red-400' : 'text-th-text-ghost'"
                                       x-text="stepLabel(js.name)"></span>
                                 <!-- Step message -->
-                                <span x-show="js.message && js.status !== 'failed'" class="text-xs text-gray-600 ml-auto truncate max-w-48" x-text="js.message"></span>
+                                <span x-show="js.message && js.status !== 'failed'" class="text-xs text-th-text-ghost ml-auto truncate max-w-48" x-text="js.message"></span>
                             </div>
                         </template>
                     </div>
@@ -512,7 +512,7 @@
                                 </svg>
                                 <div>
                                     <p class="text-sm font-medium text-green-300">Project created successfully</p>
-                                    <p class="text-xs text-gray-400 mt-0.5">Redirecting to your new project...</p>
+                                    <p class="text-xs text-th-text-muted mt-0.5">Redirecting to your new project...</p>
                                 </div>
                             </div>
                         </div>
@@ -522,18 +522,18 @@
         </div>
 
         <!-- Footer with navigation buttons -->
-        <div class="px-6 py-4 border-t border-gray-800 flex items-center justify-between">
+        <div class="px-6 py-4 border-t border-th-border flex items-center justify-between">
             <div>
                 <!-- Back button (Step 2) -->
                 <button type="button" x-show="step === 2"
                         @click="step = 1"
-                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                        class="px-4 py-2 text-sm text-th-text-tertiary hover:text-th-text-primary transition-colors">
                     Back
                 </button>
                 <!-- Back button (Step 3) -->
                 <button type="button" x-show="step === 3"
                         @click="step = 2"
-                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                        class="px-4 py-2 text-sm text-th-text-tertiary hover:text-th-text-primary transition-colors">
                     Back
                 </button>
             </div>
@@ -542,14 +542,14 @@
                 <!-- Cancel button (Steps 1, 2 & 3) -->
                 <button type="button" x-show="step < 4"
                         @click="closeWizard()"
-                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                        class="px-4 py-2 text-sm text-th-text-tertiary hover:text-th-text-primary transition-colors">
                     Cancel
                 </button>
 
                 <!-- Next button (Step 1 -> Step 2) -->
                 <button type="button" x-show="step === 1"
                         @click="goToStep2()"
-                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                        class="px-5 py-2 bg-accent hover:bg-accent-hover text-th-text-primary text-sm font-medium rounded-lg transition-colors">
                     Next
                 </button>
 
@@ -557,7 +557,7 @@
                 <button type="button" x-show="step === 2"
                         @click="proceedFromTypeStep()"
                         :disabled="!projectType"
-                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-medium rounded-lg transition-colors">
+                        class="px-5 py-2 bg-accent hover:bg-accent-hover disabled:bg-surface-overlay disabled:text-th-text-faint text-th-text-primary text-sm font-medium rounded-lg transition-colors">
                     <span x-show="!submitting" x-text="projectType === 'empty' ? 'Create Project' : 'Continue'"></span>
                     <span x-show="submitting" class="flex items-center gap-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -572,7 +572,7 @@
                 <button type="button" x-show="step === 3"
                         @click="submitWizard()"
                         :disabled="submitting || (projectType === 'template' && !selectedFramework) || (projectType === 'clone' && !gitCloneURL.trim())"
-                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-500 text-white text-sm font-medium rounded-lg transition-colors">
+                        class="px-5 py-2 bg-accent hover:bg-accent-hover disabled:bg-surface-overlay disabled:text-th-text-faint text-th-text-primary text-sm font-medium rounded-lg transition-colors">
                     <span x-show="!submitting">Create Project</span>
                     <span x-show="submitting" class="flex items-center gap-2">
                         <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -586,14 +586,14 @@
                 <!-- Retry button (Step 4, failed) -->
                 <button type="button" x-show="step === 4 && (jobStatus === 'failed' || jobStatus === 'rolled_back')"
                         @click="retryWizard()"
-                        class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                        class="px-5 py-2 bg-accent hover:bg-accent-hover text-th-text-primary text-sm font-medium rounded-lg transition-colors">
                     Retry
                 </button>
 
                 <!-- Close button (Step 4) -->
                 <button type="button" x-show="step === 4"
                         @click="closeWizard()"
-                        class="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors">
+                        class="px-4 py-2 text-sm text-th-text-tertiary hover:text-th-text-primary transition-colors">
                     Close
                 </button>
             </div>

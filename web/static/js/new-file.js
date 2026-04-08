@@ -176,7 +176,7 @@
 
         // Title
         var title = document.createElement('h3');
-        title.className = 'text-sm font-semibold text-white mb-3';
+        title.className = 'text-sm font-semibold text-th-text-primary mb-3';
         title.id = 'new-file-title';
         card.appendChild(title);
 
@@ -209,13 +209,13 @@
         btnRow.className = 'flex items-center justify-end gap-2 mt-3';
 
         var cancelBtn = document.createElement('button');
-        cancelBtn.className = 'px-3 py-1.5 text-xs text-gray-400 hover:text-white rounded transition-colors';
+        cancelBtn.className = 'px-3 py-1.5 text-xs text-th-text-muted hover:text-th-text-primary rounded transition-colors';
         cancelBtn.textContent = 'Cancel';
         cancelBtn.addEventListener('click', function() { closeModal(); });
         btnRow.appendChild(cancelBtn);
 
         var createBtn = document.createElement('button');
-        createBtn.className = 'px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors font-medium';
+        createBtn.className = 'px-3 py-1.5 text-xs bg-accent hover:bg-accent-hover text-th-text-primary rounded transition-colors font-medium';
         createBtn.textContent = 'Create';
         createBtn.addEventListener('click', function() { doCreate(); });
         createBtnEl = createBtn;

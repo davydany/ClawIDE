@@ -1,6 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-950" style="height:100dvh">
+<html lang="en" class="h-full bg-surface-deepest" style="height:100dvh"{{if and .Theme (ne .Theme "default")}} data-theme="{{.Theme}}"{{end}}{{if and .Mode (ne .Mode "") (ne .Mode "dark")}} data-mode="{{.Mode}}"{{end}}>
 <head>
+    <script>
+    // Prevent FOUC: apply theme from localStorage before CSS loads
+    (function(){var t=localStorage.getItem('clawide-theme');if(t&&t!=='default')document.documentElement.dataset.theme=t;var m=localStorage.getItem('clawide-mode');if(m&&m!=='dark')document.documentElement.dataset.mode=m;})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>{{block "title" .}}ClawIDE{{end}}</title>
@@ -25,6 +29,7 @@
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script src="/static/js/sidebar.js"></script>
     <script src="/static/js/modal-dialog.js"></script>
@@ -38,7 +43,7 @@
     <script src="/static/js/color-utils.js"></script>
     {{block "head" .}}{{end}}
 </head>
-<body class="h-full text-gray-100 antialiased" style="height:100dvh" hx-boost="true">
+<body class="h-full text-th-text-secondary antialiased" style="height:100dvh" hx-boost="true">
     {{block "body" .}}{{end}}
 
     {{block "scripts" .}}{{end}}

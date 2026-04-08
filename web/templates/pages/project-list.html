@@ -8,28 +8,28 @@
          @click="sidebarOpen = false"></div>
 
     <!-- Sidebar -->
-    <aside data-tour="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
+    <aside data-tour="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-surface-base border-r border-th-border transform transition-transform duration-200 lg:relative lg:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
-            <a href="/" class="flex items-center gap-2 text-lg font-semibold text-white">
+        <div class="flex items-center justify-between h-14 px-4 border-b border-th-border">
+            <a href="/" class="flex items-center gap-2 text-lg font-semibold text-th-text-primary">
                 <span class="text-xl">🦀</span>
                 ClawIDE
-                <span class="text-xs font-normal text-gray-500">{{version}}</span>
+                <span class="text-xs font-normal text-th-text-faint">{{version}}</span>
             </a>
-            <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-gray-400 hover:text-white">
+            <button @click="sidebarOpen = false" class="lg:hidden p-1 rounded text-th-text-muted hover:text-th-text-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
         <nav class="p-3 space-y-1 overflow-y-auto h-[calc(100%-3.5rem)]">
-            <a href="/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white bg-gray-800">
+            <a href="/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-th-text-primary bg-surface-raised">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
                 Dashboard
             </a>
-            <a href="/settings" data-tour="settings-link" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+            <a href="/settings" data-tour="settings-link" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-th-text-tertiary hover:bg-surface-raised hover:text-th-text-primary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -42,14 +42,15 @@
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-w-0">
         <!-- Top bar -->
-        <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
-            <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
+        <header class="relative z-50 flex items-center h-14 px-4 border-b border-th-border bg-surface-base/50 backdrop-blur">
+            <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-th-text-muted hover:text-th-text-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
-            <h1 class="text-sm font-medium text-white">Dashboard</h1>
+            <h1 class="text-sm font-medium text-th-text-primary">Dashboard</h1>
             <div class="ml-auto flex items-center gap-2">
+                {{template "mode-toggle" .}}
                 {{template "notification-bell" .}}
             </div>
         </header>
@@ -58,15 +59,15 @@
         <main class="flex-1 overflow-y-auto">
             <div class="p-4 lg:p-6 max-w-7xl mx-auto">
                 <!-- Breadcrumbs -->
-                <nav class="mb-4 text-sm text-gray-400">
-                    <span class="text-white">Dashboard</span>
+                <nav class="mb-4 text-sm text-th-text-muted">
+                    <span class="text-th-text-primary">Dashboard</span>
                 </nav>
 
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-semibold text-white">Projects</h2>
+                    <h2 class="text-xl font-semibold text-th-text-primary">Projects</h2>
                     <button data-tour="new-project" onclick="document.getElementById('wizardModal').showModal()"
-                            class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+                            class="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-th-text-primary text-sm font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -97,7 +98,7 @@
 
                     <!-- All Projects -->
                     {{if .StarredProjects}}
-                    <h3 class="text-sm font-medium text-gray-400 mb-3">All Projects</h3>
+                    <h3 class="text-sm font-medium text-th-text-muted mb-3">All Projects</h3>
                     {{end}}
                     <div id="project-list" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {{if .Projects}}
@@ -105,7 +106,7 @@
                             {{template "project-card" .}}
                             {{end}}
                         {{else if not .StarredProjects}}
-                        <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-500">
+                        <div class="col-span-full flex flex-col items-center justify-center py-16 text-th-text-faint">
                             <svg class="w-12 h-12 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                             </svg>
@@ -119,19 +120,19 @@
                 {{if .Discovered}}
                 <!-- Discovered Projects -->
                 <div class="mt-8">
-                    <h2 class="text-lg font-semibold text-gray-400 mb-4">Discovered in Projects Directory</h2>
+                    <h2 class="text-lg font-semibold text-th-text-muted mb-4">Discovered in Projects Directory</h2>
                     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {{range .Discovered}}
-                        <div class="bg-gray-900/50 rounded-xl border border-dashed border-gray-700 p-4">
+                        <div class="bg-surface-base/50 rounded-xl border border-dashed border-th-border-strong p-4">
                             <div class="flex items-start justify-between">
                                 <div class="min-w-0">
-                                    <h3 class="text-sm font-medium text-gray-300 truncate">{{.Name}}</h3>
-                                    <p class="text-xs text-gray-600 mt-1 truncate font-mono">{{.Path}}</p>
+                                    <h3 class="text-sm font-medium text-th-text-tertiary truncate">{{.Name}}</h3>
+                                    <p class="text-xs text-th-text-ghost mt-1 truncate font-mono">{{.Path}}</p>
                                 </div>
                                 <button hx-post="/projects/"
                                         hx-vals='{"name": "{{.Name}}", "path": "{{.Path}}"}'
                                         hx-swap="none"
-                                        class="flex-shrink-0 ml-3 px-3 py-1 text-xs bg-gray-800 hover:bg-indigo-600 text-gray-300 hover:text-white rounded-lg border border-gray-700 hover:border-indigo-500 transition-colors">
+                                        class="flex-shrink-0 ml-3 px-3 py-1 text-xs bg-surface-raised hover:bg-accent text-th-text-tertiary hover:text-th-text-primary rounded-lg border border-th-border-strong hover:border-accent-border transition-colors">
                                     Import
                                 </button>
                             </div>

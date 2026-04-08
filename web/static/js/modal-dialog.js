@@ -3,11 +3,11 @@
 (function() {
     'use strict';
 
-    var DIALOG_STYLES = 'bg-gray-900 text-gray-100 rounded-xl shadow-2xl border border-gray-700 p-0 backdrop:bg-black/60';
-    var INPUT_STYLES = 'w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500';
-    var BTN_PRIMARY = 'px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors font-medium';
-    var BTN_DANGER = 'px-4 py-2 text-sm bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium';
-    var BTN_CANCEL = 'px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors';
+    var DIALOG_STYLES = 'bg-surface-base text-th-text-secondary rounded-xl shadow-2xl border border-th-border-strong p-0 backdrop:bg-black/60';
+    var INPUT_STYLES = 'w-full bg-surface-raised border border-th-border-strong rounded-lg px-3 py-2 text-sm text-th-text-primary placeholder-th-text-faint focus:outline-none focus:border-accent-border';
+    var BTN_PRIMARY = 'px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-th-text-primary rounded-lg transition-colors font-medium';
+    var BTN_DANGER = 'px-4 py-2 text-sm bg-red-600 hover:bg-red-500 text-th-text-primary rounded-lg transition-colors font-medium';
+    var BTN_CANCEL = 'px-4 py-2 text-sm text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised rounded-lg transition-colors';
 
     function escapeHTML(str) {
         if (!str) return '';
@@ -35,20 +35,20 @@
             dialog.style.maxWidth = '440px';
 
             var suffixHTML = options.suffix
-                ? '<span class="text-gray-500 text-sm ml-1">' + escapeHTML(options.suffix) + '</span>'
+                ? '<span class="text-th-text-faint text-sm ml-1">' + escapeHTML(options.suffix) + '</span>'
                 : '';
 
             dialog.innerHTML =
                 '<div class="px-6 pt-5 pb-4">' +
-                '  <h3 class="text-base font-semibold text-white mb-4">' + escapeHTML(title) + '</h3>' +
-                '  <label class="block text-xs text-gray-400 mb-1.5">' + escapeHTML(label) + '</label>' +
+                '  <h3 class="text-base font-semibold text-th-text-primary mb-4">' + escapeHTML(title) + '</h3>' +
+                '  <label class="block text-xs text-th-text-muted mb-1.5">' + escapeHTML(label) + '</label>' +
                 '  <div class="flex items-center">' +
                 '    <input type="text" class="' + INPUT_STYLES + '" value="' + escapeHTML(defaultValue || '') + '"' +
                 '           placeholder="' + escapeHTML(options.placeholder || '') + '">' +
                      suffixHTML +
                 '  </div>' +
                 '</div>' +
-                '<div class="flex justify-end gap-2 px-6 py-3 border-t border-gray-700">' +
+                '<div class="flex justify-end gap-2 px-6 py-3 border-t border-th-border-strong">' +
                 '  <button type="button" class="dialog-cancel ' + BTN_CANCEL + '">Cancel</button>' +
                 '  <button type="button" class="dialog-ok ' + BTN_PRIMARY + '">OK</button>' +
                 '</div>';
@@ -117,10 +117,10 @@
 
             dialog.innerHTML =
                 '<div class="px-6 pt-5 pb-4">' +
-                '  <h3 class="text-base font-semibold text-white mb-2">' + escapeHTML(title) + '</h3>' +
-                '  <p class="text-sm text-gray-400">' + escapeHTML(message) + '</p>' +
+                '  <h3 class="text-base font-semibold text-th-text-primary mb-2">' + escapeHTML(title) + '</h3>' +
+                '  <p class="text-sm text-th-text-muted">' + escapeHTML(message) + '</p>' +
                 '</div>' +
-                '<div class="flex justify-end gap-2 px-6 py-3 border-t border-gray-700">' +
+                '<div class="flex justify-end gap-2 px-6 py-3 border-t border-th-border-strong">' +
                 '  <button type="button" class="dialog-cancel ' + BTN_CANCEL + '">' + escapeHTML(cancelLabel) + '</button>' +
                 '  <button type="button" class="dialog-ok ' + btnClass + '">' + escapeHTML(confirmLabel) + '</button>' +
                 '</div>';

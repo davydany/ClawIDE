@@ -17,6 +17,8 @@ func (h *Handlers) ListSessions(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]any{
 		"Project":  project,
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"Sessions": sessions,
 	}
 

@@ -3,23 +3,23 @@
 {{define "body"}}
 <div class="flex h-full" x-data="{ sidebarOpen: false }">
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-900 border-r border-gray-800 transform transition-transform duration-200 lg:relative lg:translate-x-0"
+    <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-surface-base border-r border-th-border transform transition-transform duration-200 lg:relative lg:translate-x-0"
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
-        <div class="flex items-center justify-between h-14 px-4 border-b border-gray-800">
-            <a href="/" class="flex items-center gap-2 text-lg font-semibold text-white">
+        <div class="flex items-center justify-between h-14 px-4 border-b border-th-border">
+            <a href="/" class="flex items-center gap-2 text-lg font-semibold text-th-text-primary">
                 <span class="text-xl">🦀</span>
                 ClawIDE
-                <span class="text-xs font-normal text-gray-500">{{version}}</span>
+                <span class="text-xs font-normal text-th-text-faint">{{version}}</span>
             </a>
         </div>
         <nav class="p-3 space-y-1">
-            <a href="/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-800 hover:text-white">
+            <a href="/" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-th-text-tertiary hover:bg-surface-raised hover:text-th-text-primary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
                 Dashboard
             </a>
-            <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-white bg-gray-800">
+            <a href="/settings" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-th-text-primary bg-surface-raised">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -31,14 +31,15 @@
 
     <!-- Main content -->
     <div class="flex-1 flex flex-col min-w-0">
-        <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
-            <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
+        <header class="relative z-50 flex items-center h-14 px-4 border-b border-th-border bg-surface-base/50 backdrop-blur">
+            <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-th-text-muted hover:text-th-text-primary">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
             </button>
-            <h1 class="text-sm font-medium text-white">Settings</h1>
+            <h1 class="text-sm font-medium text-th-text-primary">Settings</h1>
             <div class="ml-auto flex items-center gap-2">
+                {{template "mode-toggle" .}}
                 {{template "notification-bell" .}}
             </div>
         </header>
@@ -46,22 +47,22 @@
         <main class="flex-1 overflow-y-auto">
             <div class="p-4 lg:p-6 max-w-2xl mx-auto">
                 <!-- Breadcrumbs -->
-                <nav class="mb-4 text-sm text-gray-400">
-                    <a href="/" class="hover:text-white">Dashboard</a>
-                    <span class="mx-2 text-gray-600">/</span>
-                    <span class="text-white">Settings</span>
+                <nav class="mb-4 text-sm text-th-text-muted">
+                    <a href="/" class="hover:text-th-text-primary">Dashboard</a>
+                    <span class="mx-2 text-th-text-ghost">/</span>
+                    <span class="text-th-text-primary">Settings</span>
                 </nav>
 
-                <h2 class="text-xl font-semibold text-white mb-6">Settings</h2>
+                <h2 class="text-xl font-semibold text-th-text-primary mb-6">Settings</h2>
 
                 <div class="space-y-6">
                     <!-- General Settings -->
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-                        <h3 class="text-sm font-medium text-white mb-4">General</h3>
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6">
+                        <h3 class="text-sm font-medium text-th-text-primary mb-4">General</h3>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">Projects Directory</label>
-                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.ProjectsDir}}</p>
+                                <label class="block text-sm text-th-text-muted mb-1">Projects Directory</label>
+                                <p class="text-sm text-th-text-tertiary font-mono bg-surface-raised px-3 py-2 rounded-lg">{{.Config.ProjectsDir}}</p>
                             </div>
                             <div x-data="{
                                 maxSessions: {{.Config.MaxSessions}},
@@ -94,32 +95,32 @@
                                     }).finally(function() { self.saving = false; });
                                 }
                             }">
-                                <label class="block text-sm text-gray-400 mb-2">Max Sessions</label>
+                                <label class="block text-sm text-th-text-muted mb-2">Max Sessions</label>
                                 <div class="flex items-center gap-2">
                                     <input type="number" x-model="maxSessions" min="10" max="100"
-                                           class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+                                           class="flex-1 bg-surface-raised text-sm text-th-text-tertiary border border-th-border-strong rounded-lg px-3 py-2 focus:outline-none focus:border-accent-border"
                                            @change="save()">
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover disabled:bg-surface-overlay text-th-text-primary rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
                                     </button>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-2">Minimum: 10, Maximum: 100</p>
+                                <p class="text-xs text-th-text-faint mt-2">Minimum: 10, Maximum: 100</p>
                                 <template x-if="error">
                                     <p class="text-xs text-red-400 mt-1" x-text="error"></p>
                                 </template>
                             </div>
                             <div>
-                                <label class="block text-sm text-gray-400 mb-1">Listen Address</label>
-                                <p class="text-sm text-gray-300 font-mono bg-gray-800 px-3 py-2 rounded-lg">{{.Config.Host}}:{{.Config.Port}}</p>
+                                <label class="block text-sm text-th-text-muted mb-1">Listen Address</label>
+                                <p class="text-sm text-th-text-tertiary font-mono bg-surface-raised px-3 py-2 rounded-lg">{{.Config.Host}}:{{.Config.Port}}</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- AI Agent CLI Configuration -->
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6"
                          x-data="{
                             agentCmd: '{{.Config.AgentCommand}}',
                             agentArgs: '{{.Config.AgentArgs}}',
@@ -155,46 +156,46 @@
                          }">
                         <div class="mb-4">
                             <div class="flex items-start justify-between mb-2">
-                                <h3 class="text-sm font-medium text-white">AI Agent CLI Configuration</h3>
+                                <h3 class="text-sm font-medium text-th-text-primary">AI Agent CLI Configuration</h3>
                                 <button @click="showHelp = !showHelp"
-                                        class="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded bg-indigo-900/20 hover:bg-indigo-900/40 transition-colors">
+                                        class="text-xs text-accent-text hover:text-accent-text px-2 py-1 rounded bg-accent-muted/20 hover:bg-accent-muted/40 transition-colors">
                                     <span x-text="showHelp ? 'Hide Help' : 'Show Help'"></span>
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-400">Configure the AI agent command and options that ClawIDE will auto-launch in new terminal panes.</p>
+                            <p class="text-xs text-th-text-muted">Configure the AI agent command and options that ClawIDE will auto-launch in new terminal panes.</p>
                         </div>
 
                         <!-- Help Section -->
-                        <div x-show="showHelp" class="mb-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                            <div class="text-xs text-gray-300 space-y-2">
+                        <div x-show="showHelp" class="mb-4 p-4 bg-surface-raised/50 rounded-lg border border-th-border-strong/50">
+                            <div class="text-xs text-th-text-tertiary space-y-2">
                                 <p><strong>What is this?</strong> ClawIDE can automatically launch an AI agent in new terminal panes to help with code tasks.</p>
                                 <p><strong>Supported Agents:</strong></p>
                                 <ul class="list-disc list-inside pl-2 space-y-1">
-                                    <li><code class="text-indigo-300">claude</code> - Claude Code (recommended)</li>
-                                    <li><code class="text-indigo-300">codex</code> - OpenAI Codex</li>
-                                    <li><code class="text-indigo-300">aider</code> - Aider</li>
-                                    <li><code class="text-indigo-300">(custom)</code> - Any command path</li>
+                                    <li><code class="text-accent-text">claude</code> - Claude Code (recommended)</li>
+                                    <li><code class="text-accent-text">codex</code> - OpenAI Codex</li>
+                                    <li><code class="text-accent-text">aider</code> - Aider</li>
+                                    <li><code class="text-accent-text">(custom)</code> - Any command path</li>
                                 </ul>
-                                <p><strong>CLI Arguments:</strong> Add options like <code class="text-indigo-300">--model opus --verbose</code> to customize behavior.</p>
+                                <p><strong>CLI Arguments:</strong> Add options like <code class="text-accent-text">--model opus --verbose</code> to customize behavior.</p>
                                 <p><strong>Common Options:</strong></p>
-                                <ul class="list-disc list-inside pl-2 space-y-1 text-gray-400">
-                                    <li><code class="text-indigo-300">--model sonnet|opus|haiku</code> - Choose model</li>
-                                    <li><code class="text-indigo-300">--effort low|medium|high</code> - Effort level</li>
-                                    <li><code class="text-indigo-300">--permission-mode plan|acceptEdits|default</code> - Permission level</li>
-                                    <li><code class="text-indigo-300">-c, --continue</code> - Resume previous session</li>
-                                    <li><code class="text-indigo-300">--verbose</code> - Enable verbose output</li>
+                                <ul class="list-disc list-inside pl-2 space-y-1 text-th-text-muted">
+                                    <li><code class="text-accent-text">--model sonnet|opus|haiku</code> - Choose model</li>
+                                    <li><code class="text-accent-text">--effort low|medium|high</code> - Effort level</li>
+                                    <li><code class="text-accent-text">--permission-mode plan|acceptEdits|default</code> - Permission level</li>
+                                    <li><code class="text-accent-text">-c, --continue</code> - Resume previous session</li>
+                                    <li><code class="text-accent-text">--verbose</code> - Enable verbose output</li>
                                 </ul>
-                                <p><strong>📖 Full Reference:</strong> See <code class="text-indigo-300">docs/claude-cli-options.md</code> for complete options list.</p>
+                                <p><strong>📖 Full Reference:</strong> See <code class="text-accent-text">docs/claude-cli-options.md</code> for complete options list.</p>
                             </div>
                         </div>
 
                         <div class="space-y-4">
                             <!-- Agent Command Selection -->
                             <div>
-                                <label class="block text-sm text-gray-400 mb-2">AI Agent Command</label>
+                                <label class="block text-sm text-th-text-muted mb-2">AI Agent Command</label>
                                 <div class="flex items-center gap-2 mb-2">
                                     <select x-model="agentCmd"
-                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                            class="flex-1 bg-surface-raised text-sm text-th-text-tertiary border border-th-border-strong rounded-lg px-3 py-2 focus:outline-none focus:border-accent-border">
                                         <option value="claude">Claude Code (claude)</option>
                                         <option value="codex">OpenAI Codex (codex)</option>
                                         <option value="aider">Aider (aider)</option>
@@ -204,37 +205,37 @@
                                         </template>
                                     </select>
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover disabled:bg-surface-overlay text-th-text-primary rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
                                     </button>
                                 </div>
-                                <p class="text-xs text-gray-500">Command that will auto-launch in new terminal panes.</p>
+                                <p class="text-xs text-th-text-faint">Command that will auto-launch in new terminal panes.</p>
                             </div>
 
                             <!-- Custom Command Path -->
-                            <div x-show="!isPreset" class="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                                <label class="block text-sm text-gray-400 mb-2">Custom Command Path</label>
+                            <div x-show="!isPreset" class="p-3 bg-surface-raised/30 rounded-lg border border-th-border-strong/50">
+                                <label class="block text-sm text-th-text-muted mb-2">Custom Command Path</label>
                                 <input type="text" x-model="customCmd"
                                        placeholder="e.g. /usr/local/bin/claude or /path/to/custom-agent"
-                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
-                                <p class="text-xs text-gray-500 mt-1">Provide the full path to your custom AI agent command.</p>
+                                       class="w-full bg-surface-raised text-sm text-th-text-tertiary border border-th-border-strong rounded-lg px-3 py-2 focus:outline-none focus:border-accent-border font-mono">
+                                <p class="text-xs text-th-text-faint mt-1">Provide the full path to your custom AI agent command.</p>
                             </div>
 
                             <!-- CLI Arguments -->
                             <div x-show="effectiveCmd !== ''">
-                                <label class="block text-sm text-gray-400 mb-2">Additional CLI Arguments</label>
+                                <label class="block text-sm text-th-text-muted mb-2">Additional CLI Arguments</label>
                                 <input type="text" x-model="agentArgs"
                                        placeholder="e.g. --model opus --effort high --permission-mode acceptEdits"
-                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono mb-1">
-                                <p class="text-xs text-gray-500">Optional flags passed to the agent command. Separate multiple options with spaces.</p>
+                                       class="w-full bg-surface-raised text-sm text-th-text-tertiary border border-th-border-strong rounded-lg px-3 py-2 focus:outline-none focus:border-accent-border font-mono mb-1">
+                                <p class="text-xs text-th-text-faint">Optional flags passed to the agent command. Separate multiple options with spaces.</p>
                             </div>
 
                             <!-- No Agent Option -->
                             <template x-if="effectiveCmd === ''">
-                                <div class="p-3 bg-gray-800/30 rounded-lg border border-gray-700/50">
-                                    <p class="text-sm text-gray-400">
+                                <div class="p-3 bg-surface-raised/30 rounded-lg border border-th-border-strong/50">
+                                    <p class="text-sm text-th-text-muted">
                                         <span class="text-yellow-400">ℹ️</span> Shell only mode: New panes will launch a plain shell without an AI agent.
                                     </p>
                                 </div>
@@ -243,7 +244,7 @@
                     </div>
 
                     <!-- Preferred Editor -->
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6"
                          x-data="{
                             editors: [],
                             preferred: '',
@@ -271,16 +272,16 @@
                                 }).finally(function(){ self.saving = false; });
                             }
                          }">
-                        <h3 class="text-sm font-medium text-white mb-2">Preferred Editor</h3>
-                        <p class="text-xs text-gray-400 mb-4">Choose which code editor to open projects in from the workspace.</p>
+                        <h3 class="text-sm font-medium text-th-text-primary mb-2">Preferred Editor</h3>
+                        <p class="text-xs text-th-text-muted mb-4">Choose which code editor to open projects in from the workspace.</p>
                         <template x-if="loading">
-                            <p class="text-sm text-gray-500">Detecting editors...</p>
+                            <p class="text-sm text-th-text-faint">Detecting editors...</p>
                         </template>
                         <template x-if="!loading">
                             <div>
                                 <div class="flex items-center gap-2">
                                     <select x-model="preferred"
-                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                            class="flex-1 bg-surface-raised text-sm text-th-text-tertiary border border-th-border-strong rounded-lg px-3 py-2 focus:outline-none focus:border-accent-border">
                                         <option value="">None (disabled)</option>
                                         <template x-for="ed in editors" :key="ed.id">
                                             <option :value="ed.id"
@@ -290,7 +291,7 @@
                                         </template>
                                     </select>
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover disabled:bg-surface-overlay text-th-text-primary rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
@@ -304,16 +305,16 @@
                     </div>
 
                     <!-- Sidebar settings -->
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6"
                          x-data="{ position: '{{.Config.SidebarPosition}}', saving: false }">
-                        <h3 class="text-sm font-medium text-white mb-4">Sidebar</h3>
+                        <h3 class="text-sm font-medium text-th-text-primary mb-4">Sidebar</h3>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm text-gray-400 mb-2">Position</label>
+                                <label class="block text-sm text-th-text-muted mb-2">Position</label>
                                 <div class="flex items-center gap-2">
                                     <button @click="if(position !== 'left') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'left'})}).then(r=>{if(r.ok){position='left'}}).finally(()=>saving=false) }"
                                             :disabled="saving"
-                                            :class="position === 'left' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
+                                            :class="position === 'left' ? 'bg-accent text-th-text-primary border-accent-border' : 'bg-surface-raised text-th-text-tertiary border-th-border-strong hover:border-th-border-muted hover:text-th-text-primary'"
                                             class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
@@ -322,7 +323,7 @@
                                     </button>
                                     <button @click="if(position !== 'right') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'right'})}).then(r=>{if(r.ok){position='right'}}).finally(()=>saving=false) }"
                                             :disabled="saving"
-                                            :class="position === 'right' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
+                                            :class="position === 'right' ? 'bg-accent text-th-text-primary border-accent-border' : 'bg-surface-raised text-th-text-tertiary border-th-border-strong hover:border-th-border-muted hover:text-th-text-primary'"
                                             class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M12 12h8M4 18h16"/>
@@ -330,27 +331,103 @@
                                         Right
                                     </button>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-2">Changes apply on next workspace load.</p>
+                                <p class="text-xs text-th-text-faint mt-2">Changes apply on next workspace load.</p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
-                        <h3 class="text-sm font-medium text-white mb-4">Onboarding</h3>
+                    <!-- Theme -->
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6"
+                         x-data="{ theme: (document.documentElement.dataset.theme || 'default'), mode: (document.documentElement.dataset.mode || 'dark'), saving: false,
+                            setTheme(name) {
+                                if (this.theme === name) return;
+                                this.theme = name;
+                                if (window.ClawIDETheme) window.ClawIDETheme.set(name);
+                            },
+                            setMode(m) {
+                                if (this.mode === m) return;
+                                this.mode = m;
+                                if (window.ClawIDETheme) window.ClawIDETheme.setMode(m);
+                            }
+                         }"
+                         @clawide:theme-changed.window="mode = ($event.detail && $event.detail.mode) || 'dark'; theme = ($event.detail && $event.detail.theme) || 'default'">
+                        <h3 class="text-sm font-medium text-th-text-primary mb-4">Theme</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                            <!-- ClawIDE Default -->
+                            <button @click="setTheme('default')"
+                                    :class="theme === 'default' ? 'ring-2 ring-accent-border' : 'ring-1 ring-th-border-strong hover:ring-th-border-muted'"
+                                    class="rounded-xl p-3 text-left transition-all">
+                                <div class="flex flex-col gap-1.5 mb-2">
+                                    <div class="h-2 rounded-full w-full" style="background:#030712"></div>
+                                    <div class="h-2 rounded-full w-full" style="background:#111827"></div>
+                                    <div class="h-2 rounded-full w-3/4" style="background:#4f46e5"></div>
+                                </div>
+                                <span class="text-xs font-medium text-th-text-tertiary">ClawIDE</span>
+                            </button>
+                            <!-- Claude Desktop -->
+                            <button @click="setTheme('claude')"
+                                    :class="theme === 'claude' ? 'ring-2 ring-accent-border' : 'ring-1 ring-th-border-strong hover:ring-th-border-muted'"
+                                    class="rounded-xl p-3 text-left transition-all">
+                                <div class="flex flex-col gap-1.5 mb-2">
+                                    <div class="h-2 rounded-full w-full" style="background:#1a1510"></div>
+                                    <div class="h-2 rounded-full w-full" style="background:#2a2219"></div>
+                                    <div class="h-2 rounded-full w-3/4" style="background:#da7756"></div>
+                                </div>
+                                <span class="text-xs font-medium text-th-text-tertiary">Claude</span>
+                            </button>
+                            <!-- Monochrome -->
+                            <button @click="setTheme('mono')"
+                                    :class="theme === 'mono' ? 'ring-2 ring-accent-border' : 'ring-1 ring-th-border-strong hover:ring-th-border-muted'"
+                                    class="rounded-xl p-3 text-left transition-all">
+                                <div class="flex flex-col gap-1.5 mb-2">
+                                    <div class="h-2 rounded-full w-full" style="background:#000000"></div>
+                                    <div class="h-2 rounded-full w-full" style="background:#0a0a0a"></div>
+                                    <div class="h-2 rounded-full w-3/4" style="background:#d4d4d4"></div>
+                                </div>
+                                <span class="text-xs font-medium text-th-text-tertiary">Mono</span>
+                            </button>
+                        </div>
+                        <!-- Light / Dark mode toggle -->
+                        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-th-border">
+                            <span class="text-xs text-th-text-muted">Mode</span>
+                            <div class="flex rounded-lg border border-th-border-strong overflow-hidden">
+                                <button @click="setMode('light')"
+                                        :class="mode === 'light' ? 'bg-surface-raised text-th-text-primary' : 'text-th-text-muted hover:text-th-text-secondary'"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    Light
+                                </button>
+                                <button @click="setMode('dark')"
+                                        :class="mode === 'dark' ? 'bg-surface-raised text-th-text-primary' : 'text-th-text-muted hover:text-th-text-secondary'"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                                    </svg>
+                                    Dark
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-xs text-th-text-faint mt-3">Theme applies instantly across the entire UI.</p>
+                    </div>
+
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6">
+                        <h3 class="text-sm font-medium text-th-text-primary mb-4">Onboarding</h3>
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-300">Welcome Tour</p>
-                                <p class="text-xs text-gray-500 mt-1">Restart the welcome screen and guided tours</p>
+                                <p class="text-sm text-th-text-tertiary">Welcome Tour</p>
+                                <p class="text-xs text-th-text-faint mt-1">Restart the welcome screen and guided tours</p>
                             </div>
                             <button hx-post="/api/onboarding/reset"
-                                    class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                    class="px-4 py-2 text-sm bg-surface-raised hover:bg-surface-overlay text-th-text-tertiary hover:text-th-text-primary border border-th-border-strong rounded-lg transition-colors">
                                 Restart Onboarding
                             </button>
                         </div>
                     </div>
 
                     <!-- Software Update -->
-                    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6"
+                    <div class="bg-surface-base rounded-xl border border-th-border p-6"
                          x-data="{
                             checking: false,
                             installing: false,
@@ -427,7 +504,7 @@
                                 }, 1000);
                             }
                          }">
-                        <h3 class="text-sm font-medium text-white mb-4">Software Update</h3>
+                        <h3 class="text-sm font-medium text-th-text-primary mb-4">Software Update</h3>
                         <div class="space-y-3">
                             <!-- Docker detection banner -->
                             <template x-if="state && state.is_docker">
@@ -438,7 +515,7 @@
                                         </svg>
                                         <div>
                                             <p class="text-sm font-medium text-blue-300">Running in Docker</p>
-                                            <p class="text-xs text-gray-400 mt-1">In-app updates are not available in Docker. Pull the latest image to update:</p>
+                                            <p class="text-xs text-th-text-muted mt-1">In-app updates are not available in Docker. Pull the latest image to update:</p>
                                             <code class="block text-xs text-blue-200 bg-blue-900/40 px-3 py-2 rounded mt-2 font-mono">docker pull ghcr.io/davydany/clawide:latest</code>
                                         </div>
                                     </div>
@@ -448,15 +525,15 @@
                             <!-- Current version -->
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-300">Current Version</p>
-                                    <p class="text-xs text-gray-500 font-mono mt-0.5">{{.Version}}</p>
+                                    <p class="text-sm text-th-text-tertiary">Current Version</p>
+                                    <p class="text-xs text-th-text-faint font-mono mt-0.5">{{.Version}}</p>
                                 </div>
                                 <template x-if="state && state.is_dev">
-                                    <span class="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">Dev build - updates disabled</span>
+                                    <span class="text-xs text-th-text-faint bg-surface-raised px-2 py-1 rounded">Dev build - updates disabled</span>
                                 </template>
                                 <template x-if="state && !state.is_dev && !state.is_docker">
                                     <button @click="checkNow()" :disabled="checking || installing"
-                                            class="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                            class="px-3 py-1.5 text-sm bg-surface-raised hover:bg-surface-overlay disabled:bg-surface-raised disabled:text-th-text-ghost text-th-text-tertiary hover:text-th-text-primary border border-th-border-strong rounded-lg transition-colors">
                                         <span x-show="!checking">Check for Updates</span>
                                         <span x-show="checking" class="flex items-center gap-1.5">
                                             <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
@@ -473,11 +550,11 @@
                             <template x-if="state && !state.is_dev && !state.is_docker">
                                 <div class="flex items-center justify-between py-1">
                                     <div>
-                                        <p class="text-sm text-gray-300">Automatic Update Checks</p>
-                                        <p class="text-xs text-gray-500 mt-0.5">Periodically check for new versions in the background</p>
+                                        <p class="text-sm text-th-text-tertiary">Automatic Update Checks</p>
+                                        <p class="text-xs text-th-text-faint mt-0.5">Periodically check for new versions in the background</p>
                                     </div>
                                     <button @click="toggleAutoUpdate()" :disabled="togglingAutoUpdate"
-                                            :class="autoUpdate ? 'bg-indigo-600' : 'bg-gray-700'"
+                                            :class="autoUpdate ? 'bg-accent' : 'bg-surface-overlay'"
                                             class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50">
                                         <span :class="autoUpdate ? 'translate-x-5' : 'translate-x-0'"
                                               class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
@@ -487,22 +564,22 @@
 
                             <!-- Update available banner -->
                             <template x-if="state && state.update_available && !state.is_docker && !installing">
-                                <div class="bg-indigo-900/30 border border-indigo-700/50 rounded-lg p-4">
+                                <div class="bg-accent-muted/30 border border-accent-border/50 rounded-lg p-4">
                                     <div class="flex items-start justify-between">
                                         <div>
-                                            <p class="text-sm font-medium text-indigo-300">
+                                            <p class="text-sm font-medium text-accent-text">
                                                 ClawIDE <span x-text="state.latest_version"></span> is available
                                             </p>
-                                            <p class="text-xs text-gray-400 mt-1">
+                                            <p class="text-xs text-th-text-muted mt-1">
                                                 Download size: <span x-text="(state.asset_size / 1024 / 1024).toFixed(1) + ' MB'"></span>
                                             </p>
                                             <a :href="state.release_url" target="_blank" rel="noopener"
-                                               class="text-xs text-indigo-400 hover:text-indigo-300 mt-1 inline-block">
+                                               class="text-xs text-accent-text hover:text-accent-text mt-1 inline-block">
                                                 View release notes
                                             </a>
                                         </div>
                                         <button @click="applyUpdate()"
-                                                class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors whitespace-nowrap ml-4 animate-pulse shadow-lg shadow-indigo-500/40">
+                                                class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-th-text-primary rounded-lg transition-colors whitespace-nowrap ml-4 animate-pulse shadow-lg shadow-accent-glow">
                                             Auto Update to Latest
                                         </button>
                                     </div>
@@ -519,7 +596,7 @@
                                         </svg>
                                         <div>
                                             <p class="text-sm font-medium text-yellow-300">Installing update...</p>
-                                            <p class="text-xs text-gray-400 mt-0.5">ClawIDE will restart automatically. This page will reload when ready.</p>
+                                            <p class="text-xs text-th-text-muted mt-0.5">ClawIDE will restart automatically. This page will reload when ready.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -532,7 +609,7 @@
 
                             <!-- Last check time -->
                             <template x-if="state && state.last_check && !state.is_dev">
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-th-text-faint">
                                     Last checked: <span x-text="new Date(state.last_check).toLocaleString()"></span>
                                 </p>
                             </template>

@@ -200,7 +200,7 @@
     }
 
     // --- Fuzzy Highlight ---
-    // Returns HTML with matched characters wrapped in <span class="text-indigo-400">
+    // Returns HTML with matched characters wrapped in <span class="text-accent-text">
     function fuzzyHighlight(text, query) {
         if (!query) return escapeHtml(text);
         var qLower = query.toLowerCase();
@@ -210,7 +210,7 @@
         var idx = tLower.indexOf(qLower);
         if (idx !== -1) {
             return escapeHtml(text.substring(0, idx)) +
-                '<span class="text-indigo-400 font-semibold">' + escapeHtml(text.substring(idx, idx + query.length)) + '</span>' +
+                '<span class="text-accent-text font-semibold">' + escapeHtml(text.substring(idx, idx + query.length)) + '</span>' +
                 escapeHtml(text.substring(idx + query.length));
         }
 
@@ -219,7 +219,7 @@
         var qi = 0;
         for (var i = 0; i < text.length; i++) {
             if (qi < qLower.length && tLower.charAt(i) === qLower.charAt(qi)) {
-                result += '<span class="text-indigo-400 font-semibold">' + escapeHtml(text.charAt(i)) + '</span>';
+                result += '<span class="text-accent-text font-semibold">' + escapeHtml(text.charAt(i)) + '</span>';
                 qi++;
             } else {
                 result += escapeHtml(text.charAt(i));

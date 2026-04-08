@@ -15,6 +15,8 @@ import (
 func (h *Handlers) SettingsPage(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
 		"Title":   "Settings - ClawIDE",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"Config":  h.cfg,
 		"Version": version.Version,
 	}
@@ -56,6 +58,8 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 		"sidebar_width":      true,
 		"auto_update_check": true,
 		"preferred_editor":   true,
+		"theme":             true,
+		"mode":              true,
 		"ai_settings":       true, // Allow nested AI settings updates
 	}
 
@@ -110,6 +114,8 @@ func (h *Handlers) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	h.cfg.Port = newCfg.Port
 	h.cfg.AutoUpdateCheck = newCfg.AutoUpdateCheck
 	h.cfg.PreferredEditor = newCfg.PreferredEditor
+	h.cfg.Theme = newCfg.Theme
+	h.cfg.Mode = newCfg.Mode
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
