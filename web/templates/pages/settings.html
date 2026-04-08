@@ -97,10 +97,10 @@
                                 <label class="block text-sm text-gray-400 mb-2">Max Sessions</label>
                                 <div class="flex items-center gap-2">
                                     <input type="number" x-model="maxSessions" min="10" max="100"
-                                           class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500"
+                                           class="flex-1 bg-gray-800 text-sm text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" style="color-scheme: dark"
                                            @change="save()">
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-400 text-white rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
@@ -157,7 +157,7 @@
                             <div class="flex items-start justify-between mb-2">
                                 <h3 class="text-sm font-medium text-white">AI Agent CLI Configuration</h3>
                                 <button @click="showHelp = !showHelp"
-                                        class="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded bg-indigo-900/20 hover:bg-indigo-900/40 transition-colors">
+                                        class="text-xs text-indigo-300 hover:text-indigo-200 px-2 py-1 rounded bg-indigo-900/30 hover:bg-indigo-900/50 border border-indigo-700/50 transition-colors">
                                     <span x-text="showHelp ? 'Hide Help' : 'Show Help'"></span>
                                 </button>
                             </div>
@@ -194,7 +194,7 @@
                                 <label class="block text-sm text-gray-400 mb-2">AI Agent Command</label>
                                 <div class="flex items-center gap-2 mb-2">
                                     <select x-model="agentCmd"
-                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                            class="flex-1 bg-gray-800 text-sm text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" style="color-scheme: dark">
                                         <option value="claude">Claude Code (claude)</option>
                                         <option value="codex">OpenAI Codex (codex)</option>
                                         <option value="aider">Aider (aider)</option>
@@ -204,7 +204,7 @@
                                         </template>
                                     </select>
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-400 text-white rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
@@ -218,7 +218,7 @@
                                 <label class="block text-sm text-gray-400 mb-2">Custom Command Path</label>
                                 <input type="text" x-model="customCmd"
                                        placeholder="e.g. /usr/local/bin/claude or /path/to/custom-agent"
-                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
+                                       class="w-full bg-gray-800 text-sm text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono">
                                 <p class="text-xs text-gray-500 mt-1">Provide the full path to your custom AI agent command.</p>
                             </div>
 
@@ -227,7 +227,7 @@
                                 <label class="block text-sm text-gray-400 mb-2">Additional CLI Arguments</label>
                                 <input type="text" x-model="agentArgs"
                                        placeholder="e.g. --model opus --effort high --permission-mode acceptEdits"
-                                       class="w-full bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono mb-1">
+                                       class="w-full bg-gray-800 text-sm text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 font-mono mb-1">
                                 <p class="text-xs text-gray-500">Optional flags passed to the agent command. Separate multiple options with spaces.</p>
                             </div>
 
@@ -280,7 +280,7 @@
                             <div>
                                 <div class="flex items-center gap-2">
                                     <select x-model="preferred"
-                                            class="flex-1 bg-gray-800 text-sm text-gray-300 border border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500">
+                                            class="flex-1 bg-gray-800 text-sm text-white border border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500" style="color-scheme: dark">
                                         <option value="">None (disabled)</option>
                                         <template x-for="ed in editors" :key="ed.id">
                                             <option :value="ed.id"
@@ -290,7 +290,7 @@
                                         </template>
                                     </select>
                                     <button @click="save()" :disabled="saving"
-                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 text-white rounded-lg transition-colors whitespace-nowrap">
+                                            class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-700 disabled:text-gray-400 text-white rounded-lg transition-colors whitespace-nowrap">
                                         <span x-show="!saving && !saved">Save</span>
                                         <span x-show="saving">Saving...</span>
                                         <span x-show="saved" class="text-green-300">✓ Saved</span>
@@ -314,7 +314,7 @@
                                     <button @click="if(position !== 'left') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'left'})}).then(r=>{if(r.ok){position='left'}}).finally(()=>saving=false) }"
                                             :disabled="saving"
                                             :class="position === 'left' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
-                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
+                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors disabled:text-gray-400 disabled:opacity-60">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/>
                                         </svg>
@@ -323,7 +323,7 @@
                                     <button @click="if(position !== 'right') { saving=true; fetch('/api/settings', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sidebar_position:'right'})}).then(r=>{if(r.ok){position='right'}}).finally(()=>saving=false) }"
                                             :disabled="saving"
                                             :class="position === 'right' ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-gray-800 text-gray-300 border-gray-700 hover:border-gray-600 hover:text-white'"
-                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors">
+                                            class="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors disabled:text-gray-400 disabled:opacity-60">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M12 12h8M4 18h16"/>
                                         </svg>
@@ -343,7 +343,7 @@
                                 <p class="text-xs text-gray-500 mt-1">Restart the welcome screen and guided tours</p>
                             </div>
                             <button hx-post="/api/onboarding/reset"
-                                    class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                    class="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white border border-gray-600 rounded-lg transition-colors">
                                 Restart Onboarding
                             </button>
                         </div>
@@ -456,7 +456,7 @@
                                 </template>
                                 <template x-if="state && !state.is_dev && !state.is_docker">
                                     <button @click="checkNow()" :disabled="checking || installing"
-                                            class="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-600 text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors">
+                                            class="px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 disabled:bg-gray-800 disabled:text-gray-500 text-white border border-gray-600 rounded-lg transition-colors">
                                         <span x-show="!checking">Check for Updates</span>
                                         <span x-show="checking" class="flex items-center gap-1.5">
                                             <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
@@ -477,7 +477,7 @@
                                         <p class="text-xs text-gray-500 mt-0.5">Periodically check for new versions in the background</p>
                                     </div>
                                     <button @click="toggleAutoUpdate()" :disabled="togglingAutoUpdate"
-                                            :class="autoUpdate ? 'bg-indigo-600' : 'bg-gray-700'"
+                                            :class="autoUpdate ? 'bg-indigo-600' : 'bg-gray-600'"
                                             class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50">
                                         <span :class="autoUpdate ? 'translate-x-5' : 'translate-x-0'"
                                               class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
