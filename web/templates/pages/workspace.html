@@ -339,7 +339,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-gray-800 bg-gray-900/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-gray-400 hover:text-white">
@@ -377,7 +377,7 @@
                         {{range .Features}}
                         <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/" hx-boost="false"
                            class="flex items-center gap-2 px-3 py-2 text-xs transition-colors {{if eq .ID $.ActiveFeatureID}}text-purple-400 bg-gray-800/50{{else}}text-gray-300 hover:bg-gray-800{{end}}">
-                            <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            {{if .IsClone}}<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3v12M18 9a3 3 0 01-3 3h-3l-3-3M6 21a3 3 0 003-3V9"/></svg>{{else}}<svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>{{end}}
                             {{.Name}}
                         </a>
                         {{end}}
@@ -700,8 +700,8 @@
                 {{range .Features}}
                 <div class="relative flex items-center">
                     <a href="/projects/{{$.Project.ID}}/features/{{.ID}}/" hx-boost="false"
-                       class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ID $.ActiveFeatureID}}text-white border-purple-400{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
-                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                       class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap border-b-2 transition-colors {{if eq .ID $.ActiveFeatureID}}text-white {{if .IsClone}}border-emerald-400{{else}}border-purple-400{{end}}{{else}}text-gray-400 border-transparent hover:text-gray-200{{end}}">
+                        {{if .IsClone}}<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3v12M18 9a3 3 0 01-3 3h-3l-3-3M6 21a3 3 0 003-3V9"/></svg>{{else}}<svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>{{end}}
                         {{.Name}}
                     </a>
                     <button @click.stop="featureMenu = featureMenu === '{{.ID}}' ? '' : '{{.ID}}'"
@@ -741,26 +741,64 @@
                 </button>
             </div>
 
-            <!-- New Feature Modal (accessible from both mobile and desktop) -->
+            <!-- New Workspace Modal (accessible from both mobile and desktop) -->
             <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
                 <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
-                        <h3 class="text-lg font-semibold text-white mb-4">New Feature</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4" x-text="workspaceType === 'branch' ? 'New Branch' : 'New Feature'">New Feature</h3>
                         <form method="POST" action="/projects/{{.Project.ID}}/features/">
+                            <input type="hidden" name="type" :value="workspaceType">
+                            <input type="hidden" name="prefix" :value="workspaceType === 'branch' ? branchPrefix : ''">
                             <div class="space-y-3">
+                                <!-- Type toggle -->
                                 <div>
-                                    <label class="block text-xs text-gray-400 mb-1">Feature Name</label>
-                                    <input type="text" name="name" x-model="featureName" required placeholder="e.g. Add OAuth2 Support"
+                                    <label class="block text-xs text-gray-400 mb-1">Type</label>
+                                    <div class="flex bg-gray-800 rounded p-0.5">
+                                        <button type="button" @click="workspaceType = 'feature'"
+                                                :class="workspaceType === 'feature' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                                                class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors">Feature</button>
+                                        <button type="button" @click="workspaceType = 'branch'"
+                                                :class="workspaceType === 'branch' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                                                class="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors">Branch</button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-400 mb-1" x-text="workspaceType === 'branch' ? 'Branch Name' : 'Feature Name'">Feature Name</label>
+                                    <input type="text" name="name" x-model="featureName" required
+                                           :placeholder="workspaceType === 'branch' ? 'e.g. fix-login-bug' : 'e.g. Add OAuth2 Support'"
                                            class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
+                                </div>
+                                <!-- Prefix dropdown (branch type only) -->
+                                <div x-show="workspaceType === 'branch'" x-cloak>
+                                    <label class="block text-xs text-gray-400 mb-1">Branch Prefix</label>
+                                    <select x-model="branchPrefix"
+                                            class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-indigo-500">
+                                        <option value="">None</option>
+                                        <option value="feature">feature/</option>
+                                        <option value="hotfix">hotfix/</option>
+                                        <option value="bugfix">bugfix/</option>
+                                        <option value="experiment">experiment/</option>
+                                        <option value="release">release/</option>
+                                        <option value="chore">chore/</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-400 mb-1">Base Branch</label>
                                     <input type="text" name="base_branch" x-model="featureBase" placeholder="{{if .ActiveBranch}}{{.ActiveBranch}}{{else}}Leave empty for current branch{{end}}"
                                            class="w-full px-3 py-2 text-sm bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500">
                                 </div>
+                                <!-- Branch preview (branch type only) -->
+                                <div x-show="workspaceType === 'branch' && featureName" x-cloak class="text-xs text-gray-500">
+                                    Branch: <span class="text-indigo-400" x-text="(branchPrefix ? branchPrefix + '/' : '') + featureName.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '')"></span>
+                                </div>
+                                <!-- Clone info note -->
+                                <div x-show="workspaceType === 'branch'" x-cloak class="text-[10px] text-gray-600">
+                                    Creates a full independent clone of the repository.
+                                </div>
                             </div>
                             <div class="flex justify-end gap-2 mt-4">
                                 <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">Cancel</button>
-                                <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors">Create Feature</button>
+                                <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors"
+                                        x-text="workspaceType === 'branch' ? 'Create Branch' : 'Create Feature'">Create Feature</button>
                             </div>
                     </form>
                 </div>
