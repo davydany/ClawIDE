@@ -61,19 +61,29 @@ func (h *Handlers) RestoreTrashedFeature(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Recreate the worktree.
-	worktreePath := git.WorktreeDir(project.Path, tf.Feature.BranchName)
-	if err := git.CreateWorktree(project.Path, tf.Feature.BranchName, worktreePath); err != nil {
-		log.Printf("Error recreating worktree for restore: %v", err)
-		http.Error(w, "failed to recreate worktree: "+err.Error(), http.StatusInternalServerError)
-		return
+	// Recreate the working directory based on workspace type.
+	var workDir string
+	if tf.Feature.IsClone() {
+		workDir = git.CloneDir(project.Path, tf.Feature.BranchName)
+		if err := git.CloneLocal(project.Path, workDir, tf.Feature.BranchName); err != nil {
+			log.Printf("Error recreating clone for restore: %v", err)
+			http.Error(w, "failed to recreate clone: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		workDir = git.WorktreeDir(project.Path, tf.Feature.BranchName)
+		if err := git.CreateWorktree(project.Path, tf.Feature.BranchName, workDir); err != nil {
+			log.Printf("Error recreating worktree for restore: %v", err)
+			http.Error(w, "failed to recreate worktree: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Restore the feature with a new ID and updated paths.
 	now := time.Now()
 	restored := tf.Feature
 	restored.ID = uuid.New().String()
-	restored.WorktreePath = worktreePath
+	restored.WorktreePath = workDir
 	restored.UpdatedAt = now
 
 	if err := h.store.AddFeature(restored); err != nil {
@@ -89,7 +99,7 @@ func (h *Handlers) RestoreTrashedFeature(w http.ResponseWriter, r *http.Request)
 		ProjectID: project.ID,
 		FeatureID: restored.ID,
 		Name:      "Session " + now.Format("15:04"),
-		WorkDir:   worktreePath,
+		WorkDir:   workDir,
 		Layout:    model.NewAgentPane(paneID),
 		CreatedAt: now,
 		UpdatedAt: now,

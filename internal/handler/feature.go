@@ -15,8 +15,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateFeature creates a new feature workspace with its own git branch and
-// worktree. POST /projects/{id}/features/
+// CreateFeature creates a new feature or branch workspace with its own git
+// branch and isolated working directory.
+// POST /projects/{id}/features/
 func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
 
@@ -32,9 +33,17 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 
 	name := r.FormValue("name")
 	baseBranch := r.FormValue("base_branch")
+	featureType := r.FormValue("type")
+	prefix := r.FormValue("prefix")
+
 	if name == "" {
 		http.Error(w, "name is required", http.StatusBadRequest)
 		return
+	}
+
+	// Default to feature type for backward compatibility.
+	if featureType == "" {
+		featureType = model.FeatureTypeFeature
 	}
 
 	// Determine the base branch: explicit > project active branch > current branch.
@@ -51,8 +60,19 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	branchName := git.SanitizeBranchName(name)
-	worktreePath := git.WorktreeDir(project.Path, branchName)
+	// Determine branch name and working directory based on type.
+	var branchName string
+	var workDir string
+
+	switch featureType {
+	case model.FeatureTypeBranch:
+		branchName = git.SanitizeBranchNameWithPrefix(name, prefix)
+		workDir = git.CloneDir(project.Path, branchName)
+	default:
+		featureType = model.FeatureTypeFeature
+		branchName = git.SanitizeBranchName(name)
+		workDir = git.WorktreeDir(project.Path, branchName)
+	}
 
 	// Create the git branch from base.
 	if err := git.CreateBranch(project.Path, branchName, baseBranch); err != nil {
@@ -62,15 +82,25 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Switch back to the base branch so the main worktree isn't on the
-	// feature branch, then create a worktree for the feature branch.
+	// new branch.
 	if err := git.CheckoutBranch(project.Path, baseBranch); err != nil {
 		log.Printf("Error switching back to base branch %q: %v", baseBranch, err)
 	}
 
-	if err := git.CreateWorktree(project.Path, branchName, worktreePath); err != nil {
-		log.Printf("Error creating worktree: %v", err)
-		http.Error(w, "failed to create worktree: "+err.Error(), http.StatusInternalServerError)
-		return
+	// Create the isolated working directory.
+	switch featureType {
+	case model.FeatureTypeBranch:
+		if err := git.CloneLocal(project.Path, workDir, branchName); err != nil {
+			log.Printf("Error creating clone: %v", err)
+			http.Error(w, "failed to create clone: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	default:
+		if err := git.CreateWorktree(project.Path, branchName, workDir); err != nil {
+			log.Printf("Error creating worktree: %v", err)
+			http.Error(w, "failed to create worktree: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	now := time.Now()
@@ -79,10 +109,11 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 	feature := model.Feature{
 		ID:           featureID,
 		ProjectID:    project.ID,
+		Type:         featureType,
 		Name:         name,
 		BranchName:   branchName,
 		BaseBranch:   baseBranch,
-		WorktreePath: worktreePath,
+		WorktreePath: workDir,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -107,20 +138,20 @@ func (h *Handlers) CreateFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create an initial session in the feature workspace.
+	// Create an initial session in the workspace.
 	paneID := uuid.New().String()
 	sess := model.Session{
 		ID:        uuid.New().String(),
 		ProjectID: project.ID,
 		FeatureID: featureID,
 		Name:      "Session " + time.Now().Format("15:04"),
-		WorkDir:   worktreePath,
+		WorkDir:   workDir,
 		Layout:    model.NewAgentPane(paneID),
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 	if err := h.store.AddSession(sess); err != nil {
-		log.Printf("Error creating initial feature session: %v", err)
+		log.Printf("Error creating initial session: %v", err)
 	}
 
 	http.Redirect(w, r, "/projects/"+project.ID+"/features/"+featureID+"/", http.StatusSeeOther)
@@ -249,7 +280,7 @@ func (h *Handlers) DeleteFeature(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Destroy all PTY sessions belonging to this feature.
+	// Destroy all PTY sessions belonging to this workspace.
 	sessions := h.store.GetFeatureSessions(featureID)
 	for _, sess := range sessions {
 		if sess.Layout != nil {
@@ -261,9 +292,15 @@ func (h *Handlers) DeleteFeature(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Remove the git worktree but keep the branch for future restoration.
-	if err := git.RemoveWorktree(project.Path, feature.WorktreePath); err != nil {
-		log.Printf("Error removing worktree %s: %v", feature.WorktreePath, err)
+	// Remove the working directory but keep the branch for future restoration.
+	if feature.IsClone() {
+		if err := git.RemoveClone(feature.WorktreePath); err != nil {
+			log.Printf("Error removing clone %s: %v", feature.WorktreePath, err)
+		}
+	} else {
+		if err := git.RemoveWorktree(project.Path, feature.WorktreePath); err != nil {
+			log.Printf("Error removing worktree %s: %v", feature.WorktreePath, err)
+		}
 	}
 
 	// Move the feature to trash.
