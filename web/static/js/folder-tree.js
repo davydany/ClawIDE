@@ -159,7 +159,7 @@
         var rootSelected = this.selectedID === '' && !this.selectedFileID;
         html += '<div class="folder-tree-node ' + (rootSelected ? 'folder-tree-selected' : '') + '" data-folder-id="" data-node-type="folder">';
         html += '  <div class="folder-tree-label" style="padding-left:8px">';
-        html += '    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>';
+        html += '    <svg class="w-3.5 h-3.5 text-th-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>';
         html += '    <span class="text-xs truncate">' + escapeHTML(this.rootLabel) + '</span>';
         html += '  </div>';
         html += '</div>';
@@ -213,7 +213,7 @@
             }
 
             // Folder icon
-            html += '    <svg class="w-3.5 h-3.5 flex-shrink-0 ' + (isExpanded ? 'text-yellow-400' : 'text-gray-400') + '" fill="' + (isExpanded ? 'currentColor' : 'none') + '" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>';
+            html += '    <svg class="w-3.5 h-3.5 flex-shrink-0 ' + (isExpanded ? 'text-yellow-400' : 'text-th-text-muted') + '" fill="' + (isExpanded ? 'currentColor' : 'none') + '" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>';
             html += '    <span class="text-xs truncate">' + escapeHTML(folder.name) + '</span>';
             html += '  </div>';
             html += '</div>';
@@ -271,7 +271,7 @@
             html += '  <div class="folder-tree-label" style="padding-left:' + indent + 'px">';
             html += '    <span class="w-3 h-3 inline-block"></span>'; // spacer to align with toggle
             // Document icon
-            html += '    <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+            html += '    <svg class="w-3.5 h-3.5 flex-shrink-0 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
             html += '    <span class="text-xs truncate">' + escapeHTML(fileName) + '</span>';
             html += '  </div>';
             html += '</div>';

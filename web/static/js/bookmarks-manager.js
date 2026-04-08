@@ -395,7 +395,7 @@
 
         if (bookmarks.length === 0) {
             var msg = selectedFolderID ? 'No bookmarks in this folder' : 'No bookmarks yet';
-            list.innerHTML = '<div class="text-gray-500 text-xs p-3 text-center">' + msg + '</div>';
+            list.innerHTML = '<div class="text-th-text-faint text-xs p-3 text-center">' + msg + '</div>';
             return;
         }
 
@@ -416,7 +416,7 @@
             }
 
             // Name as link
-            html += '    <a href="' + escapeAttr(bm.url) + '" target="_blank" rel="noopener" class="text-xs text-white font-medium truncate hover:text-indigo-300 transition-colors" title="' + escapeAttr(bm.url) + '">' + escapeHTML(bm.name) + '</a>';
+            html += '    <a href="' + escapeAttr(bm.url) + '" target="_blank" rel="noopener" class="text-xs text-th-text-primary font-medium truncate hover:text-accent-text transition-colors" title="' + escapeAttr(bm.url) + '">' + escapeHTML(bm.name) + '</a>';
 
             // Git status badge (bookmarks share a single file)
             if (gitStatusLoaded && typeof ClawIDEGit !== 'undefined') {
@@ -429,16 +429,16 @@
 
             // Hover actions
             html += '    <div class="flex items-center gap-1 flex-shrink-0 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-white transition-colors" title="Edit" data-bookmark-edit="' + escapeAttr(bm.id) + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-th-text-primary transition-colors" title="Edit" data-bookmark-edit="' + escapeAttr(bm.id) + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
             html += '      </button>';
-            html += '      <button class="p-0.5 rounded text-gray-500 hover:text-red-400 transition-colors" title="Delete" data-bookmark-delete="' + escapeAttr(bm.id) + '">';
+            html += '      <button class="p-0.5 rounded text-th-text-faint hover:text-red-400 transition-colors" title="Delete" data-bookmark-delete="' + escapeAttr(bm.id) + '">';
             html += '        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>';
             html += '      </button>';
             html += '    </div>';
 
             html += '  </div>';
-            html += '  <div class="text-[10px] text-gray-500 mt-0.5 truncate pl-6">' + escapeHTML(domain) + '</div>';
+            html += '  <div class="text-[10px] text-th-text-faint mt-0.5 truncate pl-6">' + escapeHTML(domain) + '</div>';
             html += '</div>';
         }
         list.innerHTML = html;
@@ -617,7 +617,7 @@
         });
 
         if (barItems.length === 0) {
-            bookmarkBarContent.innerHTML = '<span class="text-xs text-gray-500 italic">No bookmarks in bar</span>';
+            bookmarkBarContent.innerHTML = '<span class="text-xs text-th-text-faint italic">No bookmarks in bar</span>';
             return;
         }
 
@@ -627,7 +627,7 @@
             var faviconUrl = getFaviconUrl(bm.url);
 
             html += '<a href="' + escapeAttr(bm.url) + '" target="_blank" rel="noopener"';
-            html += '   class="bookmark-bar-item flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-800"';
+            html += '   class="bookmark-bar-item flex items-center gap-1 px-2 py-1 text-xs text-th-text-muted hover:text-th-text-primary transition-colors rounded hover:bg-surface-raised"';
             html += '   title="' + escapeAttr(bm.name) + '"';
             html += '   data-bar-id="' + escapeAttr(bm.id) + '">';
 
@@ -636,7 +636,7 @@
             } else if (faviconUrl) {
                 html += '<img src="' + escapeAttr(faviconUrl) + '" class="w-4 h-4" onerror="this.style.display=\'none\'">';
             } else {
-                html += '<svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
+                html += '<svg class="w-3.5 h-3.5 text-th-text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>';
             }
 
             html += '<span class="max-w-[80px] truncate">' + escapeHTML(bm.name) + '</span>';
@@ -842,11 +842,11 @@
 
     function showFallbackEmojiGrid() {
         if (!emojiPickerEl) return;
-        var html = '<div class="bg-gray-900 border border-gray-700 rounded-lg p-2 shadow-xl" style="width:240px">';
-        html += '<div class="text-[10px] text-gray-500 mb-1.5 px-1">Quick Emojis</div>';
+        var html = '<div class="bg-surface-base border border-th-border-strong rounded-lg p-2 shadow-xl" style="width:240px">';
+        html += '<div class="text-[10px] text-th-text-faint mb-1.5 px-1">Quick Emojis</div>';
         html += '<div class="grid grid-cols-8 gap-0.5">';
         for (var i = 0; i < FALLBACK_EMOJIS.length; i++) {
-            html += '<button type="button" class="emoji-fallback-btn p-1 text-lg hover:bg-gray-800 rounded cursor-pointer text-center leading-none" data-emoji="' + FALLBACK_EMOJIS[i] + '">' + FALLBACK_EMOJIS[i] + '</button>';
+            html += '<button type="button" class="emoji-fallback-btn p-1 text-lg hover:bg-surface-raised rounded cursor-pointer text-center leading-none" data-emoji="' + FALLBACK_EMOJIS[i] + '">' + FALLBACK_EMOJIS[i] + '</button>';
         }
         html += '</div></div>';
 
@@ -880,7 +880,7 @@
         emojiPickerEl.style.display = 'none';
         var loadingEl = document.createElement('div');
         loadingEl.id = 'emoji-loading-indicator';
-        loadingEl.className = 'text-xs text-gray-500 py-1';
+        loadingEl.className = 'text-xs text-th-text-faint py-1';
         loadingEl.textContent = 'Loading emoji picker...';
         emojiPickerEl.parentNode.appendChild(loadingEl);
 

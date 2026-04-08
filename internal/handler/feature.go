@@ -211,6 +211,8 @@ func (h *Handlers) FeatureWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]any{
 		"Title":              feature.Name + " - " + project.Name + " - ClawIDE",
+		"Theme":           h.cfg.Theme,
+		"Mode":            h.cfg.Mode,
 		"Project":            project,
 		"Feature":            feature,
 		"Features":           features,

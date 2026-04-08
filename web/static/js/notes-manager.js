@@ -229,11 +229,11 @@
         scope = newScope;
         if (tabProject && tabGlobal) {
             if (scope === 'project') {
-                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300';
-                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800';
+                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-accent/30 text-accent-text';
+                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised';
             } else {
-                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-gray-400 hover:text-white hover:bg-gray-800';
-                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-indigo-600/30 text-indigo-300';
+                tabProject.className = 'flex-1 px-2 py-1 text-xs font-medium rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised';
+                tabGlobal.className = 'flex-1 px-2 py-1 text-xs font-medium rounded bg-accent/30 text-accent-text';
             }
         }
         resetForm();
@@ -715,7 +715,7 @@
         if (typeof ClawIDEMarkdown !== 'undefined') {
             ClawIDEMarkdown.renderInto(previewEl, content);
         } else {
-            previewEl.innerHTML = content ? escapeHTML(content).replace(/\n/g, '<br>') : '<span class="text-gray-500 italic">Nothing to preview</span>';
+            previewEl.innerHTML = content ? escapeHTML(content).replace(/\n/g, '<br>') : '<span class="text-th-text-faint italic">Nothing to preview</span>';
         }
     }
 

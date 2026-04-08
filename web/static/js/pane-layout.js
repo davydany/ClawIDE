@@ -142,14 +142,14 @@
             var kebabWrap = document.createElement('div');
             kebabWrap.className = 'relative';
             var kebabBtn = document.createElement('button');
-            kebabBtn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
+            kebabBtn.className = 'text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
             kebabBtn.innerHTML = '<svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>';
             kebabBtn.title = 'More options';
             var kebabMenu = document.createElement('div');
-            kebabMenu.className = 'absolute right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded-lg shadow-xl py-1 z-50 min-w-[160px] hidden';
+            kebabMenu.className = 'absolute right-0 top-full mt-1 bg-surface-raised border border-th-border-strong rounded-lg shadow-xl py-1 z-50 min-w-[160px] hidden';
 
             var menuItemAgent = document.createElement('button');
-            menuItemAgent.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemAgent.className = 'w-full text-left px-3 py-1.5 text-xs text-th-text-tertiary hover:bg-surface-overlay hover:text-th-text-primary';
             menuItemAgent.textContent = 'New Agent Pane';
             menuItemAgent.onclick = function() {
                 kebabMenu.classList.add('hidden');
@@ -158,7 +158,7 @@
             kebabMenu.appendChild(menuItemAgent);
 
             var menuItemShell = document.createElement('button');
-            menuItemShell.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemShell.className = 'w-full text-left px-3 py-1.5 text-xs text-th-text-tertiary hover:bg-surface-overlay hover:text-th-text-primary';
             menuItemShell.textContent = 'New Shell Pane';
             menuItemShell.onclick = function() {
                 kebabMenu.classList.add('hidden');
@@ -168,12 +168,12 @@
 
             // Add separator
             var separator = document.createElement('div');
-            separator.className = 'border-t border-gray-700 my-1';
+            separator.className = 'border-t border-th-border-strong my-1';
             kebabMenu.appendChild(separator);
 
             // Paste button
             var menuItemPaste = document.createElement('button');
-            menuItemPaste.className = 'w-full text-left px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white';
+            menuItemPaste.className = 'w-full text-left px-3 py-1.5 text-xs text-th-text-tertiary hover:bg-surface-overlay hover:text-th-text-primary';
             menuItemPaste.textContent = 'Paste from Clipboard';
             menuItemPaste.onclick = function() {
                 kebabMenu.classList.add('hidden');
@@ -199,7 +199,7 @@
 
             // Close button
             var closeBtn = document.createElement('button');
-            closeBtn.className = 'text-gray-500 hover:text-red-400 px-1 transition-colors';
+            closeBtn.className = 'text-th-text-faint hover:text-red-400 px-1 transition-colors';
             closeBtn.innerHTML = '&#x2715;';
             closeBtn.title = 'Close pane';
             closeBtn.onclick = function() {
@@ -343,7 +343,7 @@
         center.appendChild(nameSpan);
 
         var indicator = document.createElement('span');
-        indicator.className = 'text-xs text-gray-500 flex-shrink-0';
+        indicator.className = 'text-xs text-th-text-faint flex-shrink-0';
         indicator.textContent = (startIndex + 1) + '/' + leaves.length;
         center.appendChild(indicator);
 
@@ -359,7 +359,7 @@
 
         // Close button
         var closeBtn = document.createElement('button');
-        closeBtn.className = 'carousel-nav-btn text-gray-500 hover:text-red-400';
+        closeBtn.className = 'carousel-nav-btn text-th-text-faint hover:text-red-400';
         closeBtn.innerHTML = '&#x2715;';
         closeBtn.title = 'Close pane';
         closeBtn.onclick = function() {
@@ -459,7 +459,7 @@
 
     function createToolbarButton(label, direction, onclick) {
         var btn = document.createElement('button');
-        btn.className = 'text-gray-500 hover:text-gray-300 px-1 transition-colors';
+        btn.className = 'text-th-text-faint hover:text-th-text-tertiary px-1 transition-colors';
         btn.title = 'Split ' + direction;
 
         if (direction === 'horizontal') {

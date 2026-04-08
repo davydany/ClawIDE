@@ -2,14 +2,196 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════
+   Theme System — Semantic CSS Custom Properties
+   ═══════════════════════════════════════════════════ */
+
 :root {
-    --color-bg-primary: #030712;
-    --color-bg-secondary: #111827;
-    --color-bg-tertiary: #1f2937;
-    --color-border: #374151;
-    --color-text-primary: #f9fafb;
-    --color-text-secondary: #9ca3af;
-    --color-accent: #6366f1;
+    /* Surfaces (backgrounds) */
+    --surface-deepest: #030712;
+    --surface-base: #111827;
+    --surface-raised: #1f2937;
+    --surface-overlay: #374151;
+    --surface-hover: rgba(31, 41, 55, 0.5);
+
+    /* Borders */
+    --border-default: #1f2937;
+    --border-strong: #374151;
+    --border-muted: #4b5563;
+
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: #f3f4f6;
+    --text-tertiary: #d1d5db;
+    --text-muted: #9ca3af;
+    --text-faint: #6b7280;
+    --text-ghost: #4b5563;
+
+    /* Accent */
+    --accent: #4f46e5;
+    --accent-hover: #6366f1;
+    --accent-text: #818cf8;
+    --accent-border: #6366f1;
+    --accent-muted: #312e81;
+    --accent-glow: rgba(79, 70, 229, 0.35);
+
+    /* Scrollbar */
+    --scrollbar-thumb: #374151;
+    --scrollbar-hover: #4b5563;
+}
+
+/* Claude Desktop — warm brown/terracotta */
+[data-theme="claude"] {
+    --surface-deepest: #1a1510;
+    --surface-base: #2a2219;
+    --surface-raised: #3d3024;
+    --surface-overlay: #504034;
+    --surface-hover: rgba(61, 48, 36, 0.5);
+
+    --border-default: #3d3024;
+    --border-strong: #504034;
+    --border-muted: #635143;
+
+    --text-primary: #ece5d8;
+    --text-secondary: #ddd5c8;
+    --text-tertiary: #c4b9a8;
+    --text-muted: #9a8b78;
+    --text-faint: #7d6e5c;
+    --text-ghost: #635143;
+
+    --accent: #da7756;
+    --accent-hover: #e58c6b;
+    --accent-text: #e89e7e;
+    --accent-border: #da7756;
+    --accent-muted: #3d2518;
+    --accent-glow: rgba(218, 119, 86, 0.35);
+
+    --scrollbar-thumb: #504034;
+    --scrollbar-hover: #635143;
+}
+
+/* Monochrome — black & white, light gray accent */
+[data-theme="mono"] {
+    --surface-deepest: #000000;
+    --surface-base: #0a0a0a;
+    --surface-raised: #171717;
+    --surface-overlay: #262626;
+    --surface-hover: rgba(23, 23, 23, 0.5);
+
+    --border-default: #262626;
+    --border-strong: #404040;
+    --border-muted: #525252;
+
+    --text-primary: #ffffff;
+    --text-secondary: #e5e5e5;
+    --text-tertiary: #d4d4d4;
+    --text-muted: #a3a3a3;
+    --text-faint: #737373;
+    --text-ghost: #525252;
+
+    --accent: #d4d4d4;
+    --accent-hover: #e5e5e5;
+    --accent-text: #d4d4d4;
+    --accent-border: #a3a3a3;
+    --accent-muted: #262626;
+    --accent-glow: rgba(212, 212, 212, 0.2);
+
+    --scrollbar-thumb: #404040;
+    --scrollbar-hover: #525252;
+}
+
+/* ═══════════════════════════════════════════════════
+   Light Mode Overrides
+   ═══════════════════════════════════════════════════ */
+
+/* Default (Indigo) — Light */
+[data-mode="light"] {
+    --surface-deepest: #f8fafc;
+    --surface-base: #ffffff;
+    --surface-raised: #f1f5f9;
+    --surface-overlay: #e2e8f0;
+    --surface-hover: rgba(241, 245, 249, 0.5);
+
+    --border-default: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --border-muted: #94a3b8;
+
+    --text-primary: #0f172a;
+    --text-secondary: #1e293b;
+    --text-tertiary: #334155;
+    --text-muted: #64748b;
+    --text-faint: #94a3b8;
+    --text-ghost: #cbd5e1;
+
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-text: #4338ca;
+    --accent-border: #6366f1;
+    --accent-muted: #e0e7ff;
+    --accent-glow: rgba(79, 70, 229, 0.15);
+
+    --scrollbar-thumb: #cbd5e1;
+    --scrollbar-hover: #94a3b8;
+}
+
+/* Claude Desktop — Light */
+[data-theme="claude"][data-mode="light"] {
+    --surface-deepest: #faf8f5;
+    --surface-base: #ffffff;
+    --surface-raised: #f5f0ea;
+    --surface-overlay: #e8dfd4;
+    --surface-hover: rgba(245, 240, 234, 0.5);
+
+    --border-default: #e8dfd4;
+    --border-strong: #d4c8b8;
+    --border-muted: #b8a890;
+
+    --text-primary: #1a1510;
+    --text-secondary: #2a2219;
+    --text-tertiary: #3d3024;
+    --text-muted: #7d6e5c;
+    --text-faint: #9a8b78;
+    --text-ghost: #c4b9a8;
+
+    --accent: #c96842;
+    --accent-hover: #b85a36;
+    --accent-text: #b85a36;
+    --accent-border: #da7756;
+    --accent-muted: #fde8de;
+    --accent-glow: rgba(218, 119, 86, 0.15);
+
+    --scrollbar-thumb: #d4c8b8;
+    --scrollbar-hover: #b8a890;
+}
+
+/* Monochrome — Light */
+[data-theme="mono"][data-mode="light"] {
+    --surface-deepest: #fafafa;
+    --surface-base: #ffffff;
+    --surface-raised: #f5f5f5;
+    --surface-overlay: #e5e5e5;
+    --surface-hover: rgba(245, 245, 245, 0.5);
+
+    --border-default: #e5e5e5;
+    --border-strong: #d4d4d4;
+    --border-muted: #a3a3a3;
+
+    --text-primary: #0a0a0a;
+    --text-secondary: #171717;
+    --text-tertiary: #262626;
+    --text-muted: #525252;
+    --text-faint: #737373;
+    --text-ghost: #a3a3a3;
+
+    --accent: #404040;
+    --accent-hover: #262626;
+    --accent-text: #262626;
+    --accent-border: #525252;
+    --accent-muted: #e5e5e5;
+    --accent-glow: rgba(64, 64, 64, 0.15);
+
+    --scrollbar-thumb: #d4d4d4;
+    --scrollbar-hover: #a3a3a3;
 }
 
 /* Safe area for iOS */
@@ -39,7 +221,7 @@
 
 /* Touch selection indicator */
 .touch-selecting {
-    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline: 2px solid var(--accent-border);
     outline-offset: -2px;
 }
 
@@ -50,8 +232,8 @@
     padding: 6px 16px;
     font-size: 13px;
     font-weight: 600;
-    color: #fff;
-    background: #4f46e5;
+    color: var(--text-primary);
+    background: var(--accent);
     border: none;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -61,7 +243,7 @@
 }
 
 .touch-copy-btn:active {
-    background: #4338ca;
+    background: var(--accent);
 }
 
 /* Scrollbar styling */
@@ -75,12 +257,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #374151;
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
+    background: var(--scrollbar-hover);
 }
 
 /* Hide elements with x-cloak before Alpine loads */
@@ -90,21 +272,21 @@
 
 /* File tree styles */
 .file-tree-item {
-    @apply flex items-center gap-1.5 px-2 py-1 text-sm text-gray-300 hover:bg-gray-800 rounded cursor-pointer;
+    @apply flex items-center gap-1.5 px-2 py-1 text-sm text-th-text-tertiary hover:bg-surface-raised rounded cursor-pointer;
 }
 
 .file-tree-item.active {
-    @apply bg-gray-800 text-white;
+    @apply bg-surface-raised text-th-text-primary;
 }
 
 /* Resizable panel handle */
 .resize-handle {
-    @apply w-1 cursor-col-resize bg-transparent hover:bg-indigo-500/50 transition-colors;
+    @apply w-1 cursor-col-resize bg-transparent hover:bg-accent-hover/50 transition-colors;
 }
 
 /* Pane resize handles */
 .pane-resize-handle {
-    @apply bg-gray-700 hover:bg-indigo-500 transition-colors flex-shrink-0;
+    @apply bg-surface-overlay hover:bg-accent-hover transition-colors flex-shrink-0;
 }
 
 .pane-resize-handle[data-direction="horizontal"] {
@@ -117,7 +299,7 @@
 
 /* Pane toolbar */
 .pane-toolbar {
-    @apply flex items-center gap-1 px-1 py-0.5 bg-gray-900/80 border-b border-gray-800 text-xs;
+    @apply flex items-center gap-1 px-1 py-0.5 bg-surface-base/80 border-b border-th-border text-xs;
 }
 
 /* Pane leaf */
@@ -126,12 +308,12 @@
 }
 
 .pane-leaf.focused {
-    outline: 2px solid rgba(99, 102, 241, 0.6);
+    outline: 2px solid var(--accent-border);
     outline-offset: -2px;
 }
 
 .pane-leaf.focused > .pane-toolbar {
-    @apply border-b-indigo-500/60;
+    @apply border-b-accent-border/60;
 }
 
 /* Editor pane styles */
@@ -141,18 +323,18 @@
 
 /* Editor pane header: flex row with tab bar + controls */
 .editor-pane-header {
-    @apply flex items-center bg-gray-900/80 border-b border-gray-800 text-xs;
+    @apply flex items-center bg-surface-base/80 border-b border-th-border text-xs;
 }
 
 .editor-pane-header.focused {
-    @apply border-b-indigo-500/50;
+    @apply border-b-accent-border/50;
 }
 
 /* Scrollable tab bar */
 .editor-tab-bar {
     @apply flex flex-1 min-w-0 overflow-x-auto;
     scrollbar-width: thin;
-    scrollbar-color: #374151 transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .editor-tab-bar::-webkit-scrollbar {
@@ -164,21 +346,21 @@
 }
 
 .editor-tab-bar::-webkit-scrollbar-thumb {
-    background: #374151;
+    background: var(--scrollbar-thumb);
     border-radius: 2px;
 }
 
 /* Individual tab */
 .editor-tab {
-    @apply flex items-center gap-1.5 px-3 py-1.5 text-gray-400 cursor-pointer whitespace-nowrap flex-shrink-0 border-b-2 border-transparent transition-colors select-none;
+    @apply flex items-center gap-1.5 px-3 py-1.5 text-th-text-muted cursor-pointer whitespace-nowrap flex-shrink-0 border-b-2 border-transparent transition-colors select-none;
 }
 
 .editor-tab:hover {
-    @apply text-gray-200 bg-gray-800/50;
+    @apply text-th-text-secondary bg-surface-raised/50;
 }
 
 .editor-tab.active {
-    @apply bg-gray-800 text-white border-b-indigo-400;
+    @apply bg-surface-raised text-th-text-primary border-b-accent-border;
 }
 
 .editor-tab .tab-name {
@@ -192,7 +374,7 @@
 
 /* Tab close button: hidden by default, visible on tab hover */
 .editor-tab .tab-close {
-    @apply text-gray-600 hover:text-red-400 text-xs leading-none ml-1 hidden cursor-pointer;
+    @apply text-th-text-ghost hover:text-red-400 text-xs leading-none ml-1 hidden cursor-pointer;
 }
 
 .editor-tab:hover .tab-close {
@@ -216,7 +398,7 @@
 }
 
 .editor-resize-handle {
-    @apply bg-gray-700 hover:bg-indigo-500 transition-colors flex-shrink-0;
+    @apply bg-surface-overlay hover:bg-accent-hover transition-colors flex-shrink-0;
 }
 
 .editor-resize-handle[data-direction="horizontal"] {
@@ -247,7 +429,7 @@
     flex: 1;
     min-width: 0;
     overflow-y: auto;
-    border-left: 1px solid #374151;
+    border-left: 1px solid var(--border-strong);
     display: block;
 }
 
@@ -272,13 +454,13 @@
 .editor-preview-resize-handle {
     width: 4px;
     cursor: col-resize;
-    background: #374151;
+    background: var(--scrollbar-thumb);
     flex-shrink: 0;
     transition: background-color 0.15s;
 }
 
 .editor-preview-resize-handle:hover {
-    background: #6366f1;
+    background: var(--accent-hover);
 }
 
 /* Preview button group — visually separated from split controls */
@@ -288,17 +470,17 @@
 
 /* Separator between preview and split/close controls */
 .editor-controls-separator {
-    @apply w-px h-3.5 bg-gray-600 mx-1 flex-shrink-0;
+    @apply w-px h-3.5 bg-th-border-muted mx-1 flex-shrink-0;
 }
 
 /* Active state for preview toggle buttons */
 .editor-preview-btn.active {
-    color: #818cf8;
+    color: var(--accent-text);
 }
 
 /* Floating tooltip for editor control buttons (appended to body to avoid overflow clipping) */
 .editor-floating-tooltip {
-    @apply fixed px-2 py-1 text-xs font-medium bg-gray-800 text-gray-200 rounded shadow-lg border border-gray-600 whitespace-nowrap pointer-events-none;
+    @apply fixed px-2 py-1 text-xs font-medium bg-surface-raised text-th-text-secondary rounded shadow-lg border border-th-border-muted whitespace-nowrap pointer-events-none;
     z-index: 9999;
     transition: opacity 120ms ease-out;
 }
@@ -313,7 +495,7 @@
 }
 
 .cm-editor .cm-gutters {
-    border-right: 1px solid #374151;
+    border-right: 1px solid var(--border-strong);
 }
 
 /* Modifier keys toolbar - touch devices only */
@@ -323,7 +505,7 @@
 
 @media (hover: none) and (pointer: coarse) {
     .modifier-toolbar {
-        @apply flex items-center gap-1 px-2 py-1.5 bg-gray-900 border-t border-gray-800;
+        @apply flex items-center gap-1 px-2 py-1.5 bg-surface-base border-t border-th-border;
         display: flex;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
@@ -336,11 +518,11 @@
 }
 
 .modifier-toolbar .modifier-separator {
-    @apply w-px h-6 bg-gray-700 mx-1 flex-shrink-0;
+    @apply w-px h-6 bg-surface-overlay mx-1 flex-shrink-0;
 }
 
 .modifier-toolbar button {
-    @apply flex items-center justify-center rounded text-xs font-medium text-gray-400 bg-gray-800 border border-gray-700 transition-colors select-none;
+    @apply flex items-center justify-center rounded text-xs font-medium text-th-text-muted bg-surface-raised border border-th-border-strong transition-colors select-none;
     min-width: 40px;
     min-height: 36px;
     padding: 4px 8px;
@@ -349,17 +531,17 @@
 }
 
 .modifier-toolbar button:active {
-    @apply bg-gray-700;
+    @apply bg-surface-overlay;
 }
 
 /* Modifier active-once state */
 .modifier-toolbar button.active-once {
-    @apply bg-indigo-600 border-indigo-500 text-white;
+    @apply bg-accent border-accent-border text-th-text-primary;
 }
 
 /* Modifier locked state */
 .modifier-toolbar button.locked {
-    @apply bg-indigo-600 border-indigo-500 text-white;
+    @apply bg-accent border-accent-border text-th-text-primary;
     position: relative;
 }
 
@@ -386,24 +568,24 @@
 
 /* Pane name (desktop toolbar) */
 .pane-name {
-    @apply text-xs text-gray-400 truncate cursor-default;
+    @apply text-xs text-th-text-muted truncate cursor-default;
     max-width: 120px;
     outline: none;
 }
 
 .pane-name[contenteditable="true"] {
-    @apply text-white bg-gray-800 px-1 rounded;
+    @apply text-th-text-primary bg-surface-raised px-1 rounded;
     cursor: text;
 }
 
 /* Carousel (phone layout <768px) */
 .carousel-header {
-    @apply flex items-center gap-1 px-2 py-1.5 bg-gray-900 border-b border-gray-800;
+    @apply flex items-center gap-1 px-2 py-1.5 bg-surface-base border-b border-th-border;
     flex-shrink: 0;
 }
 
 .carousel-nav-btn {
-    @apply flex items-center justify-center rounded text-gray-400 transition-colors;
+    @apply flex items-center justify-center rounded text-th-text-muted transition-colors;
     min-width: 36px;
     min-height: 36px;
     touch-action: manipulation;
@@ -411,7 +593,7 @@
 }
 
 .carousel-nav-btn:active {
-    @apply bg-gray-800;
+    @apply bg-surface-raised;
 }
 
 .carousel-slides {
@@ -419,13 +601,13 @@
 }
 
 .carousel-pane-name {
-    @apply text-sm text-gray-300 truncate cursor-default;
+    @apply text-sm text-th-text-tertiary truncate cursor-default;
     max-width: 140px;
     outline: none;
 }
 
 .carousel-pane-name[contenteditable="true"] {
-    @apply text-white bg-gray-800 px-1 rounded;
+    @apply text-th-text-primary bg-surface-raised px-1 rounded;
     cursor: text;
 }
 
@@ -478,7 +660,7 @@
 }
 
 .sidebar-resize-handle:hover {
-    background: rgba(99, 102, 241, 0.5);
+    background: var(--accent-glow);
 }
 
 /* Sidebar section header */
@@ -488,7 +670,7 @@
 
 /* Snippet list items (sidebar version) */
 .snippet-item {
-    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+    @apply px-2 py-1.5 border-b border-th-border hover:bg-surface-raised/50 transition-colors;
 }
 
 .snippet-item-header {
@@ -496,7 +678,7 @@
 }
 
 .snippet-item-name {
-    @apply text-xs text-white font-medium truncate;
+    @apply text-xs text-th-text-primary font-medium truncate;
 }
 
 .snippet-item-actions {
@@ -504,7 +686,7 @@
 }
 
 .snippet-item-actions button {
-    @apply p-0.5 rounded text-gray-500 hover:text-white transition-colors;
+    @apply p-0.5 rounded text-th-text-faint hover:text-th-text-primary transition-colors;
 }
 
 .snippet-btn-insert:hover {
@@ -516,22 +698,22 @@
 }
 
 .snippet-item-preview {
-    @apply text-[10px] text-gray-500 mt-0.5 font-mono truncate;
+    @apply text-[10px] text-th-text-faint mt-0.5 font-mono truncate;
 }
 
 /* Note items */
 .note-item {
-    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+    @apply px-2 py-1.5 border-b border-th-border hover:bg-surface-raised/50 transition-colors;
 }
 
 /* Bookmark items */
 .bookmark-item {
-    @apply px-2 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+    @apply px-2 py-1.5 border-b border-th-border hover:bg-surface-raised/50 transition-colors;
 }
 
 /* Voice Box history items */
 .voicebox-history-item {
-    @apply px-4 py-1.5 border-b border-gray-800 hover:bg-gray-800/50 transition-colors;
+    @apply px-4 py-1.5 border-b border-th-border hover:bg-surface-raised/50 transition-colors;
 }
 
 /* Note markdown preview */
@@ -541,21 +723,21 @@
 }
 
 .note-markdown-preview h1 {
-    @apply text-lg font-bold text-white mt-4 mb-2 pb-1 border-b border-gray-700;
+    @apply text-lg font-bold text-th-text-primary mt-4 mb-2 pb-1 border-b border-th-border-strong;
 }
 
 .note-markdown-preview h2 {
-    @apply text-base font-semibold text-white mt-3 mb-2;
+    @apply text-base font-semibold text-th-text-primary mt-3 mb-2;
 }
 
 .note-markdown-preview h3 {
-    @apply text-sm font-semibold text-white mt-3 mb-1;
+    @apply text-sm font-semibold text-th-text-primary mt-3 mb-1;
 }
 
 .note-markdown-preview h4,
 .note-markdown-preview h5,
 .note-markdown-preview h6 {
-    @apply text-xs font-semibold text-gray-200 mt-2 mb-1;
+    @apply text-xs font-semibold text-th-text-secondary mt-2 mb-1;
 }
 
 .note-markdown-preview p {
@@ -580,25 +762,25 @@
 }
 
 .note-markdown-preview code {
-    @apply bg-gray-700 px-1 py-0.5 rounded text-amber-300;
+    @apply bg-surface-overlay px-1 py-0.5 rounded text-amber-300;
     font-size: 0.8em;
 }
 
 .note-markdown-preview pre {
-    @apply bg-gray-800 rounded-lg p-3 mb-3 overflow-x-auto border border-gray-700;
+    @apply bg-surface-raised rounded-lg p-3 mb-3 overflow-x-auto border border-th-border-strong;
 }
 
 .note-markdown-preview pre code {
-    @apply bg-transparent p-0 text-gray-300;
+    @apply bg-transparent p-0 text-th-text-tertiary;
     font-size: 0.8rem;
 }
 
 .note-markdown-preview blockquote {
-    @apply border-l-2 border-gray-600 pl-3 ml-0 my-2 text-gray-400 italic;
+    @apply border-l-2 border-th-border-muted pl-3 ml-0 my-2 text-th-text-muted italic;
 }
 
 .note-markdown-preview a {
-    @apply text-indigo-400;
+    @apply text-accent-text;
 }
 
 .note-markdown-preview a:hover {
@@ -606,7 +788,7 @@
 }
 
 .note-markdown-preview hr {
-    @apply border-gray-700 my-4;
+    @apply border-th-border-strong my-4;
 }
 
 .note-markdown-preview table {
@@ -614,11 +796,11 @@
 }
 
 .note-markdown-preview th {
-    @apply bg-gray-800 px-3 py-1.5 text-left text-xs font-semibold text-gray-300 border border-gray-700;
+    @apply bg-surface-raised px-3 py-1.5 text-left text-xs font-semibold text-th-text-tertiary border border-th-border-strong;
 }
 
 .note-markdown-preview td {
-    @apply px-3 py-1.5 text-xs border border-gray-700;
+    @apply px-3 py-1.5 text-xs border border-th-border-strong;
 }
 
 .note-markdown-preview img {
@@ -626,7 +808,7 @@
 }
 
 .note-markdown-preview .mermaid-diagram {
-    @apply my-3 p-2 bg-gray-800/50 rounded-lg border border-gray-700;
+    @apply my-3 p-2 bg-surface-raised/50 rounded-lg border border-th-border-strong;
 }
 
 .note-markdown-preview .mermaid-diagram svg {
@@ -670,8 +852,8 @@ dialog::backdrop {
 .tour-tooltip {
     position: fixed;
     z-index: 9999;
-    background: #1f2937;
-    border: 1px solid #374151;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -685,11 +867,11 @@ dialog::backdrop {
     bottom: 20px;
     right: 20px;
     z-index: 10000;
-    background: #1f2937;
-    color: #f9fafb;
+    background: var(--surface-raised);
+    color: var(--text-secondary);
     padding: 12px 20px;
     border-radius: 8px;
-    border: 1px solid #374151;
+    border: 1px solid var(--border-strong);
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -714,27 +896,27 @@ dialog::backdrop {
 }
 
 .folder-tree-node:hover {
-    @apply bg-gray-800/50;
+    @apply bg-surface-raised/50;
 }
 
 .folder-tree-selected {
-    @apply bg-gray-800 text-white;
+    @apply bg-surface-raised text-th-text-primary;
 }
 
 .folder-tree-label {
-    @apply flex items-center gap-1.5 py-1 pr-2 text-gray-300;
+    @apply flex items-center gap-1.5 py-1 pr-2 text-th-text-tertiary;
     min-height: 28px;
 }
 
 .folder-tree-toggle {
-    @apply flex-shrink-0 p-0 bg-transparent border-none text-gray-500 hover:text-white cursor-pointer;
+    @apply flex-shrink-0 p-0 bg-transparent border-none text-th-text-faint hover:text-th-text-primary cursor-pointer;
     line-height: 0;
 }
 
 .folder-tree-drop-target {
-    outline: 2px solid #6366f1;
+    outline: 2px solid var(--accent-hover);
     outline-offset: -2px;
-    @apply bg-indigo-500/10 rounded;
+    @apply bg-accent-hover/10 rounded;
 }
 
 .folder-tree-dragging {
@@ -749,11 +931,11 @@ dialog::backdrop {
 }
 
 .bookmark-drop-above {
-    border-top: 2px solid #6366f1 !important;
+    border-top: 2px solid var(--accent-hover) !important;
 }
 
 .bookmark-drop-below {
-    border-bottom: 2px solid #6366f1 !important;
+    border-bottom: 2px solid var(--accent-hover) !important;
 }
 
 .bookmark-item[draggable="true"] {
@@ -779,15 +961,15 @@ dialog::backdrop {
     position: fixed;
     z-index: 9999;
     min-width: 160px;
-    background: #1f2937;
-    border: 1px solid #374151;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     padding: 4px 0;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
 .context-menu-item {
-    @apply flex items-center gap-2 w-full px-3 py-1.5 text-xs text-gray-300 hover:bg-gray-700 hover:text-white transition-colors cursor-pointer;
+    @apply flex items-center gap-2 w-full px-3 py-1.5 text-xs text-th-text-tertiary hover:bg-surface-overlay hover:text-th-text-primary transition-colors cursor-pointer;
     border: none;
     background: none;
     text-align: left;
@@ -798,15 +980,15 @@ dialog::backdrop {
 }
 
 .context-menu-separator {
-    @apply my-1 border-t border-gray-700;
+    @apply my-1 border-t border-th-border-strong;
 }
 
 /* File tree context menu */
 .file-tree-context-menu {
     position: fixed;
     z-index: 9999;
-    background: #1f2937;
-    border: 1px solid #374151;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
     padding: 4px 0;
     min-width: 140px;
@@ -814,15 +996,15 @@ dialog::backdrop {
 }
 
 .file-tree-context-menu-item {
-    @apply px-3 py-1.5 text-xs text-gray-300 cursor-pointer transition-colors;
+    @apply px-3 py-1.5 text-xs text-th-text-tertiary cursor-pointer transition-colors;
 }
 
 .file-tree-context-menu-item:hover {
-    @apply bg-gray-700 text-white;
+    @apply bg-surface-overlay text-th-text-primary;
 }
 
 .file-tree-context-menu-separator {
-    @apply border-t border-gray-700 my-1;
+    @apply border-t border-th-border-strong my-1;
 }
 
 .file-tree-context-menu-item-danger {
@@ -852,8 +1034,8 @@ dialog::backdrop {
 
 .new-file-card {
     position: relative;
-    background: #1f2937;
-    border: 1px solid #374151;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
     border-radius: 10px;
     padding: 16px;
     width: 400px;
@@ -862,17 +1044,17 @@ dialog::backdrop {
 }
 
 .new-file-input {
-    @apply w-full px-3 py-2 text-sm text-white bg-gray-800 border border-gray-600 rounded font-mono;
+    @apply w-full px-3 py-2 text-sm text-th-text-primary bg-surface-raised border border-th-border-muted rounded font-mono;
     outline: none;
 }
 
 .new-file-input:focus {
-    @apply border-indigo-500 ring-1 ring-indigo-500;
+    @apply border-accent-border ring-1 ring-accent-border;
 }
 
 .new-file-autocomplete {
-    background: #111827;
-    border: 1px solid #374151;
+    background: var(--surface-base);
+    border: 1px solid var(--border-strong);
     border-radius: 0 0 6px 6px;
     max-height: 160px;
     overflow-y: auto;
@@ -880,12 +1062,12 @@ dialog::backdrop {
 }
 
 .new-file-suggestion {
-    @apply px-3 py-1.5 text-xs text-gray-300 cursor-pointer font-mono transition-colors;
+    @apply px-3 py-1.5 text-xs text-th-text-tertiary cursor-pointer font-mono transition-colors;
 }
 
 .new-file-suggestion:hover,
 .new-file-suggestion.selected {
-    @apply bg-gray-700 text-white;
+    @apply bg-surface-overlay text-th-text-primary;
 }
 
 .new-file-error {

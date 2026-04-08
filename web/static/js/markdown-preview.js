@@ -31,15 +31,51 @@
             });
         }
 
-        // Initialize Mermaid with dark theme
+        // Initialize Mermaid with theme-aware config
         if (typeof mermaid !== 'undefined') {
+            var currentMode = document.documentElement.dataset.mode || 'dark';
+            var currentTheme = document.documentElement.dataset.theme || 'default';
+            var mermaidTheme;
+            if (currentTheme === 'mono') {
+                mermaidTheme = 'neutral';
+            } else {
+                mermaidTheme = (currentMode === 'light') ? 'default' : 'dark';
+            }
             mermaid.initialize({
                 startOnLoad: false,
-                theme: 'dark',
+                theme: mermaidTheme,
                 securityLevel: 'strict',
                 fontFamily: 'ui-monospace, monospace'
             });
         }
+
+        // Listen for theme changes to reinitialize Mermaid and swap highlight.js stylesheet
+        window.addEventListener('clawide:theme-changed', function(e) {
+            var mode = (e.detail && e.detail.mode) || 'dark';
+            var themeName = (e.detail && e.detail.theme) || 'default';
+
+            if (typeof mermaid !== 'undefined') {
+                var mTheme;
+                if (themeName === 'mono') {
+                    mTheme = 'neutral';
+                } else {
+                    mTheme = (mode === 'light') ? 'default' : 'dark';
+                }
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: mTheme,
+                    securityLevel: 'strict',
+                    fontFamily: 'ui-monospace, monospace'
+                });
+            }
+
+            // Swap highlight.js stylesheet for light/dark
+            var hljsLink = document.querySelector('link[href*="highlightjs"]');
+            if (hljsLink) {
+                var newStyle = (mode === 'light') ? 'github.min.css' : 'github-dark.min.css';
+                hljsLink.href = hljsLink.href.replace(/github(-dark)?\.min\.css/, newStyle);
+            }
+        });
     }
 
     /**
@@ -49,7 +85,7 @@
      */
     function render(text) {
         if (!text || !text.trim()) {
-            return '<span class="text-gray-500 italic">Nothing to preview</span>';
+            return '<span class="text-th-text-faint italic">Nothing to preview</span>';
         }
 
         init();
@@ -136,9 +172,9 @@
         // Italic
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
         // Inline code
-        html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-700 px-1 rounded text-[11px]">$1</code>');
+        html = html.replace(/`([^`]+)`/g, '<code class="bg-surface-overlay px-1 rounded text-[11px]">$1</code>');
         // Links
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-indigo-400 hover:underline">$1</a>');
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-accent-text hover:underline">$1</a>');
         // Line breaks
         html = html.replace(/\n/g, '<br>');
         return html;
