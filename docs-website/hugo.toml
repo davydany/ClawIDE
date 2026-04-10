@@ -1,7 +1,13 @@
-baseURL = '/'
+baseURL = 'https://www.clawide.app/'
 languageCode = 'en-us'
 title = 'ClawIDE'
 enableRobotsTXT = true
+enableGitInfo = true
+
+[sitemap]
+  changefreq = 'weekly'
+  priority = 0.5
+  filename = 'sitemap.xml'
 
 [build]
   [build.buildStats]
