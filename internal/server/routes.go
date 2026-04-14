@@ -88,7 +88,10 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Use(middleware.ProjectLoader(s.store))
 
 			r.Get("/", s.handlers.ProjectWorkspace)
-			r.Delete("/", s.handlers.DeleteProject)
+			r.Patch("/", s.handlers.RenameProject)
+			r.Patch("/path", s.handlers.RenameProjectDirectory)
+			r.Delete("/", s.handlers.RemoveProjectFromClawIDE)
+			r.Post("/trash", s.handlers.TrashProject)
 			r.Patch("/star", s.handlers.ToggleStar)
 			r.Patch("/color", s.handlers.UpdateProjectColor)
 
@@ -214,6 +217,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 	r.Get("/api/trash", s.handlers.ListTrashedFeatures)
 	r.Post("/api/trash/{tid}/restore", s.handlers.RestoreTrashedFeature)
 	r.Delete("/api/trash/{tid}", s.handlers.PermanentlyDeleteTrashedFeature)
+
+	// Project trash API
+	r.Get("/api/trash/projects", s.handlers.ListTrashedProjects)
+	r.Post("/api/trash/projects/{tid}/restore", s.handlers.RestoreTrashedProject)
+	r.Delete("/api/trash/projects/{tid}", s.handlers.PermanentlyDeleteTrashedProject)
 
 	// Scratchpad API (global)
 	r.Get("/api/scratchpad", s.handlers.GetScratchpad)

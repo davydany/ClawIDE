@@ -126,7 +126,7 @@ func TestCreateProject(t *testing.T) {
 	})
 }
 
-func TestDeleteProject(t *testing.T) {
+func TestRemoveProjectFromClawIDE(t *testing.T) {
 	t.Run("successful delete via HTMX", func(t *testing.T) {
 		h, st := setupProjectTest(t)
 		require.NoError(t, st.AddProject(model.Project{ID: "p1", Name: "Test"}))
@@ -138,7 +138,7 @@ func TestDeleteProject(t *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
-		h.DeleteProject(w, req)
+		h.RemoveProjectFromClawIDE(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Equal(t, "/", w.Header().Get("HX-Redirect"))
@@ -156,7 +156,7 @@ func TestDeleteProject(t *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
-		h.DeleteProject(w, req)
+		h.RemoveProjectFromClawIDE(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 
@@ -170,7 +170,7 @@ func TestDeleteProject(t *testing.T) {
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 		w := httptest.NewRecorder()
 
-		h.DeleteProject(w, req)
+		h.RemoveProjectFromClawIDE(w, req)
 		assert.Equal(t, http.StatusSeeOther, w.Code)
 	})
 }

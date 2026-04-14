@@ -43,6 +43,7 @@ func (r *Renderer) parseTemplates() error {
 		"contains": strings.Contains,
 		"join":     strings.Join,
 		"dict":     dictFunc,
+		"base":     filepath.Base,
 		"json": func(v any) template.JS {
 			b, _ := json.Marshal(v)
 			return template.JS(b)

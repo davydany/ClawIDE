@@ -15,6 +15,7 @@ type State struct {
 	Sessions        []model.Session        `json:"sessions"`
 	Features        []model.Feature        `json:"features"`
 	TrashedFeatures []model.TrashedFeature `json:"trashed_features,omitempty"`
+	TrashedProjects []model.TrashedProject `json:"trashed_projects,omitempty"`
 }
 
 type Store struct {
@@ -351,6 +352,95 @@ func (s *Store) DeleteExpiredTrashedFeatures(cutoff time.Time) (int, error) {
 	}
 	s.state.TrashedFeatures = kept
 	return removed, s.save()
+}
+
+// --------------- Trashed-project operations ---------------
+
+func (s *Store) GetTrashedProjects() []model.TrashedProject {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]model.TrashedProject, len(s.state.TrashedProjects))
+	copy(out, s.state.TrashedProjects)
+	return out
+}
+
+func (s *Store) GetTrashedProject(id string) (model.TrashedProject, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, tp := range s.state.TrashedProjects {
+		if tp.ID == id {
+			return tp, true
+		}
+	}
+	return model.TrashedProject{}, false
+}
+
+func (s *Store) AddTrashedProject(tp model.TrashedProject) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state.TrashedProjects = append(s.state.TrashedProjects, tp)
+	return s.save()
+}
+
+func (s *Store) DeleteTrashedProject(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, tp := range s.state.TrashedProjects {
+		if tp.ID == id {
+			s.state.TrashedProjects = append(s.state.TrashedProjects[:i], s.state.TrashedProjects[i+1:]...)
+			return s.save()
+		}
+	}
+	return fmt.Errorf("trashed project %s not found", id)
+}
+
+// DeleteExpiredTrashedProjects removes all trashed projects older than cutoff
+// and returns the removed entries (so callers can clean up the on-disk trash
+// directories) along with the count.
+func (s *Store) DeleteExpiredTrashedProjects(cutoff time.Time) ([]model.TrashedProject, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var expired []model.TrashedProject
+	kept := s.state.TrashedProjects[:0]
+	for _, tp := range s.state.TrashedProjects {
+		if tp.TrashedAt.Before(cutoff) {
+			expired = append(expired, tp)
+		} else {
+			kept = append(kept, tp)
+		}
+	}
+	if len(expired) == 0 {
+		return nil, nil
+	}
+	s.state.TrashedProjects = kept
+	return expired, s.save()
+}
+
+// UpdateSessionsWorkDir rewrites Session.WorkDir for every session belonging
+// to projectID where the current WorkDir is rooted at oldPath. Used when a
+// project directory is renamed on disk.
+func (s *Store) UpdateSessionsWorkDir(projectID, oldPath, newPath string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	changed := false
+	for i, sess := range s.state.Sessions {
+		if sess.ProjectID != projectID {
+			continue
+		}
+		if sess.WorkDir == oldPath {
+			s.state.Sessions[i].WorkDir = newPath
+			changed = true
+			continue
+		}
+		if len(sess.WorkDir) > len(oldPath) && sess.WorkDir[:len(oldPath)] == oldPath && sess.WorkDir[len(oldPath)] == '/' {
+			s.state.Sessions[i].WorkDir = newPath + sess.WorkDir[len(oldPath):]
+			changed = true
+		}
+	}
+	if !changed {
+		return nil
+	}
+	return s.save()
 }
 
 func (s *Store) load() error {

@@ -2,6 +2,8 @@ package trash
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/davydany/ClawIDE/internal/git"
@@ -79,5 +81,21 @@ func (c *Cleaner) cleanup() {
 	}
 	if count > 0 {
 		log.Printf("[trash] permanently deleted %d expired feature(s)", count)
+	}
+
+	// Sweep expired trashed projects. The store returns the removed entries
+	// so we can delete their on-disk trash directories.
+	expiredProjects, err := c.store.DeleteExpiredTrashedProjects(cutoff)
+	if err != nil {
+		log.Printf("[trash] error cleaning expired projects: %v", err)
+	}
+	for _, tp := range expiredProjects {
+		wrapper := filepath.Dir(tp.TrashedPath)
+		if err := os.RemoveAll(wrapper); err != nil {
+			log.Printf("[trash] could not delete trashed project dir %s: %v", wrapper, err)
+		}
+	}
+	if len(expiredProjects) > 0 {
+		log.Printf("[trash] permanently deleted %d expired project(s)", len(expiredProjects))
 	}
 }

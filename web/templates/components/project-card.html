@@ -1,7 +1,8 @@
 {{define "project-card"}}
-<div class="group relative bg-surface-base rounded-xl border border-th-border hover:border-th-border-strong hover:bg-surface-base/80 transition-all">
+<div class="group relative bg-surface-base rounded-xl border border-th-border hover:border-th-border-strong hover:bg-surface-base/80 transition-all"
+     x-data="{ menuOpen: false }">
     <a href="/projects/{{.ID}}/" hx-boost="false"
-       class="block p-4 pr-20">
+       class="block p-4 pr-24">
         <div class="min-w-0">
             <h3 class="text-sm font-medium text-th-text-primary truncate group-hover:text-accent-text transition-colors">{{.Name}}</h3>
             <p class="text-xs text-th-text-faint mt-1 truncate font-mono">{{.Path}}</p>
@@ -9,9 +10,25 @@
     </a>
     <div class="absolute right-3 top-3 flex items-center gap-1">
         {{template "star-button" .}}
-        <svg class="w-5 h-5 text-th-border group-hover:text-th-text-faint transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-        </svg>
+        <button @click.stop.prevent="menuOpen = !menuOpen"
+                class="p-1 rounded text-th-text-faint hover:text-th-text-primary hover:bg-surface-raised transition-colors"
+                title="Project actions">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <circle cx="10" cy="4" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="16" r="1.5"/>
+            </svg>
+        </button>
+    </div>
+    <div x-show="menuOpen" x-cloak @click.away="menuOpen = false"
+         class="absolute right-3 top-11 w-48 bg-surface-base border border-th-border-strong rounded-lg shadow-xl py-1 z-20">
+        <button @click.stop.prevent="menuOpen = false; ClawIDEProjectActions.renameDisplay('{{.ID}}', {{.Name | printf "%q"}})"
+                class="w-full text-left px-3 py-1.5 text-xs text-th-text-primary hover:bg-surface-raised">Rename</button>
+        <button @click.stop.prevent="menuOpen = false; ClawIDEProjectActions.renameDirectory('{{.ID}}', {{base .Path | printf "%q"}})"
+                class="w-full text-left px-3 py-1.5 text-xs text-th-text-primary hover:bg-surface-raised">Rename directory…</button>
+        <div class="my-1 border-t border-th-border"></div>
+        <button @click.stop.prevent="menuOpen = false; ClawIDEProjectActions.removeFromClawIDE('{{.ID}}', {{.Name | printf "%q"}})"
+                class="w-full text-left px-3 py-1.5 text-xs text-th-text-muted hover:bg-surface-raised">Remove from ClawIDE</button>
+        <button @click.stop.prevent="menuOpen = false; ClawIDEProjectActions.trash('{{.ID}}', {{.Name | printf "%q"}})"
+                class="w-full text-left px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10">Delete</button>
     </div>
 </div>
 {{end}}

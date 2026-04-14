@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/davydany/ClawIDE/internal/color"
 	"github.com/davydany/ClawIDE/internal/docker"
 	"github.com/davydany/ClawIDE/internal/editor"
+	"github.com/davydany/ClawIDE/internal/fsutil"
 	"github.com/davydany/ClawIDE/internal/git"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
@@ -305,12 +307,19 @@ func (h *Handlers) ReorderProjects(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *Handlers) DeleteProject(w http.ResponseWriter, r *http.Request) {
+// RemoveProjectFromClawIDE clears a project from ClawIDE's state (cascading
+// to sessions, features, and trashed features) but does NOT touch the
+// project directory on disk. This is the "Remove from ClawIDE" menu action.
+// DELETE /projects/{id}/
+func (h *Handlers) RemoveProjectFromClawIDE(w http.ResponseWriter, r *http.Request) {
 	projectID := chi.URLParam(r, "id")
 
+	// Destroy any running PTYs before the store forgets about them.
+	h.destroyProjectPTYs(projectID)
+
 	if err := h.store.DeleteProject(projectID); err != nil {
-		log.Printf("Error deleting project: %v", err)
-		http.Error(w, "Failed to delete project", http.StatusInternalServerError)
+		log.Printf("Error removing project from ClawIDE: %v", err)
+		http.Error(w, "Failed to remove project", http.StatusInternalServerError)
 		return
 	}
 
@@ -321,6 +330,212 @@ func (h *Handlers) DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// RenameProject updates the display name of a project. Does not touch the
+// filesystem. PATCH /projects/{id}/
+func (h *Handlers) RenameProject(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "id")
+
+	project, ok := h.store.GetProject(projectID)
+	if !ok {
+		http.Error(w, "project not found", http.StatusNotFound)
+		return
+	}
+
+	var body struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	name := strings.TrimSpace(body.Name)
+	if name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+
+	project.Name = name
+	project.UpdatedAt = time.Now()
+
+	if err := h.store.UpdateProject(project); err != nil {
+		log.Printf("Error renaming project: %v", err)
+		http.Error(w, "failed to rename project", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(project)
+}
+
+// RenameProjectDirectory renames the project directory on disk within its
+// current parent directory, updates project.Path, and rewrites Session.WorkDir
+// for every session belonging to this project. It refuses to proceed if the
+// project has any features, because feature worktree/clone paths are derived
+// from the project path and renaming would orphan them.
+// PATCH /projects/{id}/path
+func (h *Handlers) RenameProjectDirectory(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "id")
+
+	project, ok := h.store.GetProject(projectID)
+	if !ok {
+		http.Error(w, "project not found", http.StatusNotFound)
+		return
+	}
+
+	var body struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	newBase := strings.TrimSpace(body.Name)
+	if err := validateDirName(newBase); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Refuse if any features reference this project — their worktree/clone
+	// paths are derived from project.Path and a rename would orphan them.
+	if features := h.store.GetFeatures(projectID); len(features) > 0 {
+		http.Error(w, "cannot rename directory: project has features/worktrees that depend on this path. Delete or merge them first.", http.StatusConflict)
+		return
+	}
+
+	parent := filepath.Dir(project.Path)
+	newPath := filepath.Join(parent, newBase)
+	if newPath == project.Path {
+		// No-op, still return success.
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(project)
+		return
+	}
+	if _, err := os.Stat(newPath); err == nil {
+		http.Error(w, "a file or directory already exists at "+newPath, http.StatusConflict)
+		return
+	}
+
+	// Kill any running PTY sessions bound to the project before renaming,
+	// because tmux bakes the cwd at session-create time.
+	h.destroyProjectPTYs(projectID)
+
+	oldPath := project.Path
+	if err := os.Rename(oldPath, newPath); err != nil {
+		log.Printf("Error renaming project directory %s -> %s: %v", oldPath, newPath, err)
+		http.Error(w, "failed to rename directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	project.Path = newPath
+	project.UpdatedAt = time.Now()
+	if err := h.store.UpdateProject(project); err != nil {
+		log.Printf("Error updating project after directory rename: %v", err)
+		http.Error(w, "directory renamed but failed to update state: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err := h.store.UpdateSessionsWorkDir(projectID, oldPath, newPath); err != nil {
+		log.Printf("Error updating session workdirs after rename: %v", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(project)
+}
+
+// TrashProject moves a project's directory into the ClawIDE trash folder
+// under the data dir, records a TrashedProject entry, and clears the project
+// from the active store (cascading to sessions, features, and trashed
+// features). Restorable from the trash UI within 30 days.
+// POST /projects/{id}/trash
+func (h *Handlers) TrashProject(w http.ResponseWriter, r *http.Request) {
+	projectID := chi.URLParam(r, "id")
+
+	project, ok := h.store.GetProject(projectID)
+	if !ok {
+		http.Error(w, "project not found", http.StatusNotFound)
+		return
+	}
+
+	// Destroy any running PTYs before moving the directory out from under them.
+	h.destroyProjectPTYs(projectID)
+
+	trashID := uuid.New().String()
+	trashRoot := filepath.Join(h.cfg.DataDir, "trash", "projects", trashID)
+	trashPath := filepath.Join(trashRoot, filepath.Base(project.Path))
+
+	if err := fsutil.MoveDir(project.Path, trashPath); err != nil {
+		log.Printf("Error moving project %s to trash: %v", project.Path, err)
+		http.Error(w, "failed to move project to trash: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	tp := model.TrashedProject{
+		ID:           trashID,
+		Project:      project,
+		OriginalPath: project.Path,
+		TrashedPath:  trashPath,
+		TrashedAt:    time.Now(),
+	}
+	if err := h.store.AddTrashedProject(tp); err != nil {
+		log.Printf("Error recording trashed project: %v", err)
+		// Attempt to roll back the move so the user's files aren't stranded.
+		if rollbackErr := fsutil.MoveDir(trashPath, project.Path); rollbackErr != nil {
+			log.Printf("Error rolling back trash move: %v", rollbackErr)
+		} else {
+			_ = os.RemoveAll(trashRoot)
+		}
+		http.Error(w, "failed to trash project", http.StatusInternalServerError)
+		return
+	}
+
+	// Clear the project from the active store. This cascades to sessions,
+	// features, and trashed features for this project.
+	if err := h.store.DeleteProject(projectID); err != nil {
+		log.Printf("Error clearing project state after trash: %v", err)
+	}
+
+	if r.Header.Get("HX-Request") == "true" {
+		w.Header().Set("HX-Redirect", "/")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// destroyProjectPTYs closes every PTY pane belonging to the given project.
+// Mirrors the pattern used by DeleteFeature: iterate the project's sessions
+// (both project-level and feature-level) and destroy each pane leaf.
+func (h *Handlers) destroyProjectPTYs(projectID string) {
+	for _, sess := range h.store.GetAllSessions() {
+		if sess.ProjectID != projectID || sess.Layout == nil {
+			continue
+		}
+		for _, paneID := range sess.Layout.CollectLeaves() {
+			if err := h.ptyManager.DestroySession(paneID); err != nil {
+				log.Printf("Error destroying pane %s: %v", paneID, err)
+			}
+		}
+	}
+}
+
+// validateDirName enforces that a proposed directory basename is safe to use
+// (no path separators, no traversal, no null bytes, not empty, not "." or "..").
+func validateDirName(name string) error {
+	if name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if name == "." || name == ".." {
+		return fmt.Errorf("name %q is reserved", name)
+	}
+	for _, c := range name {
+		if c == '/' || c == '\\' || c == 0 {
+			return fmt.Errorf("name contains an invalid character")
+		}
+	}
+	return nil
 }
 
 type ScanResult struct {
