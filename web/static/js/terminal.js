@@ -190,6 +190,7 @@
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             theme: getTerminalTheme(),
             allowProposedApi: true,
+            scrollback: 10000,
         });
 
         const fitAddon = new window.XtermFitAddon();
@@ -200,6 +201,30 @@
 
         term.open(container);
         fitAddon.fit();
+
+        // Mouse-wheel scrollback: ensure the wheel always scrolls xterm.js's
+        // own buffer when the primary (normal) screen is active, even if the
+        // foreground app has enabled mouse tracking. Without this, apps like
+        // Claude Code swallow wheel events and the user can't scroll past the
+        // live viewport. Alt-screen apps (vim/less) keep their own behavior.
+        if (typeof term.attachCustomWheelEventHandler === 'function') {
+            term.attachCustomWheelEventHandler(function(ev) {
+                if (term.buffer.active.type === 'normal') {
+                    var lines = Math.sign(ev.deltaY) * 3;
+                    term.scrollLines(lines);
+                    return false; // swallow — don't also forward to app
+                }
+                return true;
+            });
+        } else if (term.element) {
+            // Fallback for older xterm.js builds without the custom handler.
+            term.element.addEventListener('wheel', function(ev) {
+                if (term.buffer.active.type !== 'normal') return;
+                ev.preventDefault();
+                ev.stopPropagation();
+                term.scrollLines(Math.sign(ev.deltaY) * 3);
+            }, { capture: true, passive: false });
+        }
 
         // Clipboard helpers (defined before key handler so they're in scope)
         function showCopyToast() {

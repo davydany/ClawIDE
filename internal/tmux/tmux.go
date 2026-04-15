@@ -68,10 +68,44 @@ func KillSession(name string) error {
 	return exec.Command(binary, "kill-session", "-t", name).Run()
 }
 
-// SessionCommand returns the command and args needed to attach-or-create a multiplexer session.
-// The -A flag means: attach if exists, create if not.
-func SessionCommand(name, workDir string) (string, []string) {
-	return binary, []string{"new-session", "-A", "-s", name, "-c", workDir}
+// SessionCommand returns the command and args needed to attach an existing
+// multiplexer session. Callers must ensure the session exists first via
+// PrepareSession — this is deliberately split from creation so per-session
+// options (mouse, history-limit, window-size) can be applied before attach.
+func SessionCommand(name string) (string, []string) {
+	return binary, []string{"attach-session", "-t", name}
+}
+
+// PrepareSession ensures the named session exists and applies ClawIDE's
+// per-session option overrides. It is idempotent: safe to call on every
+// attach, including for sessions created by an older ClawIDE build.
+//
+// The options applied here fix mouse-wheel scrolling inside tmux panes:
+//   - mouse off: stops tmux from capturing wheel events so xterm.js can
+//     scroll its own buffer. Overrides the user's global `set -g mouse on`
+//     for this session only.
+//   - history-limit 50000: deeper scrollback for the Ctrl+B [ fallback.
+//   - focus-events on: Claude Code reads focus in/out to pause/resume.
+//   - window-size latest: session adopts the attaching client's dimensions
+//     immediately, avoiding a brief paint at tmux's default 80x24.
+//
+// Option errors are swallowed — a failed set-option shouldn't block attach.
+func PrepareSession(name, workDir string) error {
+	if !HasSession(name) {
+		if err := exec.Command(binary, "new-session", "-d", "-s", name, "-c", workDir).Run(); err != nil {
+			return fmt.Errorf("creating detached %s session: %w", binary, err)
+		}
+	}
+	opts := [][]string{
+		{"set-option", "-t", name, "mouse", "off"},
+		{"set-option", "-t", name, "history-limit", "50000"},
+		{"set-option", "-t", name, "focus-events", "on"},
+		{"set-option", "-t", name, "window-size", "latest"},
+	}
+	for _, args := range opts {
+		_ = exec.Command(binary, args...).Run()
+	}
+	return nil
 }
 
 // SendKeys sends keystrokes to a multiplexer session. The keys are followed by Enter.

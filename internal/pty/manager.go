@@ -44,7 +44,10 @@ func (m *Manager) CreateSession(paneID, workDir string, env map[string]string) (
 	}
 
 	tmuxName := tmux.TmuxName(paneID)
-	cmd, args := tmux.SessionCommand(tmuxName, workDir)
+	if err := tmux.PrepareSession(tmuxName, workDir); err != nil {
+		log.Printf("tmux PrepareSession %s: %v (continuing with attach)", tmuxName, err)
+	}
+	cmd, args := tmux.SessionCommand(tmuxName)
 	sess := NewSession(paneID, workDir, cmd, args, m.scrollbackSize, env)
 
 	if err := sess.Start(); err != nil {

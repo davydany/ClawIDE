@@ -17,10 +17,10 @@ func TestSessionCommand(t *testing.T) {
 	orig := Binary()
 	defer SetBinary(orig)
 
-	cmd, args := SessionCommand("clawide-test", "/home/user/project")
+	cmd, args := SessionCommand("clawide-test")
 
 	assert.Equal(t, orig, cmd)
-	assert.Equal(t, []string{"new-session", "-A", "-s", "clawide-test", "-c", "/home/user/project"}, args)
+	assert.Equal(t, []string{"attach-session", "-t", "clawide-test"}, args)
 }
 
 func TestSetBinaryAndBinary(t *testing.T) {
@@ -41,10 +41,10 @@ func TestSessionCommandWithCustomBinary(t *testing.T) {
 	defer SetBinary(orig)
 
 	SetBinary("psmux")
-	cmd, args := SessionCommand("clawide-test", "/home/user/project")
+	cmd, args := SessionCommand("clawide-test")
 
 	assert.Equal(t, "psmux", cmd)
-	assert.Equal(t, []string{"new-session", "-A", "-s", "clawide-test", "-c", "/home/user/project"}, args)
+	assert.Equal(t, []string{"attach-session", "-t", "clawide-test"}, args)
 }
 
 func TestCheckWithNonexistentBinary(t *testing.T) {
