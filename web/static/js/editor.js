@@ -180,6 +180,10 @@
             tab.previewTimer = null;
         }
 
+        // Tear down preview-mode extras so scroll listeners don't leak.
+        teardownScrollSync(tab);
+        destroyTocPanel(tab);
+
         // Destroy CM view
         if (tab.editorView) {
             window.ClawIDECodeMirror.destroyEditor(tab.editorView);
@@ -545,6 +549,10 @@
         // Remove all mode classes
         wrapper.classList.remove('preview-side', 'preview-only');
 
+        // Always tear down mode-specific extras before reconfiguring.
+        teardownScrollSync(tab);
+        destroyTocPanel(tab);
+
         if (mode === 'off') {
             // Remove preview container if it exists
             if (tab.previewEl && tab.previewEl.parentNode) {
@@ -583,6 +591,7 @@
             }
             ensurePreviewContainer(tab);
             renderPreview(paneId, tabId);
+            setupScrollSync(tab);
         } else if (mode === 'preview') {
             wrapper.classList.add('preview-only');
             ensureCmWrap(tab);
@@ -595,6 +604,7 @@
             var handle2 = wrapper.querySelector('.editor-preview-resize-handle');
             if (handle2) handle2.parentNode.removeChild(handle2);
             ensurePreviewContainer(tab);
+            buildTocPanel(tab);
             renderPreview(paneId, tabId);
         }
 
@@ -609,8 +619,17 @@
 
         var content = window.ClawIDECodeMirror.getContent(tab.editorView);
         if (window.ClawIDEMarkdown) {
-            window.ClawIDEMarkdown.renderInto(tab.previewEl, content);
+            var result = window.ClawIDEMarkdown.renderInto(tab.previewEl, content);
+            tab.previewHeadings = (result && result.headings) || [];
         }
+
+        // Refresh TOC contents in preview-only mode
+        if (tab.previewMode === 'preview' && tab.tocPanel) {
+            renderTocContents(tab);
+            tab.tocPanel.style.display = tab.previewHeadings.length >= 2 ? '' : 'none';
+            updateTocActiveHeading(tab);
+        }
+        // Side-mode sync reads tab.previewHeadings lazily; no rebuild needed here.
     }
 
     function debouncedRenderPreview(paneId, tabId) {
@@ -655,6 +674,316 @@
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp);
         });
+    }
+
+    // ===================================================================
+    // Table of Contents (full-preview mode only)
+    // ===================================================================
+
+    function buildTocPanel(tab) {
+        if (!tab || !tab.wrapperEl || tab.tocPanel) return;
+
+        var panel = document.createElement('aside');
+        panel.className = 'md-preview-toc-panel';
+
+        var title = document.createElement('div');
+        title.className = 'md-toc-title';
+        title.textContent = 'On this page';
+        panel.appendChild(title);
+
+        var nav = document.createElement('nav');
+        var ul = document.createElement('ul');
+        nav.appendChild(ul);
+        panel.appendChild(nav);
+
+        // Insert TOC to the left of the preview container
+        if (tab.previewEl && tab.previewEl.parentNode === tab.wrapperEl) {
+            tab.wrapperEl.insertBefore(panel, tab.previewEl);
+        } else {
+            tab.wrapperEl.appendChild(panel);
+        }
+
+        tab.tocPanel = panel;
+        tab.tocListEl = ul;
+
+        // Delegated click handler: resolve data-heading-id → scroll the heading.
+        panel.addEventListener('click', function(e) {
+            var a = e.target.closest ? e.target.closest('a[data-heading-id]') : null;
+            if (!a) return;
+            e.preventDefault();
+            var id = a.getAttribute('data-heading-id');
+            var target = tab.previewEl && tab.previewEl.querySelector('#' + cssEscapeId(id));
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        // Scroll listener on preview to keep active heading in sync.
+        if (tab.previewEl) {
+            tab.tocScrollHandler = function() {
+                if (tab.tocScrollPending) return;
+                tab.tocScrollPending = true;
+                requestAnimationFrame(function() {
+                    tab.tocScrollPending = false;
+                    updateTocActiveHeading(tab);
+                });
+            };
+            tab.previewEl.addEventListener('scroll', tab.tocScrollHandler, { passive: true });
+        }
+    }
+
+    function renderTocContents(tab) {
+        if (!tab || !tab.tocListEl) return;
+        var headings = tab.previewHeadings || [];
+        tab.tocListEl.innerHTML = '';
+        for (var i = 0; i < headings.length; i++) {
+            var h = headings[i];
+            var li = document.createElement('li');
+            var indent = Math.max(0, (h.level - 1)) * 12;
+            li.style.setProperty('--toc-indent', indent + 'px');
+            var a = document.createElement('a');
+            a.setAttribute('data-heading-id', h.id);
+            a.setAttribute('href', '#' + h.id);
+            a.textContent = h.text;
+            li.appendChild(a);
+            tab.tocListEl.appendChild(li);
+        }
+    }
+
+    function updateTocActiveHeading(tab) {
+        if (!tab || !tab.tocListEl || !tab.previewEl) return;
+        var headings = tab.previewHeadings || [];
+        if (!headings.length) return;
+
+        var scrollTop = tab.previewEl.scrollTop + 80;
+        var activeIdx = 0;
+        for (var i = 0; i < headings.length; i++) {
+            if (headings[i].element && headings[i].element.offsetTop <= scrollTop) {
+                activeIdx = i;
+            } else {
+                break;
+            }
+        }
+
+        var links = tab.tocListEl.querySelectorAll('a[data-heading-id]');
+        for (var j = 0; j < links.length; j++) {
+            if (j === activeIdx) links[j].classList.add('active');
+            else links[j].classList.remove('active');
+        }
+    }
+
+    function destroyTocPanel(tab) {
+        if (!tab) return;
+        if (tab.tocScrollHandler && tab.previewEl) {
+            tab.previewEl.removeEventListener('scroll', tab.tocScrollHandler);
+        }
+        tab.tocScrollHandler = null;
+        tab.tocScrollPending = false;
+        if (tab.tocPanel && tab.tocPanel.parentNode) {
+            tab.tocPanel.parentNode.removeChild(tab.tocPanel);
+        }
+        tab.tocPanel = null;
+        tab.tocListEl = null;
+    }
+
+    // CSS.escape fallback for heading IDs that may contain special characters.
+    function cssEscapeId(id) {
+        if (window.CSS && typeof window.CSS.escape === 'function') {
+            return window.CSS.escape(id);
+        }
+        return String(id).replace(/[^\w-]/g, '\\$&');
+    }
+
+    // ===================================================================
+    // Scroll sync (side-by-side mode only)
+    // ===================================================================
+
+    function setupScrollSync(tab) {
+        if (!tab || !tab.editorView || !tab.previewEl) return;
+        if (tab.scrollSync) teardownScrollSync(tab);
+
+        var cm = window.ClawIDECodeMirror;
+        if (!cm || !cm.getScrollDOM) return;
+        var scrollDOM = cm.getScrollDOM(tab.editorView);
+        if (!scrollDOM) return;
+
+        var state = {
+            scrollDOM: scrollDOM,
+            lastProgrammatic: 0,
+            editorPending: false,
+            previewPending: false,
+            editorHandler: null,
+            previewHandler: null,
+        };
+
+        state.editorHandler = function() {
+            if (performance.now() - state.lastProgrammatic < 100) return;
+            if (state.editorPending) return;
+            state.editorPending = true;
+            requestAnimationFrame(function() {
+                state.editorPending = false;
+                syncPreviewFromEditor(tab);
+            });
+        };
+        state.previewHandler = function() {
+            if (performance.now() - state.lastProgrammatic < 100) return;
+            if (state.previewPending) return;
+            state.previewPending = true;
+            requestAnimationFrame(function() {
+                state.previewPending = false;
+                syncEditorFromPreview(tab);
+            });
+        };
+
+        scrollDOM.addEventListener('scroll', state.editorHandler, { passive: true });
+        tab.previewEl.addEventListener('scroll', state.previewHandler, { passive: true });
+
+        tab.scrollSync = state;
+    }
+
+    function teardownScrollSync(tab) {
+        if (!tab || !tab.scrollSync) return;
+        var s = tab.scrollSync;
+        if (s.scrollDOM && s.editorHandler) {
+            s.scrollDOM.removeEventListener('scroll', s.editorHandler);
+        }
+        if (tab.previewEl && s.previewHandler) {
+            tab.previewEl.removeEventListener('scroll', s.previewHandler);
+        }
+        tab.scrollSync = null;
+    }
+
+    // Find the heading index i such that headings[i].sourceLine <= topLine < headings[i+1].sourceLine
+    function findHeadingIndexByLine(headings, topLine) {
+        if (!headings.length) return -1;
+        if (topLine < headings[0].sourceLine) return -1;
+        for (var i = 0; i < headings.length - 1; i++) {
+            if (headings[i + 1].sourceLine > topLine) return i;
+        }
+        return headings.length - 1;
+    }
+
+    function findHeadingIndexByOffset(headings, scrollTop) {
+        if (!headings.length) return -1;
+        var firstTop = headings[0].element ? headings[0].element.offsetTop : 0;
+        if (scrollTop < firstTop) return -1;
+        for (var i = 0; i < headings.length - 1; i++) {
+            var nextTop = headings[i + 1].element ? headings[i + 1].element.offsetTop : 0;
+            if (nextTop > scrollTop) return i;
+        }
+        return headings.length - 1;
+    }
+
+    function proportionalSyncPreviewFromEditor(tab, state) {
+        var src = state.scrollDOM;
+        var srcMax = src.scrollHeight - src.clientHeight;
+        var dstMax = tab.previewEl.scrollHeight - tab.previewEl.clientHeight;
+        if (srcMax <= 0 || dstMax <= 0) return;
+        var ratio = src.scrollTop / srcMax;
+        state.lastProgrammatic = performance.now();
+        tab.previewEl.scrollTop = ratio * dstMax;
+    }
+
+    function proportionalSyncEditorFromPreview(tab, state) {
+        var src = tab.previewEl;
+        var srcMax = src.scrollHeight - src.clientHeight;
+        var dstMax = state.scrollDOM.scrollHeight - state.scrollDOM.clientHeight;
+        if (srcMax <= 0 || dstMax <= 0) return;
+        var ratio = src.scrollTop / srcMax;
+        state.lastProgrammatic = performance.now();
+        state.scrollDOM.scrollTop = ratio * dstMax;
+    }
+
+    function headingsUsable(headings) {
+        if (!headings || !headings.length) return false;
+        for (var i = 0; i < headings.length; i++) {
+            if (headings[i].sourceLine == null || !headings[i].element) return false;
+        }
+        return true;
+    }
+
+    function syncPreviewFromEditor(tab) {
+        if (!tab || !tab.scrollSync || !tab.previewEl || !tab.editorView) return;
+        var state = tab.scrollSync;
+        var headings = tab.previewHeadings || [];
+        var cm = window.ClawIDECodeMirror;
+
+        if (!headingsUsable(headings) || !cm || !cm.getTopVisibleLine) {
+            proportionalSyncPreviewFromEditor(tab, state);
+            return;
+        }
+
+        var topLine = cm.getTopVisibleLine(tab.editorView);
+        var idx = findHeadingIndexByLine(headings, topLine);
+        var previewMax = tab.previewEl.scrollHeight - tab.previewEl.clientHeight;
+        if (previewMax <= 0) return;
+
+        var targetY;
+        if (idx < 0) {
+            // Above the first heading → proportional from top of doc.
+            var firstTop = headings[0].element.offsetTop;
+            var firstLine = headings[0].sourceLine;
+            var frac = firstLine > 1 ? (topLine - 1) / (firstLine - 1) : 0;
+            targetY = frac * firstTop;
+        } else if (idx >= headings.length - 1) {
+            // Below the last heading → proportional from last heading to end of doc.
+            var lastEl = headings[idx].element;
+            var lastTop = lastEl.offsetTop;
+            var docLines = tab.editorView.state.doc.lines;
+            var span = Math.max(1, docLines - headings[idx].sourceLine);
+            var fracL = Math.min(1, Math.max(0, (topLine - headings[idx].sourceLine) / span));
+            targetY = lastTop + fracL * (previewMax - lastTop);
+        } else {
+            var aEl = headings[idx].element;
+            var bEl = headings[idx + 1].element;
+            var aLine = headings[idx].sourceLine;
+            var bLine = headings[idx + 1].sourceLine;
+            var lineSpan = Math.max(1, bLine - aLine);
+            var fracM = Math.min(1, Math.max(0, (topLine - aLine) / lineSpan));
+            targetY = aEl.offsetTop + fracM * (bEl.offsetTop - aEl.offsetTop);
+        }
+
+        state.lastProgrammatic = performance.now();
+        tab.previewEl.scrollTop = Math.max(0, Math.min(previewMax, targetY));
+    }
+
+    function syncEditorFromPreview(tab) {
+        if (!tab || !tab.scrollSync || !tab.previewEl || !tab.editorView) return;
+        var state = tab.scrollSync;
+        var headings = tab.previewHeadings || [];
+        var cm = window.ClawIDECodeMirror;
+
+        if (!headingsUsable(headings) || !cm || !cm.scrollToLine) {
+            proportionalSyncEditorFromPreview(tab, state);
+            return;
+        }
+
+        var scrollTop = tab.previewEl.scrollTop;
+        var idx = findHeadingIndexByOffset(headings, scrollTop);
+        var docLines = tab.editorView.state.doc.lines;
+        var previewMax = tab.previewEl.scrollHeight - tab.previewEl.clientHeight;
+
+        var targetLine;
+        if (idx < 0) {
+            var firstTop2 = headings[0].element.offsetTop;
+            var firstLine2 = headings[0].sourceLine;
+            var frac0 = firstTop2 > 0 ? scrollTop / firstTop2 : 0;
+            targetLine = 1 + frac0 * (firstLine2 - 1);
+        } else if (idx >= headings.length - 1) {
+            var lastTop2 = headings[idx].element.offsetTop;
+            var span2 = Math.max(1, previewMax - lastTop2);
+            var fracEnd = Math.min(1, Math.max(0, (scrollTop - lastTop2) / span2));
+            targetLine = headings[idx].sourceLine + fracEnd * (docLines - headings[idx].sourceLine);
+        } else {
+            var aTop = headings[idx].element.offsetTop;
+            var bTop = headings[idx + 1].element.offsetTop;
+            var pxSpan = Math.max(1, bTop - aTop);
+            var fracMid = Math.min(1, Math.max(0, (scrollTop - aTop) / pxSpan));
+            targetLine = headings[idx].sourceLine + fracMid * (headings[idx + 1].sourceLine - headings[idx].sourceLine);
+        }
+
+        state.lastProgrammatic = performance.now();
+        cm.scrollToLine(tab.editorView, Math.round(targetLine));
     }
 
     // --- Render the tab bar for a pane ---

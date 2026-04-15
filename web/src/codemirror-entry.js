@@ -238,6 +238,31 @@ function destroyEditor(view) {
     }
 }
 
+// --- Scroll helpers (for markdown preview sync) ---
+
+function getTopVisibleLine(view) {
+    try {
+        var offset = view.scrollDOM.scrollTop - view.documentTop;
+        var block = view.lineBlockAtHeight(offset);
+        return view.state.doc.lineAt(block.from).number;
+    } catch (e) {
+        return 1;
+    }
+}
+
+function scrollToLine(view, line) {
+    if (!view) return;
+    var doc = view.state.doc;
+    if (line < 1) line = 1;
+    if (line > doc.lines) line = doc.lines;
+    var pos = doc.line(line).from;
+    view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'start' }) });
+}
+
+function getScrollDOM(view) {
+    return view && view.scrollDOM;
+}
+
 // --- MergeView support ---
 
 function createMergeView(container, docA, docB, filename, options) {
@@ -283,4 +308,7 @@ window.ClawIDECodeMirror = {
     getWordWrapState: getWordWrapState,
     createMergeView: createMergeView,
     destroyMergeView: destroyMergeView,
+    getTopVisibleLine: getTopVisibleLine,
+    scrollToLine: scrollToLine,
+    getScrollDOM: getScrollDOM,
 };

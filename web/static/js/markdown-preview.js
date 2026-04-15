@@ -151,11 +151,146 @@
      * then process Mermaid diagrams.
      * @param {HTMLElement} container - Target element
      * @param {string} text - Raw markdown
+     * @returns {{headings: Array}} metadata about rendered headings
      */
     function renderInto(container, text) {
-        if (!container) return;
+        if (!container) return { headings: [] };
         container.innerHTML = render(text);
+        var sourceHeadings = scanSourceHeadings(text || '');
+        var headings = assignHeadingIds(container, sourceHeadings);
         renderMermaidDiagrams(container);
+        return { headings: headings };
+    }
+
+    /**
+     * Turn heading text into a unique URL-friendly slug.
+     * De-dupes by appending -2, -3, ... against the usedSlugs Set (which it mutates).
+     */
+    function slugify(text, usedSlugs) {
+        var base = String(text || '')
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+        if (!base) base = 'section';
+        var slug = base;
+        var n = 2;
+        while (usedSlugs.has(slug)) {
+            slug = base + '-' + n;
+            n++;
+        }
+        usedSlugs.add(slug);
+        return slug;
+    }
+
+    /**
+     * Scan raw markdown source for heading lines, returning [{sourceLine, level}]
+     * in document order. Skips fenced and indented code blocks. Supports ATX
+     * (# Heading) and setext (Heading\n===) styles.
+     */
+    function scanSourceHeadings(text) {
+        var lines = text.split('\n');
+        var out = [];
+        var fenceChar = null;
+        var fenceLen = 0;
+        var prevBlank = true;
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+
+            // Fenced code tracking
+            var fenceMatch = /^(\s{0,3})(`{3,}|~{3,})/.exec(line);
+            if (fenceMatch) {
+                var ch = fenceMatch[2].charAt(0);
+                var len = fenceMatch[2].length;
+                if (fenceChar === null) {
+                    fenceChar = ch;
+                    fenceLen = len;
+                    prevBlank = false;
+                    continue;
+                } else if (ch === fenceChar && len >= fenceLen) {
+                    fenceChar = null;
+                    fenceLen = 0;
+                    prevBlank = false;
+                    continue;
+                }
+            }
+            if (fenceChar !== null) {
+                prevBlank = false;
+                continue;
+            }
+
+            // Indented code block: 4+ leading spaces after a blank line
+            if (prevBlank && /^ {4,}\S/.test(line)) {
+                prevBlank = false;
+                continue;
+            }
+
+            // ATX heading
+            var atx = /^ {0,3}(#{1,6})[ \t]+\S/.exec(line);
+            if (atx) {
+                out.push({ sourceLine: i + 1, level: atx[1].length });
+                prevBlank = false;
+                continue;
+            }
+
+            // Setext heading: current non-blank line followed by === or ---
+            if (line.trim() !== '' && i + 1 < lines.length) {
+                var next = lines[i + 1];
+                if (/^ {0,3}=+\s*$/.test(next)) {
+                    out.push({ sourceLine: i + 1, level: 1 });
+                    i++;
+                    prevBlank = false;
+                    continue;
+                }
+                if (/^ {0,3}-+\s*$/.test(next) && next.trim().length >= 2) {
+                    // Avoid matching a single `-` which is a list marker
+                    out.push({ sourceLine: i + 1, level: 2 });
+                    i++;
+                    prevBlank = false;
+                    continue;
+                }
+            }
+
+            prevBlank = line.trim() === '';
+        }
+
+        return out;
+    }
+
+    /**
+     * Assign unique id attributes to rendered headings and return the
+     * combined headings array. If source/DOM counts disagree, sourceLine is
+     * null on every entry (scroll-sync will fall back to proportional mode).
+     */
+    function assignHeadingIds(container, sourceHeadings) {
+        var nodeList = container.querySelectorAll('h1,h2,h3,h4,h5,h6');
+        var domHeadings = [];
+        for (var i = 0; i < nodeList.length; i++) domHeadings.push(nodeList[i]);
+
+        var used = new Set();
+        // Reuse any existing ids (e.g., from custom markdown extensions) so we
+        // don't collide when we generate new ones.
+        for (var j = 0; j < domHeadings.length; j++) {
+            var existing = domHeadings[j].id;
+            if (existing) used.add(existing);
+        }
+
+        var zipped = sourceHeadings.length === domHeadings.length;
+        var result = [];
+        for (var k = 0; k < domHeadings.length; k++) {
+            var el = domHeadings[k];
+            var text = (el.textContent || '').trim();
+            if (!el.id) el.id = slugify(text, used);
+            result.push({
+                id: el.id,
+                text: text,
+                level: parseInt(el.tagName.charAt(1), 10) || 1,
+                element: el,
+                sourceLine: zipped ? sourceHeadings[k].sourceLine : null
+            });
+        }
+        return result;
     }
 
     /**
