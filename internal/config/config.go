@@ -217,6 +217,12 @@ func (c *Config) ScratchpadFilePath() string {
 	return filepath.Join(c.DataDir, "scratchpad.json")
 }
 
+// GlobalTasksDir returns the directory where the global tasks.md board lives. The store itself
+// joins "tasks.md" onto this path.
+func (c *Config) GlobalTasksDir() string {
+	return c.DataDir
+}
+
 func (c *Config) UpdateStatePath() string {
 	return filepath.Join(c.DataDir, "update-state.json")
 }

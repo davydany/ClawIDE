@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/aicli"
 	"github.com/davydany/ClawIDE/internal/banner"
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/handler"
@@ -74,6 +75,24 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load scratchpad store: %v", err)
 	}
 
+	globalTaskStore, err := store.NewGlobalTaskStore(cfg.GlobalTasksDir())
+	if err != nil {
+		log.Fatalf("failed to load global task store: %v", err)
+	}
+
+	// AI CLI provider registry — probes PATH once at startup and caches the result. Providers
+	// not installed still register (so they appear in the UI as "unavailable" rather than
+	// silently missing), but Ask AI calls to them return 501.
+	aiRegistry := aicli.NewRegistry(wizard.NewExecutor(120 * time.Second))
+	aicli.RegisterDefaults(aiRegistry)
+	for _, p := range aiRegistry.List() {
+		if aiRegistry.IsInstalled(p.ID()) {
+			log.Printf("AI provider %q is installed", p.ID())
+		} else {
+			log.Printf("AI provider %q is NOT installed (binary %q not on PATH)", p.ID(), p.Binary())
+		}
+	}
+
 	sseHub := sse.NewHub()
 
 	// Backfill ActiveBranch for projects that don't have one set
@@ -97,7 +116,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, sseHub, upd, wizardJobs, wizardGen),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, globalTaskStore, aiRegistry, sseHub, upd, wizardJobs, wizardGen),
 		updater:    upd,
 	}
 

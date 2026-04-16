@@ -247,7 +247,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, dockerLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, tasksLoaded: false, dockerLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-th-border bg-surface-base/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-th-text-muted hover:text-th-text-primary">
@@ -263,6 +263,24 @@
                 <span class="text-th-text-primary font-medium truncate">{{.Feature.Name}}</span>
             </nav>
             <div class="ml-auto flex items-center gap-2">
+                <!-- Quick-access: Notes / Bookmarks / Tasks -->
+                <div class="hidden lg:flex items-center gap-0.5 mr-1 border-r border-th-border pr-2">
+                    <button @click="activeTab = 'notes'"
+                            :class="activeTab === 'notes' ? 'text-amber-400 bg-amber-400/10' : 'text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised'"
+                            class="p-1.5 rounded transition-colors" title="Notes">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button @click="activeTab = 'bookmarks'"
+                            :class="activeTab === 'bookmarks' ? 'text-blue-400 bg-blue-400/10' : 'text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised'"
+                            class="p-1.5 rounded transition-colors" title="Bookmarks">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                    </button>
+                    <button @click="activeTab = 'tasks'"
+                            :class="activeTab === 'tasks' ? 'text-emerald-400 bg-emerald-400/10' : 'text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised'"
+                            class="p-1.5 rounded transition-colors" title="Tasks">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    </button>
+                </div>
                 <button onclick="ClawIDEVoiceBox.open()" class="p-1.5 rounded text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised transition-colors" title="Voice Box">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                 </button>
@@ -779,6 +797,13 @@
                         class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
                     Bookmarks
+                </button>
+                <!-- Tasks tab -->
+                <button @click="activeTab = 'tasks'"
+                        :class="activeTab === 'tasks' ? 'text-th-text-primary border-emerald-400' : 'text-th-text-muted border-transparent hover:text-th-text-secondary'"
+                        class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    Tasks
                 </button>
                 <!-- Bookmark bar toggle button -->
                 <button @click="showBookmarkBar = !showBookmarkBar; localStorage.setItem('clawide-bookmark-bar', showBookmarkBar)"
@@ -1411,6 +1436,72 @@
                     <!-- Bookmarks commit modal (managed by ClawIDEGit) -->
                 </div>
 
+                <!-- Tasks (Kanban board) panel -->
+                <div x-show="activeTab === 'tasks'" x-cloak class="h-full flex flex-col"
+                     x-effect="if (activeTab === 'tasks' && !tasksLoaded) { tasksLoaded = true; $nextTick(() => { if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.init('{{.Project.ID}}') }) }">
+                    <!-- Tasks toolbar -->
+                    <div class="flex items-center gap-2 px-4 py-2 border-b border-th-border">
+                        <h3 class="text-sm font-medium text-th-text-primary flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            Tasks
+                        </h3>
+                        <!-- Scope toggle: project vs global -->
+                        <div class="flex items-center gap-1 ml-3">
+                            <button id="tasks-scope-project"
+                                    class="px-2.5 py-1 text-xs rounded transition-colors bg-surface-overlay text-th-text-primary"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.setScope('project')">
+                                Project
+                            </button>
+                            <button id="tasks-scope-global"
+                                    class="px-2.5 py-1 text-xs rounded transition-colors text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.setScope('global')">
+                                Global
+                            </button>
+                        </div>
+                        <!-- Storage location toggle -->
+                        <div class="flex items-center gap-1 ml-2 border-l border-th-border pl-2">
+                            <span class="text-[10px] text-th-text-faint mr-0.5">Store:</span>
+                            <button id="tasks-storage-in-project"
+                                    class="px-2 py-0.5 text-[10px] rounded transition-colors bg-surface-overlay text-th-text-primary"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.setStorageMode('in-project')">
+                                In Repo
+                            </button>
+                            <button id="tasks-storage-global"
+                                    class="px-2 py-0.5 text-[10px] rounded transition-colors text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.setStorageMode('global')">
+                                ~/.clawide
+                            </button>
+                        </div>
+                        <span id="tasks-metrics" class="flex items-center gap-1 ml-3"></span>
+                        <div class="ml-auto flex gap-1">
+                            <button id="tasks-new-column-btn"
+                                    class="px-3 py-1 text-xs text-accent-text hover:text-th-text-primary hover:bg-surface-raised rounded transition-colors flex items-center gap-1"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.promptNewColumn()">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Column
+                            </button>
+                            <button id="tasks-refresh-btn"
+                                    class="px-3 py-1 text-xs text-th-text-muted hover:text-th-text-primary hover:bg-surface-raised rounded transition-colors"
+                                    title="Refresh board"
+                                    onclick="if (typeof ClawIDETasks !== 'undefined') ClawIDETasks.reload()">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                            <button onclick="if (typeof ClawIDEGit !== 'undefined') ClawIDEGit.showCommitModal('tasks', '{{.Project.ID}}')"
+                                    class="px-3 py-1 text-xs bg-green-600 hover:bg-green-500 text-th-text-primary rounded transition-colors flex items-center gap-1"
+                                    title="Commit tasks.md changes">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Commit
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Kanban board container -->
+                    <div id="tasks-board" data-project-id="{{.Project.ID}}" class="flex-1 overflow-x-auto overflow-y-hidden bg-surface-base/30">
+                        <div class="flex items-center justify-center h-full text-th-text-faint text-sm">Loading tasks...</div>
+                    </div>
+                    <!-- Task detail modal (managed by ClawIDETasks) -->
+                    <div id="tasks-modal-root"></div>
+                </div>
+
                 <!-- Docker panel -->
                 <div x-show="activeTab === 'docker'" x-cloak class="h-full flex flex-col"
                      x-data="{ loaded: false }"
@@ -1554,6 +1645,10 @@
             <button @click="activeTab = 'bookmarks'" :class="activeTab === 'bookmarks' ? 'text-blue-400' : 'text-th-text-faint'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
                 <span class="text-[10px]">Bookmarks</span>
+            </button>
+            <button @click="activeTab = 'tasks'" :class="activeTab === 'tasks' ? 'text-emerald-400' : 'text-th-text-faint'" class="flex flex-col items-center gap-0.5 py-2 px-3 min-h-[44px] min-w-[44px]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                <span class="text-[10px]">Tasks</span>
             </button>
             <button @click="activeTab = 'review'; $nextTick(function(){ ClawIDEMergeReview.init('{{.Project.ID}}', '{{.Feature.ID}}') })"
                     :class="activeTab === 'review' ? 'text-accent-text' : 'text-th-text-faint'"

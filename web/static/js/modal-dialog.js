@@ -155,9 +155,120 @@
         });
     }
 
+    /**
+     * Show a multi-field form dialog.
+     * @param {string} title - Dialog title
+     * @param {Array<{key:string, label:string, type?:string, placeholder?:string, required?:boolean, value?:string}>} fields
+     * @param {Object} [options]
+     * @param {string} [options.submitLabel] - Submit button text (default 'Create')
+     * @param {string} [options.cancelLabel] - Cancel button text (default 'Cancel')
+     * @returns {Promise<Object|null>} Resolved with {key: value, ...} or null if cancelled
+     */
+    function form(title, fields, options) {
+        options = options || {};
+        var submitLabel = options.submitLabel || 'Create';
+        var cancelLabel = options.cancelLabel || 'Cancel';
+
+        return new Promise(function(resolve) {
+            var dialog = document.createElement('dialog');
+            dialog.className = DIALOG_STYLES;
+            dialog.style.minWidth = '400px';
+            dialog.style.maxWidth = '520px';
+
+            var fieldsHTML = '';
+            for (var i = 0; i < fields.length; i++) {
+                var f = fields[i];
+                var inputType = f.type || 'text';
+                var req = f.required ? ' required' : '';
+                var val = escapeHTML(f.value || '');
+                var ph = escapeHTML(f.placeholder || '');
+                fieldsHTML += '<div class="mb-3">';
+                fieldsHTML += '  <label class="block text-xs text-th-text-muted mb-1.5">' + escapeHTML(f.label) + '</label>';
+                if (inputType === 'textarea') {
+                    fieldsHTML += '  <textarea data-field="' + escapeHTML(f.key) + '" class="' + INPUT_STYLES + ' resize-y" rows="3" placeholder="' + ph + '"' + req + '>' + val + '</textarea>';
+                } else {
+                    fieldsHTML += '  <input type="' + inputType + '" data-field="' + escapeHTML(f.key) + '" class="' + INPUT_STYLES + '" value="' + val + '" placeholder="' + ph + '"' + req + '>';
+                }
+                fieldsHTML += '</div>';
+            }
+
+            dialog.innerHTML =
+                '<div class="px-6 pt-5 pb-2">' +
+                '  <h3 class="text-base font-semibold text-th-text-primary mb-4">' + escapeHTML(title) + '</h3>' +
+                   fieldsHTML +
+                '</div>' +
+                '<div class="flex justify-end gap-2 px-6 py-3 border-t border-th-border-strong">' +
+                '  <button type="button" class="dialog-cancel ' + BTN_CANCEL + '">' + escapeHTML(cancelLabel) + '</button>' +
+                '  <button type="button" class="dialog-ok ' + BTN_PRIMARY + '">' + escapeHTML(submitLabel) + '</button>' +
+                '</div>';
+
+            var okBtn = dialog.querySelector('.dialog-ok');
+            var cancelBtn = dialog.querySelector('.dialog-cancel');
+
+            function collect() {
+                var result = {};
+                var inputs = dialog.querySelectorAll('[data-field]');
+                for (var j = 0; j < inputs.length; j++) {
+                    result[inputs[j].dataset.field] = inputs[j].value;
+                }
+                return result;
+            }
+
+            function validate() {
+                for (var j = 0; j < fields.length; j++) {
+                    if (fields[j].required) {
+                        var el = dialog.querySelector('[data-field="' + fields[j].key + '"]');
+                        if (el && !el.value.trim()) {
+                            el.focus();
+                            el.classList.add('border-red-500');
+                            el.addEventListener('input', function() { this.classList.remove('border-red-500'); }, { once: true });
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            function finish(value) {
+                dialog.close();
+                dialog.remove();
+                resolve(value);
+            }
+
+            okBtn.addEventListener('click', function() {
+                if (validate()) finish(collect());
+            });
+
+            cancelBtn.addEventListener('click', function() {
+                finish(null);
+            });
+
+            dialog.addEventListener('close', function() {
+                dialog.remove();
+                resolve(null);
+            });
+
+            // Enter in text inputs submits; Enter in textareas inserts newline (default).
+            dialog.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    if (validate()) finish(collect());
+                }
+            });
+
+            document.body.appendChild(dialog);
+            dialog.showModal();
+
+            // Focus the first input.
+            var first = dialog.querySelector('[data-field]');
+            if (first) first.focus();
+        });
+    }
+
     // Export
     window.ClawIDEDialog = {
         prompt: prompt,
-        confirm: confirm
+        confirm: confirm,
+        form: form
     };
 })();

@@ -256,6 +256,40 @@ func (s *Server) setupRoutes() *chi.Mux {
 		})
 	})
 
+	// Tasks API (global + project-scoped via query param). Storage: single tasks.md per scope
+	// under either .clawide/ (project) or ~/.clawide/ (global). Drag/drop rewrites the markdown.
+	r.Route("/api/tasks", func(r chi.Router) {
+		r.Get("/board", s.handlers.GetTaskBoard)
+		r.Get("/board/aggregated", s.handlers.GetAggregatedTaskBoard)
+		r.Post("/", s.handlers.CreateTask)
+		r.Put("/{taskID}", s.handlers.UpdateTask)
+		r.Delete("/{taskID}", s.handlers.DeleteTask)
+		r.Post("/{taskID}/move", s.handlers.MoveTask)
+		r.Post("/{taskID}/comments", s.handlers.AddTaskComment)
+		r.Post("/{taskID}/ask-ai", s.handlers.AskTaskAI)
+
+		// Column management.
+		r.Post("/columns", s.handlers.CreateTaskColumn)
+		r.Put("/columns/{slug}", s.handlers.RenameTaskColumn)
+		r.Delete("/columns/{slug}", s.handlers.DeleteTaskColumn)
+		r.Post("/columns/{slug}/move", s.handlers.MoveTaskColumn)
+
+		// Task storage settings (in-project vs global).
+		r.Get("/settings", s.handlers.GetTaskSettings)
+		r.Put("/settings", s.handlers.SetTaskSettings)
+
+		// Daily metrics (created/closed per day).
+		r.Get("/metrics", s.handlers.GetTaskMetrics)
+
+		// Git operations for .clawide/tasks.md (project-scoped only — global tasks aren't in a repo).
+		r.Get("/git-status", s.handlers.TaskGitStatus)
+		r.Post("/commit", s.handlers.TaskGitCommit)
+	})
+
+	// AI CLI provider registry — lists installed providers + their models so the frontend can
+	// populate the Ask AI dropdown.
+	r.Get("/api/ai/providers", s.handlers.ListAIProviders)
+
 	// Bookmarks API (project-scoped via query param)
 	r.Route("/api/bookmarks", func(r chi.Router) {
 		r.Get("/", s.handlers.ListBookmarks)

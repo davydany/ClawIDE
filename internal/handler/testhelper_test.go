@@ -5,6 +5,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/davydany/ClawIDE/internal/aicli"
 	"github.com/davydany/ClawIDE/internal/config"
 	"github.com/davydany/ClawIDE/internal/sse"
 	"github.com/davydany/ClawIDE/internal/store"
@@ -83,11 +84,16 @@ func setupHandlerWithRenderer(t *testing.T) (*Handlers, *store.Store) {
 	scratchpadSt, err := store.NewScratchpadStore(filepath.Join(storeDir, "scratchpad.json"))
 	require.NoError(t, err)
 
+	globalTaskSt, err := store.NewGlobalTaskStore(storeDir)
+	require.NoError(t, err)
+
+	aiReg := aicli.NewRegistry(nil)
+
 	wizJobs := wizard.NewJobTracker()
 	wizReg, err := wizard.NewTemplateRegistry(wizard.TemplatesFS)
 	require.NoError(t, err)
 	wizGen := wizard.NewGenerator(wizReg, wizJobs)
 
-	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, voiceBoxSt, scratchpadSt, sse.NewHub(), nil, wizJobs, wizGen)
+	h := New(cfg, st, renderer, nil, snippetSt, notifSt, noteSt, bookmarkSt, voiceBoxSt, scratchpadSt, globalTaskSt, aiReg, sse.NewHub(), nil, wizJobs, wizGen)
 	return h, st
 }
