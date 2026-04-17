@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/davydany/ClawIDE/internal/cron"
 	"github.com/davydany/ClawIDE/internal/middleware"
 	"github.com/davydany/ClawIDE/internal/model"
 	"github.com/davydany/ClawIDE/internal/tmux"
@@ -30,12 +33,13 @@ func (h *Handlers) CreateScheduledJob(w http.ResponseWriter, r *http.Request) {
 	project := middleware.GetProject(r)
 
 	var body struct {
-		Name         string `json:"name"`
-		JobType      string `json:"job_type"`
-		Agent        string `json:"agent"`
-		Interval     string `json:"interval"`
-		Prompt       string `json:"prompt"`
-		TargetPaneID string `json:"target_pane_id"`
+		Name           string `json:"name"`
+		JobType        string `json:"job_type"`
+		Agent          string `json:"agent"`
+		Interval       string `json:"interval"`
+		CronExpression string `json:"cron_expression"`
+		Prompt         string `json:"prompt"`
+		TargetPaneID   string `json:"target_pane_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -55,20 +59,29 @@ func (h *Handlers) CreateScheduledJob(w http.ResponseWriter, r *http.Request) {
 	if body.Agent == "" {
 		body.Agent = "claude"
 	}
+	if body.JobType == "cron" && !cron.IsSupported() {
+		http.Error(w, "cron is not supported on this system", http.StatusBadRequest)
+		return
+	}
+	if body.JobType == "cron" && strings.TrimSpace(body.CronExpression) == "" {
+		http.Error(w, "cron_expression is required for cron jobs", http.StatusBadRequest)
+		return
+	}
 
 	now := time.Now()
 	job := model.ScheduledJob{
-		ID:           uuid.New().String(),
-		ProjectID:    project.ID,
-		Name:         body.Name,
-		JobType:      body.JobType,
-		Agent:        body.Agent,
-		Interval:     body.Interval,
-		Prompt:       body.Prompt,
-		TargetPaneID: body.TargetPaneID,
-		Status:       "idle",
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:             uuid.New().String(),
+		ProjectID:      project.ID,
+		Name:           body.Name,
+		JobType:        body.JobType,
+		Agent:          body.Agent,
+		Interval:       body.Interval,
+		CronExpression: body.CronExpression,
+		Prompt:         body.Prompt,
+		TargetPaneID:   body.TargetPaneID,
+		Status:         "idle",
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	if err := h.store.AddScheduledJob(job); err != nil {
@@ -102,25 +115,37 @@ func (h *Handlers) UpdateScheduledJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Name         *string `json:"name"`
-		Agent        *string `json:"agent"`
-		Interval     *string `json:"interval"`
-		Prompt       *string `json:"prompt"`
-		TargetPaneID *string `json:"target_pane_id"`
+		Name           *string `json:"name"`
+		JobType        *string `json:"job_type"`
+		Agent          *string `json:"agent"`
+		Interval       *string `json:"interval"`
+		CronExpression *string `json:"cron_expression"`
+		Prompt         *string `json:"prompt"`
+		TargetPaneID   *string `json:"target_pane_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
 
+	// If the job is currently running as a cron and the type or expression is
+	// changing, remove the old crontab entry first.
+	wasRunningCron := job.Status == "running" && job.JobType == "cron"
+
 	if body.Name != nil {
 		job.Name = *body.Name
+	}
+	if body.JobType != nil {
+		job.JobType = *body.JobType
 	}
 	if body.Agent != nil {
 		job.Agent = *body.Agent
 	}
 	if body.Interval != nil {
 		job.Interval = *body.Interval
+	}
+	if body.CronExpression != nil {
+		job.CronExpression = *body.CronExpression
 	}
 	if body.Prompt != nil {
 		job.Prompt = *body.Prompt
@@ -129,6 +154,14 @@ func (h *Handlers) UpdateScheduledJob(w http.ResponseWriter, r *http.Request) {
 		job.TargetPaneID = *body.TargetPaneID
 	}
 	job.UpdatedAt = time.Now()
+
+	// If we changed a running cron job, uninstall the old entry and mark idle.
+	if wasRunningCron {
+		if err := cron.Remove(job.ID); err != nil {
+			log.Printf("cron remove on update error: %v", err)
+		}
+		job.Status = "idle"
+	}
 
 	if err := h.store.UpdateScheduledJob(job); err != nil {
 		log.Printf("scheduled job update error: %v", err)
@@ -142,6 +175,15 @@ func (h *Handlers) UpdateScheduledJob(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) DeleteScheduledJob(w http.ResponseWriter, r *http.Request) {
 	jid := chi.URLParam(r, "jid")
+
+	// If it's a running cron job, clean up the crontab entry first.
+	job, ok := h.store.GetScheduledJob(jid)
+	if ok && job.JobType == "cron" && job.Status == "running" {
+		if err := cron.Remove(jid); err != nil {
+			log.Printf("cron remove on delete error: %v", err)
+		}
+	}
+
 	if err := h.store.DeleteScheduledJob(jid); err != nil {
 		http.Error(w, "scheduled job not found", http.StatusNotFound)
 		return
@@ -149,15 +191,26 @@ func (h *Handlers) DeleteScheduledJob(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// StartScheduledJob sends the /loop command to the target pane via tmux.
+// StartScheduledJob starts the job. For loop jobs it sends the /loop command to
+// the target pane; for cron jobs it installs a system crontab entry.
 func (h *Handlers) StartScheduledJob(w http.ResponseWriter, r *http.Request) {
 	jid := chi.URLParam(r, "jid")
+	project := middleware.GetProject(r)
 	job, ok := h.store.GetScheduledJob(jid)
 	if !ok {
 		http.Error(w, "scheduled job not found", http.StatusNotFound)
 		return
 	}
 
+	switch job.JobType {
+	case "cron":
+		h.startCronJob(w, project, job)
+	default: // "loop"
+		h.startLoopJob(w, job)
+	}
+}
+
+func (h *Handlers) startLoopJob(w http.ResponseWriter, job model.ScheduledJob) {
 	if job.TargetPaneID == "" {
 		http.Error(w, "no target pane configured", http.StatusBadRequest)
 		return
@@ -183,7 +236,7 @@ func (h *Handlers) StartScheduledJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	now := time.Now()
-	if err := h.store.SetScheduledJobStatus(jid, "running", &now); err != nil {
+	if err := h.store.SetScheduledJobStatus(job.ID, "running", &now); err != nil {
 		log.Printf("scheduled job status update error: %v", err)
 	}
 
@@ -193,7 +246,42 @@ func (h *Handlers) StartScheduledJob(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(job)
 }
 
-// StopScheduledJob sends Ctrl+C to the target pane to interrupt the loop.
+func (h *Handlers) startCronJob(w http.ResponseWriter, project model.Project, job model.ScheduledJob) {
+	if !cron.IsSupported() {
+		http.Error(w, "cron is not supported on this system", http.StatusBadRequest)
+		return
+	}
+	if strings.TrimSpace(job.CronExpression) == "" {
+		http.Error(w, "cron expression is required", http.StatusBadRequest)
+		return
+	}
+
+	logDir := filepath.Join(h.cfg.DataDir, "logs")
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		log.Printf("failed to create cron log directory: %v", err)
+	}
+	logPath := filepath.Join(logDir, "cron-"+job.ID+".log")
+	command := cron.BuildCommand(job.Agent, job.Prompt, project.Path, logPath)
+
+	if err := cron.Install(job.ID, job.CronExpression, command); err != nil {
+		log.Printf("cron install error: %v", err)
+		http.Error(w, "failed to install crontab entry: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	now := time.Now()
+	if err := h.store.SetScheduledJobStatus(job.ID, "running", &now); err != nil {
+		log.Printf("scheduled job status update error: %v", err)
+	}
+
+	job.Status = "running"
+	job.LastRunAt = &now
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(job)
+}
+
+// StopScheduledJob stops the job. For loop jobs it sends Ctrl+C to the target
+// pane; for cron jobs it removes the crontab entry.
 func (h *Handlers) StopScheduledJob(w http.ResponseWriter, r *http.Request) {
 	jid := chi.URLParam(r, "jid")
 	job, ok := h.store.GetScheduledJob(jid)
@@ -202,11 +290,18 @@ func (h *Handlers) StopScheduledJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if job.TargetPaneID != "" {
-		tmuxSession := tmux.TmuxName(job.TargetPaneID)
-		if tmux.HasSession(tmuxSession) {
-			if err := tmux.SendControl(tmuxSession, "C-c"); err != nil {
-				log.Printf("scheduled job stop error (tmux C-c): %v", err)
+	switch job.JobType {
+	case "cron":
+		if err := cron.Remove(job.ID); err != nil {
+			log.Printf("cron remove error: %v", err)
+		}
+	default: // "loop"
+		if job.TargetPaneID != "" {
+			tmuxSession := tmux.TmuxName(job.TargetPaneID)
+			if tmux.HasSession(tmuxSession) {
+				if err := tmux.SendControl(tmuxSession, "C-c"); err != nil {
+					log.Printf("scheduled job stop error (tmux C-c): %v", err)
+				}
 			}
 		}
 	}
@@ -218,4 +313,11 @@ func (h *Handlers) StopScheduledJob(w http.ResponseWriter, r *http.Request) {
 	job.Status = "idle"
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(job)
+}
+
+// CronSupported returns whether the system supports cron jobs. Called by the
+// frontend to conditionally show/hide the cron option.
+func (h *Handlers) CronSupported(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{"supported": cron.IsSupported()})
 }

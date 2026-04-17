@@ -142,6 +142,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 			// Scheduled Jobs API
 			r.Get("/api/scheduled-jobs", s.handlers.ListScheduledJobs)
 			r.Post("/api/scheduled-jobs", s.handlers.CreateScheduledJob)
+			r.Get("/api/scheduled-jobs/cron-support", s.handlers.CronSupported)
 			r.Get("/api/scheduled-jobs/{jid}", s.handlers.GetScheduledJob)
 			r.Put("/api/scheduled-jobs/{jid}", s.handlers.UpdateScheduledJob)
 			r.Delete("/api/scheduled-jobs/{jid}", s.handlers.DeleteScheduledJob)
