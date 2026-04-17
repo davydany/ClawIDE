@@ -351,7 +351,7 @@
     </aside>
 
     <!-- Main content -->
-    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
+    <div class="flex-1 flex flex-col min-w-0" x-data="{ activeTab: '{{.ActiveTab}}', showNewFeature: false, featureName: '', featureBase: '{{.ActiveBranch}}', workspaceType: 'feature', branchPrefix: '', featureError: '', creatingFeature: false, pullingMain: false, notesLoaded: false, bookmarksLoaded: false, notesEditMode: true, showNotesCommitModal: false, showBookmarkBar: localStorage.getItem('clawide-bookmark-bar') !== 'false', showBookmarksCommitModal: false, showBranchPicker: false, branchPickerData: null, branchFilter: '', switchingBranch: false }">
         <!-- Top bar -->
         <header class="relative z-50 flex items-center h-14 px-4 border-b border-th-border bg-surface-base/50 backdrop-blur">
             <button @click="sidebarOpen = true" class="lg:hidden p-1.5 mr-3 rounded text-th-text-muted hover:text-th-text-primary">
@@ -799,10 +799,11 @@
             </div>
 
             <!-- New Workspace Modal (accessible from both mobile and desktop) -->
-            <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false">
+            <div x-show="showNewFeature" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" @click.self="showNewFeature = false; featureError = ''">
                 <div class="bg-surface-base border border-th-border-strong rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
                         <h3 class="text-lg font-semibold text-th-text-primary mb-4" x-text="workspaceType === 'branch' ? 'New Branch' : 'New Feature'">New Feature</h3>
-                        <form method="POST" action="/projects/{{.Project.ID}}/features/">
+                        <form method="POST" action="/projects/{{.Project.ID}}/features/"
+                              @submit.prevent="if(creatingFeature) return; creatingFeature = true; featureError = ''; fetch($event.target.action, {method:'POST', body: new FormData($event.target)}).then(r=>{if(!r.ok) return r.text().then(t=>{throw new Error((t||'Failed to create').trim())}); window.location.href = r.url}).catch(e=>{featureError = e.message; creatingFeature = false})">
                             <input type="hidden" name="type" :value="workspaceType">
                             <input type="hidden" name="prefix" :value="workspaceType === 'branch' ? branchPrefix : ''">
                             <div class="space-y-3">
@@ -852,10 +853,14 @@
                                     Creates a full independent clone of the repository.
                                 </div>
                             </div>
+                            <div x-show="featureError" x-cloak
+                                 class="mt-3 px-3 py-2 text-xs bg-red-900/30 border border-red-800 text-red-300 rounded whitespace-pre-wrap break-words"
+                                 x-text="featureError"></div>
                             <div class="flex justify-end gap-2 mt-4">
-                                <button type="button" @click="showNewFeature = false" class="px-4 py-2 text-sm text-th-text-muted hover:text-th-text-primary transition-colors">Cancel</button>
-                                <button type="submit" class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-th-text-primary rounded transition-colors"
-                                        x-text="workspaceType === 'branch' ? 'Create Branch' : 'Create Feature'">Create Feature</button>
+                                <button type="button" @click="showNewFeature = false; featureError = ''" class="px-4 py-2 text-sm text-th-text-muted hover:text-th-text-primary transition-colors">Cancel</button>
+                                <button type="submit" :disabled="creatingFeature"
+                                        class="px-4 py-2 text-sm bg-accent hover:bg-accent-hover text-th-text-primary rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        x-text="creatingFeature ? 'Creating…' : (workspaceType === 'branch' ? 'Create Branch' : 'Create Feature')">Create Feature</button>
                             </div>
                     </form>
                 </div>
