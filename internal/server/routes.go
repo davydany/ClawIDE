@@ -139,6 +139,15 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Delete("/api/agents/{scope}/{agentName}", s.handlers.DeleteAgent)
 			r.Post("/api/agents/{scope}/{agentName}/move", s.handlers.MoveAgent)
 
+			// Scheduled Jobs API
+			r.Get("/api/scheduled-jobs", s.handlers.ListScheduledJobs)
+			r.Post("/api/scheduled-jobs", s.handlers.CreateScheduledJob)
+			r.Get("/api/scheduled-jobs/{jid}", s.handlers.GetScheduledJob)
+			r.Put("/api/scheduled-jobs/{jid}", s.handlers.UpdateScheduledJob)
+			r.Delete("/api/scheduled-jobs/{jid}", s.handlers.DeleteScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/start", s.handlers.StartScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/stop", s.handlers.StopScheduledJob)
+
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
 			r.Get("/api/file", s.handlers.ReadFile)
