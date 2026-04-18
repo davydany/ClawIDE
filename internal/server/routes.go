@@ -86,6 +86,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
+			r.Use(middleware.NoCacheAPI)
 
 			r.Get("/", s.handlers.ProjectWorkspace)
 			r.Patch("/", s.handlers.RenameProject)

@@ -30,7 +30,7 @@
         if (!projectID) return;
 
         // Check cron support once
-        fetch(getAPIBase() + '/cron-support')
+        fetch(getAPIBase() + '/cron-support', { cache: 'no-store' })
             .then(function(r) { return r.json(); })
             .then(function(data) { cronSupported = data.supported; })
             .catch(function() { cronSupported = false; });
@@ -39,7 +39,7 @@
     }
 
     function loadJobs(cb) {
-        fetch(getAPIBase())
+        fetch(getAPIBase(), { cache: 'no-store' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 jobs = data || [];
@@ -102,7 +102,7 @@
     // ── Pane helpers ─────────────────────────────────────────────
 
     function loadSessions(cb) {
-        fetch('/projects/' + projectID + '/sessions/')
+        fetch('/projects/' + projectID + '/sessions/', { cache: 'no-store' })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 sessions = data || [];
