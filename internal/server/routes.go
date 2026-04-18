@@ -86,6 +86,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
+			r.Use(middleware.NoCacheAPI)
 
 			r.Get("/", s.handlers.ProjectWorkspace)
 			r.Patch("/", s.handlers.RenameProject)
@@ -138,6 +139,16 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Put("/api/agents/{scope}/{agentName}", s.handlers.UpdateAgent)
 			r.Delete("/api/agents/{scope}/{agentName}", s.handlers.DeleteAgent)
 			r.Post("/api/agents/{scope}/{agentName}/move", s.handlers.MoveAgent)
+
+			// Scheduled Jobs API
+			r.Get("/api/scheduled-jobs", s.handlers.ListScheduledJobs)
+			r.Post("/api/scheduled-jobs", s.handlers.CreateScheduledJob)
+			r.Get("/api/scheduled-jobs/cron-support", s.handlers.CronSupported)
+			r.Get("/api/scheduled-jobs/{jid}", s.handlers.GetScheduledJob)
+			r.Put("/api/scheduled-jobs/{jid}", s.handlers.UpdateScheduledJob)
+			r.Delete("/api/scheduled-jobs/{jid}", s.handlers.DeleteScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/start", s.handlers.StartScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/stop", s.handlers.StopScheduledJob)
 
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
