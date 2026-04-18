@@ -217,6 +217,10 @@ func (c *Config) ScratchpadFilePath() string {
 	return filepath.Join(c.DataDir, "scratchpad.json")
 }
 
+func (c *Config) PromptForgeDir() string {
+	return filepath.Join(c.DataDir, "promptforge")
+}
+
 func (c *Config) UpdateStatePath() string {
 	return filepath.Join(c.DataDir, "update-state.json")
 }

@@ -74,6 +74,11 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load scratchpad store: %v", err)
 	}
 
+	promptForgeStore, err := store.NewPromptForgeStore(cfg.PromptForgeDir())
+	if err != nil {
+		log.Fatalf("failed to load promptforge store: %v", err)
+	}
+
 	sseHub := sse.NewHub()
 
 	// Backfill ActiveBranch for projects that don't have one set
@@ -97,7 +102,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, sseHub, upd, wizardJobs, wizardGen),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, promptForgeStore, sseHub, upd, wizardJobs, wizardGen),
 		updater:    upd,
 	}
 

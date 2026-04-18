@@ -14,6 +14,8 @@
 <script src="/static/js/editor-commands.js"></script>
 <script src="/static/js/docker.js"></script>
 <script src="/static/js/scratchpad.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nunjucks@3.2.4/browser/nunjucks.min.js"></script>
+<script src="/static/js/promptforge.js"></script>
 <script src="/static/js/snippets.js"></script>
 <script src="/static/js/voicebox.js"></script>
 <script src="/static/js/skills.js"></script>
@@ -116,6 +118,18 @@
                                   class="w-full bg-surface-raised border border-th-border-strong rounded px-2.5 py-1.5 text-xs text-th-text-primary placeholder-th-text-faint focus:outline-none focus:border-accent-border font-mono resize-y"></textarea>
                     </div>
                 </div>
+            </div>
+
+            <!-- Prompt Forge (global) -->
+            <div class="mt-4">
+                <button id="promptforge-open-btn"
+                        class="sidebar-section-header flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold text-th-text-faint uppercase tracking-wider hover:text-th-text-tertiary">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-accent-text" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Prompt Forge
+                    </span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
             </div>
 
             <!-- Skills section -->
