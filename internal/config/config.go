@@ -223,6 +223,10 @@ func (c *Config) GlobalTasksDir() string {
 	return c.DataDir
 }
 
+func (c *Config) PromptForgeDir() string {
+	return filepath.Join(c.DataDir, "promptforge")
+}
+
 func (c *Config) UpdateStatePath() string {
 	return filepath.Join(c.DataDir, "update-state.json")
 }

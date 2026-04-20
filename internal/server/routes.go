@@ -86,6 +86,7 @@ func (s *Server) setupRoutes() *chi.Mux {
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(middleware.ProjectLoader(s.store))
+			r.Use(middleware.NoCacheAPI)
 
 			r.Get("/", s.handlers.ProjectWorkspace)
 			r.Patch("/", s.handlers.RenameProject)
@@ -138,6 +139,16 @@ func (s *Server) setupRoutes() *chi.Mux {
 			r.Put("/api/agents/{scope}/{agentName}", s.handlers.UpdateAgent)
 			r.Delete("/api/agents/{scope}/{agentName}", s.handlers.DeleteAgent)
 			r.Post("/api/agents/{scope}/{agentName}/move", s.handlers.MoveAgent)
+
+			// Scheduled Jobs API
+			r.Get("/api/scheduled-jobs", s.handlers.ListScheduledJobs)
+			r.Post("/api/scheduled-jobs", s.handlers.CreateScheduledJob)
+			r.Get("/api/scheduled-jobs/cron-support", s.handlers.CronSupported)
+			r.Get("/api/scheduled-jobs/{jid}", s.handlers.GetScheduledJob)
+			r.Put("/api/scheduled-jobs/{jid}", s.handlers.UpdateScheduledJob)
+			r.Delete("/api/scheduled-jobs/{jid}", s.handlers.DeleteScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/start", s.handlers.StartScheduledJob)
+			r.Post("/api/scheduled-jobs/{jid}/stop", s.handlers.StopScheduledJob)
 
 			// File browser API
 			r.Get("/api/files", s.handlers.ListFiles)
@@ -226,6 +237,32 @@ func (s *Server) setupRoutes() *chi.Mux {
 	// Scratchpad API (global)
 	r.Get("/api/scratchpad", s.handlers.GetScratchpad)
 	r.Put("/api/scratchpad", s.handlers.UpdateScratchpad)
+
+	// PromptForge API (global)
+	r.Route("/api/promptforge", func(r chi.Router) {
+		r.Route("/folders", func(r chi.Router) {
+			r.Get("/", s.handlers.ListPromptForgeFolders)
+			r.Post("/", s.handlers.CreatePromptForgeFolder)
+			r.Patch("/{folderID}", s.handlers.UpdatePromptForgeFolder)
+			r.Delete("/{folderID}", s.handlers.DeletePromptForgeFolder)
+		})
+		r.Route("/prompts", func(r chi.Router) {
+			r.Get("/", s.handlers.ListPromptForgePrompts)
+			r.Post("/", s.handlers.CreatePromptForgePrompt)
+			r.Route("/{promptID}", func(r chi.Router) {
+				r.Get("/", s.handlers.GetPromptForgePrompt)
+				r.Put("/", s.handlers.UpdatePromptForgePrompt)
+				r.Delete("/", s.handlers.DeletePromptForgePrompt)
+				r.Route("/versions", func(r chi.Router) {
+					r.Get("/", s.handlers.ListPromptForgeVersions)
+					r.Post("/", s.handlers.CreatePromptForgeVersion)
+					r.Get("/{versionID}", s.handlers.GetPromptForgeVersion)
+					r.Patch("/{versionID}", s.handlers.UpdatePromptForgeVersion)
+					r.Delete("/{versionID}", s.handlers.DeletePromptForgeVersion)
+				})
+			})
+		})
+	})
 
 	// Snippets API (global, not project-scoped)
 	r.Route("/api/snippets", func(r chi.Router) {

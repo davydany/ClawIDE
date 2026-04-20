@@ -28,6 +28,7 @@ type Handlers struct {
 	bookmarkStore     *store.BookmarkStore     // global (legacy) bookmark store
 	voiceBoxStore     *store.VoiceBoxStore
 	scratchpadStore   *store.ScratchpadStore
+	promptForgeStore  *store.PromptForgeStore
 	sseHub            *sse.Hub
 	updater           *updater.Updater
 	wizardJobs        *wizard.JobTracker
@@ -48,7 +49,7 @@ type Handlers struct {
 	aiRegistry *aicli.Registry
 }
 
-func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, scratchpadSt *store.ScratchpadStore, globalTaskSt *store.TaskStore, aiReg *aicli.Registry, hub *sse.Hub, upd *updater.Updater, wizJobs *wizard.JobTracker, wizGen *wizard.Generator) *Handlers {
+func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *ptyPkg.Manager, snippetSt *store.SnippetStore, notifSt *store.NotificationStore, noteSt *store.NoteStore, bookmarkSt *store.BookmarkStore, voiceBoxSt *store.VoiceBoxStore, scratchpadSt *store.ScratchpadStore, promptForgeSt *store.PromptForgeStore, globalTaskSt *store.TaskStore, aiReg *aicli.Registry, hub *sse.Hub, upd *updater.Updater, wizJobs *wizard.JobTracker, wizGen *wizard.Generator) *Handlers {
 	return &Handlers{
 		cfg:                   cfg,
 		store:                 st,
@@ -60,6 +61,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer, ptyMgr *p
 		bookmarkStore:         bookmarkSt,
 		voiceBoxStore:         voiceBoxSt,
 		scratchpadStore:       scratchpadSt,
+		promptForgeStore:      promptForgeSt,
 		globalTaskStore:       globalTaskSt,
 		aiRegistry:            aiReg,
 		sseHub:                hub,

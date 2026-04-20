@@ -14,6 +14,7 @@ type State struct {
 	Projects        []model.Project        `json:"projects"`
 	Sessions        []model.Session        `json:"sessions"`
 	Features        []model.Feature        `json:"features"`
+	ScheduledJobs   []model.ScheduledJob   `json:"scheduled_jobs,omitempty"`
 	TrashedFeatures []model.TrashedFeature `json:"trashed_features,omitempty"`
 	TrashedProjects []model.TrashedProject `json:"trashed_projects,omitempty"`
 }
@@ -134,6 +135,14 @@ func (s *Store) DeleteProject(id string) error {
 				}
 			}
 			s.state.TrashedFeatures = filteredTrashed
+			// Also remove scheduled jobs for this project
+			filteredJobs := s.state.ScheduledJobs[:0]
+			for _, j := range s.state.ScheduledJobs {
+				if j.ProjectID != id {
+					filteredJobs = append(filteredJobs, j)
+				}
+			}
+			s.state.ScheduledJobs = filteredJobs
 			return s.save()
 		}
 	}
@@ -291,6 +300,78 @@ func (s *Store) DeleteFeatureSessionsByFeatureID(featureID string) error {
 	}
 	s.state.Sessions = filtered
 	return s.save()
+}
+
+// --------------- Scheduled-job operations ---------------
+
+func (s *Store) GetScheduledJobs(projectID string) []model.ScheduledJob {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var out []model.ScheduledJob
+	for _, j := range s.state.ScheduledJobs {
+		if j.ProjectID == projectID {
+			out = append(out, j)
+		}
+	}
+	return out
+}
+
+func (s *Store) GetScheduledJob(id string) (model.ScheduledJob, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for _, j := range s.state.ScheduledJobs {
+		if j.ID == id {
+			return j, true
+		}
+	}
+	return model.ScheduledJob{}, false
+}
+
+func (s *Store) AddScheduledJob(j model.ScheduledJob) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.state.ScheduledJobs = append(s.state.ScheduledJobs, j)
+	return s.save()
+}
+
+func (s *Store) UpdateScheduledJob(j model.ScheduledJob) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.state.ScheduledJobs {
+		if existing.ID == j.ID {
+			s.state.ScheduledJobs[i] = j
+			return s.save()
+		}
+	}
+	return fmt.Errorf("scheduled job %s not found", j.ID)
+}
+
+func (s *Store) DeleteScheduledJob(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, j := range s.state.ScheduledJobs {
+		if j.ID == id {
+			s.state.ScheduledJobs = append(s.state.ScheduledJobs[:i], s.state.ScheduledJobs[i+1:]...)
+			return s.save()
+		}
+	}
+	return fmt.Errorf("scheduled job %s not found", id)
+}
+
+func (s *Store) SetScheduledJobStatus(id, status string, lastRunAt *time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, j := range s.state.ScheduledJobs {
+		if j.ID == id {
+			s.state.ScheduledJobs[i].Status = status
+			if lastRunAt != nil {
+				s.state.ScheduledJobs[i].LastRunAt = lastRunAt
+			}
+			s.state.ScheduledJobs[i].UpdatedAt = time.Now()
+			return s.save()
+		}
+	}
+	return fmt.Errorf("scheduled job %s not found", id)
 }
 
 // --------------- Trash operations ---------------

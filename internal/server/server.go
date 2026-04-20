@@ -75,6 +75,11 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		log.Fatalf("failed to load scratchpad store: %v", err)
 	}
 
+	promptForgeStore, err := store.NewPromptForgeStore(cfg.PromptForgeDir())
+	if err != nil {
+		log.Fatalf("failed to load promptforge store: %v", err)
+	}
+
 	globalTaskStore, err := store.NewGlobalTaskStore(cfg.GlobalTasksDir())
 	if err != nil {
 		log.Fatalf("failed to load global task store: %v", err)
@@ -116,7 +121,7 @@ func New(cfg *config.Config, st *store.Store, renderer *tmpl.Renderer) *Server {
 		store:      st,
 		renderer:   renderer,
 		ptyManager: ptyMgr,
-		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, globalTaskStore, aiRegistry, sseHub, upd, wizardJobs, wizardGen),
+		handlers:   handler.New(cfg, st, renderer, ptyMgr, snippetStore, notificationStore, noteStore, bookmarkStore, voiceBoxStore, scratchpadStore, promptForgeStore, globalTaskStore, aiRegistry, sseHub, upd, wizardJobs, wizardGen),
 		updater:    upd,
 	}
 

@@ -113,6 +113,12 @@ func SendKeys(sessionName, keys string) error {
 	return exec.Command(binary, "send-keys", "-t", sessionName, keys, "Enter").Run()
 }
 
+// SendControl sends a control key (e.g. "C-c") to a multiplexer session
+// without appending Enter. Useful for sending interrupt signals.
+func SendControl(sessionName, key string) error {
+	return exec.Command(binary, "send-keys", "-t", sessionName, key).Run()
+}
+
 // TmuxName returns the tmux session name for a given pane ID.
 func TmuxName(paneID string) string {
 	return prefix + paneID
