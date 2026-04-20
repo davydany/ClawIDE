@@ -41,6 +41,11 @@ func (p *CodexProvider) AvailableModels() []ModelInfo {
 	}
 }
 
+func (p *CodexProvider) SupportsStreaming() bool { return false }
+func (p *CodexProvider) RunStreaming(_ context.Context, _ Request, _ func(StreamChunk)) error {
+	return fmt.Errorf("codex does not support streaming")
+}
+
 func (p *CodexProvider) Run(ctx context.Context, req Request) (Response, error) {
 	if err := ValidateModel(p, req.Model); err != nil {
 		return Response{}, err

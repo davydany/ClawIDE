@@ -28,6 +28,11 @@ func (p *GeminiProvider) AvailableModels() []ModelInfo {
 	}
 }
 
+func (p *GeminiProvider) SupportsStreaming() bool { return false }
+func (p *GeminiProvider) RunStreaming(_ context.Context, _ Request, _ func(StreamChunk)) error {
+	return fmt.Errorf("gemini CLI provider is not yet implemented")
+}
+
 func (p *GeminiProvider) Run(ctx context.Context, req Request) (Response, error) {
 	return Response{}, fmt.Errorf("gemini CLI provider is not yet implemented — flags and output format need to be verified against a real install")
 }

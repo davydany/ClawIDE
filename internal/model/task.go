@@ -26,10 +26,11 @@ type Group struct {
 }
 
 type Task struct {
-	ID          string    `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Comments    []Comment `json:"comments"`
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	LinkedBranch string    `json:"linked_branch,omitempty"`
+	Comments     []Comment `json:"comments"`
 }
 
 type Comment struct {

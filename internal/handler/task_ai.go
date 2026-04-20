@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/davydany/ClawIDE/internal/aicli"
 	"github.com/davydany/ClawIDE/internal/model"
+	"github.com/davydany/ClawIDE/internal/store"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -18,7 +20,9 @@ import (
 const maxPromptBytes = 8 * 1024
 
 // AskTaskAI runs an AI CLI against a user prompt and appends the response as a comment on the
-// target task. Blocking request — frontend uses AbortController to cancel if needed.
+// target task. For providers that support streaming (e.g. claude), the response is sent as
+// Server-Sent Events so the frontend can show live output. For buffered providers, the full
+// result is returned as JSON after the CLI finishes.
 //
 // POST /api/tasks/{taskID}/ask-ai?project_id=<id>
 // Body: {"provider": "claude", "model": "sonnet", "prompt": "..."}
@@ -47,8 +51,6 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Look up the provider. Not registered = 400 (client sent a bad provider ID). Registered but
-	// binary not on PATH = 501 so the client can flag the provider as unavailable.
 	provider, ok := h.aiRegistry.Get(body.Provider)
 	if !ok {
 		http.Error(w, "unknown provider: "+body.Provider, http.StatusBadRequest)
@@ -59,8 +61,6 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Resolve scope + working directory. For global scope we run from the user's home dir so
-	// relative paths in the prompt don't accidentally leak CWD from the server process.
 	taskStore, projectID, err := h.resolveTaskStore(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -79,15 +79,94 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Execute the provider. Model validation happens inside Run() via aicli.ValidateModel.
 	req := aicli.Request{
 		Prompt:  body.Prompt,
 		Model:   body.Model,
 		WorkDir: workDir,
 		Timeout: 120 * time.Second,
 	}
-	log.Printf("AskTaskAI: provider=%s model=%s task=%s workdir=%s", body.Provider, body.Model, taskID, workDir)
+	author := "AI/" + body.Provider + "/" + body.Model
+	log.Printf("AskTaskAI: provider=%s model=%s task=%s streaming=%v", body.Provider, body.Model, taskID, provider.SupportsStreaming())
 
+	if provider.SupportsStreaming() {
+		h.askTaskAIStreaming(w, r, provider, req, taskStore, taskID, author)
+	} else {
+		h.askTaskAIBuffered(w, r, provider, req, taskStore, taskID, author)
+	}
+}
+
+// askTaskAIStreaming writes SSE events as the CLI produces output. Events:
+//
+//	event: chunk\ndata: <text>\n\n       — incremental text
+//	event: done\ndata: <json>\n\n        — final result + saved comment
+//	event: error\ndata: <message>\n\n    — terminal error
+func (h *Handlers) askTaskAIStreaming(w http.ResponseWriter, r *http.Request, provider aicli.CLIProvider, req aicli.Request, taskStore *store.TaskStore, taskID, author string) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		// Fallback if response doesn't support flushing (shouldn't happen with net/http).
+		h.askTaskAIBuffered(w, r, provider, req, taskStore, taskID, author)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no") // disable nginx buffering if behind a proxy
+	w.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	var finalText string
+
+	err := provider.RunStreaming(r.Context(), req, func(chunk aicli.StreamChunk) {
+		if chunk.Error != "" {
+			fmt.Fprintf(w, "event: error\ndata: %s\n\n", chunk.Error)
+			flusher.Flush()
+			return
+		}
+		if chunk.Done {
+			finalText = chunk.Text
+			return // we'll write the done event after saving the comment
+		}
+		// Incremental text chunk.
+		fmt.Fprintf(w, "event: chunk\ndata: %s\n\n", chunk.Text)
+		flusher.Flush()
+	})
+
+	if err != nil {
+		log.Printf("AskTaskAI streaming error: %v", err)
+		fmt.Fprintf(w, "event: error\ndata: %s\n\n", err.Error())
+		flusher.Flush()
+		return
+	}
+
+	// Save as comment.
+	if finalText == "" {
+		fmt.Fprintf(w, "event: error\ndata: no output from provider\n\n")
+		flusher.Flush()
+		return
+	}
+	comment, err := taskStore.AppendComment(taskID, model.Comment{
+		Author: author,
+		Body:   finalText,
+	})
+	if err != nil {
+		log.Printf("AskTaskAI: AppendComment error: %v", err)
+		fmt.Fprintf(w, "event: error\ndata: failed to save: %s\n\n", err.Error())
+		flusher.Flush()
+		return
+	}
+
+	doneData, _ := json.Marshal(map[string]any{
+		"comment":  comment,
+		"provider": provider.ID(),
+		"model":    req.Model,
+	})
+	fmt.Fprintf(w, "event: done\ndata: %s\n\n", string(doneData))
+	flusher.Flush()
+}
+
+// askTaskAIBuffered is the original blocking path for providers that don't stream.
+func (h *Handlers) askTaskAIBuffered(w http.ResponseWriter, r *http.Request, provider aicli.CLIProvider, req aicli.Request, taskStore *store.TaskStore, taskID, author string) {
 	resp, err := provider.Run(r.Context(), req)
 	if err != nil {
 		log.Printf("AskTaskAI: provider.Run error: %v", err)
@@ -95,9 +174,6 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Append the response as a comment. Author string encodes provider+model so hand-readers of
-	// tasks.md can tell which system produced which comment.
-	author := "AI/" + resp.Provider + "/" + resp.Model
 	comment, err := taskStore.AppendComment(taskID, model.Comment{
 		Author: author,
 		Body:   resp.Text,
@@ -109,10 +185,10 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{
-		"comment":      comment,
-		"provider":     resp.Provider,
-		"model":        resp.Model,
-		"duration_ms":  resp.DurationMs,
+		"comment":     comment,
+		"provider":    resp.Provider,
+		"model":       resp.Model,
+		"duration_ms": resp.DurationMs,
 	})
 }
 
@@ -121,11 +197,12 @@ func (h *Handlers) AskTaskAI(w http.ResponseWriter, r *http.Request) {
 // GET /api/ai/providers
 func (h *Handlers) ListAIProviders(w http.ResponseWriter, r *http.Request) {
 	type providerResp struct {
-		ID           string             `json:"id"`
-		DisplayName  string             `json:"display_name"`
-		Installed    bool               `json:"installed"`
-		DefaultModel string             `json:"default_model"`
-		Models       []aicli.ModelInfo  `json:"models"`
+		ID               string            `json:"id"`
+		DisplayName      string            `json:"display_name"`
+		Installed        bool              `json:"installed"`
+		SupportsStreaming bool             `json:"supports_streaming"`
+		DefaultModel     string            `json:"default_model"`
+		Models           []aicli.ModelInfo `json:"models"`
 	}
 	var out []providerResp
 	for _, p := range h.aiRegistry.List() {
@@ -135,11 +212,12 @@ func (h *Handlers) ListAIProviders(w http.ResponseWriter, r *http.Request) {
 			def = models[0].ID
 		}
 		out = append(out, providerResp{
-			ID:           p.ID(),
-			DisplayName:  p.DisplayName(),
-			Installed:    h.aiRegistry.IsInstalled(p.ID()),
-			DefaultModel: def,
-			Models:       models,
+			ID:               p.ID(),
+			DisplayName:      p.DisplayName(),
+			Installed:        h.aiRegistry.IsInstalled(p.ID()),
+			SupportsStreaming: p.SupportsStreaming(),
+			DefaultModel:     def,
+			Models:           models,
 		})
 	}
 	if out == nil {

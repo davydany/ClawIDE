@@ -2,6 +2,7 @@ package aicli
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -29,6 +30,10 @@ func (f *fakeProvider) Run(ctx context.Context, req Request) (Response, error) {
 		return f.runFn(ctx, req)
 	}
 	return Response{Text: "ok"}, nil
+}
+func (f *fakeProvider) SupportsStreaming() bool { return false }
+func (f *fakeProvider) RunStreaming(_ context.Context, _ Request, _ func(StreamChunk)) error {
+	return fmt.Errorf("not supported")
 }
 
 func TestRegistry_RegisterAndGet(t *testing.T) {

@@ -13,6 +13,10 @@ import (
 // Task-ID is embedded as an HTML comment on the H3 line so it survives rendering and round-trip.
 var taskIDPattern = regexp.MustCompile(`<!--\s*id:\s*([^\s>]+)\s*-->`)
 
+// Linked branch is embedded as a second HTML comment on the H3 line, parallel to the id comment.
+// Branch names can contain "/" (e.g. feature/foo) but not whitespace or ">" per git's rules.
+var taskBranchPattern = regexp.MustCompile(`<!--\s*branch:\s*([^\s>]+)\s*-->`)
+
 // commentHeaderPattern matches the first line of a comment block:
 //
 //	**[2026-04-15 10:22 · AI/claude/sonnet]** Body text...
@@ -133,13 +137,17 @@ func ParseBoard(data []byte) (model.Board, error) {
 				continue
 			}
 			rawTitle := strings.TrimSpace(strings.TrimPrefix(line, "###"))
-			var id string
+			var id, branch string
 			if m := taskIDPattern.FindStringSubmatchIndex(rawTitle); m != nil {
 				id = rawTitle[m[2]:m[3]]
 				// Strip the HTML comment from the visible title, collapsing surrounding whitespace.
 				rawTitle = strings.TrimSpace(rawTitle[:m[0]] + rawTitle[m[1]:])
 			}
-			task := model.Task{ID: id, Title: rawTitle}
+			if m := taskBranchPattern.FindStringSubmatchIndex(rawTitle); m != nil {
+				branch = rawTitle[m[2]:m[3]]
+				rawTitle = strings.TrimSpace(rawTitle[:m[0]] + rawTitle[m[1]:])
+			}
+			task := model.Task{ID: id, Title: rawTitle, LinkedBranch: branch}
 			col := &board.Columns[curColumnIdx]
 			col.Groups[curGroupIdx].Tasks = append(col.Groups[curGroupIdx].Tasks, task)
 			curTaskIdx = len(col.Groups[curGroupIdx].Tasks) - 1
@@ -268,9 +276,14 @@ func SerializeBoard(b model.Board) []byte {
 			}
 			for _, task := range group.Tasks {
 				buf.WriteString("\n")
-				if task.ID != "" {
+				switch {
+				case task.ID != "" && task.LinkedBranch != "":
+					fmt.Fprintf(&buf, "### %s <!-- id: %s --> <!-- branch: %s -->\n", task.Title, task.ID, task.LinkedBranch)
+				case task.ID != "":
 					fmt.Fprintf(&buf, "### %s <!-- id: %s -->\n", task.Title, task.ID)
-				} else {
+				case task.LinkedBranch != "":
+					fmt.Fprintf(&buf, "### %s <!-- branch: %s -->\n", task.Title, task.LinkedBranch)
+				default:
 					fmt.Fprintf(&buf, "### %s\n", task.Title)
 				}
 				if strings.TrimSpace(task.Description) != "" {

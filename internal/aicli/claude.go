@@ -1,9 +1,12 @@
 package aicli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	"time"
 )
 
 // ClaudeProvider shells out to the `claude` CLI via:
@@ -63,6 +66,108 @@ func (p *ClaudeProvider) Run(ctx context.Context, req Request) (Response, error)
 		Model:      req.Model,
 		DurationMs: res.Duration.Milliseconds(),
 	}, nil
+}
+
+func (p *ClaudeProvider) SupportsStreaming() bool { return true }
+
+// RunStreaming uses `claude -p --bare --verbose --output-format stream-json` to stream JSONL
+// events. Each line is parsed: "assistant" messages with text content produce chunks, and the
+// final "result" message produces the Done chunk.
+func (p *ClaudeProvider) RunStreaming(ctx context.Context, req Request, onChunk func(StreamChunk)) error {
+	if err := ValidateModel(p, req.Model); err != nil {
+		return err
+	}
+	timeout := req.Timeout
+	if timeout <= 0 {
+		timeout = 120 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	args := []string{
+		"-p", "--bare", "--verbose",
+		"--output-format", "stream-json",
+		"--model", req.Model,
+		req.Prompt,
+	}
+	cmd := exec.CommandContext(ctx, p.Binary(), args...)
+	cmd.Dir = req.WorkDir
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return fmt.Errorf("stdout pipe: %w", err)
+	}
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("start: %w", err)
+	}
+
+	var fullResult string
+	scanner := bufio.NewScanner(stdout)
+	scanner.Buffer(make([]byte, 256*1024), 256*1024) // large buffer for long lines
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		text, result, isDone := parseStreamLine(line)
+		if text != "" {
+			onChunk(StreamChunk{Text: text})
+		}
+		if isDone {
+			fullResult = result
+		}
+	}
+
+	if err := cmd.Wait(); err != nil {
+		onChunk(StreamChunk{Error: fmt.Sprintf("claude exited with error: %v", err), Done: true})
+		return err
+	}
+
+	if fullResult == "" {
+		fullResult = "(no result)"
+	}
+	onChunk(StreamChunk{Text: fullResult, Done: true})
+	return nil
+}
+
+// parseStreamLine extracts displayable text from a single JSONL line of stream-json output.
+// Returns (textChunk, fullResult, isDone).
+func parseStreamLine(line string) (string, string, bool) {
+	var obj map[string]any
+	if err := json.Unmarshal([]byte(line), &obj); err != nil {
+		return "", "", false
+	}
+	typ, _ := obj["type"].(string)
+
+	switch typ {
+	case "assistant":
+		// Extract text from message.content[].text where type=="text"
+		msg, _ := obj["message"].(map[string]any)
+		if msg == nil {
+			return "", "", false
+		}
+		content, _ := msg["content"].([]any)
+		for _, c := range content {
+			block, _ := c.(map[string]any)
+			if block == nil {
+				continue
+			}
+			if blockType, _ := block["type"].(string); blockType == "text" {
+				text, _ := block["text"].(string)
+				if text != "" {
+					return text, "", false
+				}
+			}
+		}
+	case "result":
+		result, _ := obj["result"].(string)
+		isError, _ := obj["is_error"].(bool)
+		if isError {
+			return "", "", false
+		}
+		return "", result, true
+	}
+	return "", "", false
 }
 
 // claudeOutput is the subset of claude's --output-format json response we care about.

@@ -236,6 +236,26 @@ func (s *TaskStore) MoveTask(id, toColumnSlug, toGroupTitle string, toIndex int)
 	return s.saveLocked()
 }
 
+// SetLinkedBranch updates the task's LinkedBranch field in place. An empty string clears the link.
+// The caller is responsible for validating the branch exists; this method only mutates the field
+// and re-serializes.
+func (s *TaskStore) SetLinkedBranch(id, branch string) (model.Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := s.loadLocked(); err != nil {
+		return model.Task{}, err
+	}
+	task, _, _, _ := s.board.FindTask(id)
+	if task == nil {
+		return model.Task{}, fmt.Errorf("task %q not found", id)
+	}
+	task.LinkedBranch = branch
+	if err := s.saveLocked(); err != nil {
+		return model.Task{}, err
+	}
+	return *task, nil
+}
+
 // AppendComment adds a comment to the task identified by id. The comment's timestamp is
 // overwritten with the current time if it's zero, so handlers can pass a bare Comment struct.
 func (s *TaskStore) AppendComment(id string, c model.Comment) (model.Comment, error) {

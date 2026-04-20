@@ -268,6 +268,11 @@ func (s *Server) setupRoutes() *chi.Mux {
 		r.Post("/{taskID}/comments", s.handlers.AddTaskComment)
 		r.Post("/{taskID}/ask-ai", s.handlers.AskTaskAI)
 
+		// Link a task to a branch (worktree) so AI-driven breakdown knows where to write files.
+		r.Put("/{taskID}/linked-branch", s.handlers.LinkTaskBranch)
+		// AI breakdown — writes tasks/<slug>.md inside the linked worktree and updates CLAUDE.md.
+		r.Post("/{taskID}/breakdown", s.handlers.BreakdownTask)
+
 		// Column management.
 		r.Post("/columns", s.handlers.CreateTaskColumn)
 		r.Put("/columns/{slug}", s.handlers.RenameTaskColumn)

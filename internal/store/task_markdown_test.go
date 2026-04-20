@@ -359,6 +359,67 @@ func TestFindTaskAndColumn(t *testing.T) {
 	}
 }
 
+func TestRoundTrip_LinkedBranch(t *testing.T) {
+	// A task with both ID and LinkedBranch should serialize with both HTML comments on the H3 line
+	// and parse back to the same struct.
+	src := `<!-- clawide-tasks v1 -->
+
+# Backlog
+
+### Wire OAuth <!-- id: t1 --> <!-- branch: feature/auth -->
+Implement the callback.
+
+### Ship mobile build <!-- id: t2 -->
+No branch linked.
+`
+	b, err := ParseBoard([]byte(src))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if b.Columns[0].Groups[0].Tasks[0].LinkedBranch != "feature/auth" {
+		t.Errorf("task 0 LinkedBranch = %q, want feature/auth", b.Columns[0].Groups[0].Tasks[0].LinkedBranch)
+	}
+	if b.Columns[0].Groups[0].Tasks[0].Title != "Wire OAuth" {
+		t.Errorf("task 0 Title = %q, want Wire OAuth", b.Columns[0].Groups[0].Tasks[0].Title)
+	}
+	if b.Columns[0].Groups[0].Tasks[1].LinkedBranch != "" {
+		t.Errorf("task 1 LinkedBranch = %q, want empty", b.Columns[0].Groups[0].Tasks[1].LinkedBranch)
+	}
+
+	// Round-trip: serialize → parse → compare.
+	out := SerializeBoard(b)
+	b2, err := ParseBoard(out)
+	if err != nil {
+		t.Fatalf("reparse: %v", err)
+	}
+	if !reflect.DeepEqual(b, b2) {
+		t.Errorf("round trip lost data\n--first--\n%#v\n--second--\n%#v\n--markdown--\n%s", b, b2, string(out))
+	}
+
+	// Also verify branch-but-no-id and id-but-branch-reversed orderings parse correctly.
+	weird := `<!-- clawide-tasks v1 -->
+
+# Backlog
+
+### Only branch <!-- branch: feature/foo -->
+### Reversed order <!-- branch: feature/bar --> <!-- id: rev -->
+`
+	wb, err := ParseBoard([]byte(weird))
+	if err != nil {
+		t.Fatalf("weird parse: %v", err)
+	}
+	if wb.Columns[0].Groups[0].Tasks[0].LinkedBranch != "feature/foo" {
+		t.Errorf("branch-only task LinkedBranch = %q", wb.Columns[0].Groups[0].Tasks[0].LinkedBranch)
+	}
+	if wb.Columns[0].Groups[0].Tasks[0].ID != "" {
+		t.Errorf("branch-only task ID = %q, want empty", wb.Columns[0].Groups[0].Tasks[0].ID)
+	}
+	rev := wb.Columns[0].Groups[0].Tasks[1]
+	if rev.ID != "rev" || rev.LinkedBranch != "feature/bar" || rev.Title != "Reversed order" {
+		t.Errorf("reversed-order task parsed wrong: %+v", rev)
+	}
+}
+
 func mustParseTS(t *testing.T, s string) time.Time {
 	t.Helper()
 	ts, err := time.Parse(model.CommentTimestampLayout, s)

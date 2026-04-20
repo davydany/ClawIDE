@@ -496,7 +496,7 @@
         });
 
         const panel = document.createElement('div');
-        panel.className = 'w-full max-w-2xl mt-16 bg-surface-base rounded-lg border border-th-border shadow-xl overflow-hidden';
+        panel.className = 'w-full max-w-6xl mt-16 bg-surface-base rounded-lg border border-th-border shadow-xl overflow-hidden';
         panel.addEventListener('click', function(e) { e.stopPropagation(); });
 
         panel.innerHTML = `
@@ -511,40 +511,64 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div>
-                    <label class="block text-xs uppercase text-th-text-faint mb-1">Description</label>
-                    <textarea id="tasks-modal-desc"
-                              class="w-full min-h-24 bg-surface-raised border border-th-border-strong rounded px-3 py-2 text-sm text-th-text-primary font-mono focus:outline-none focus:border-accent-border"
-                              placeholder="Markdown description...">${escapeHTML(task.description || '')}</textarea>
-                    <div class="mt-1 flex justify-end">
-                        <button id="tasks-modal-save" class="px-3 py-1 text-xs bg-accent hover:bg-accent-hover text-th-text-primary rounded">Save</button>
+            <div class="grid grid-cols-1 md:grid-cols-[4fr_1fr] max-h-[75vh]">
+                <!-- Main content (80% on md+) -->
+                <div class="p-4 space-y-4 overflow-y-auto border-b md:border-b-0 md:border-r border-th-border">
+                    <div>
+                        <label class="block text-xs uppercase text-th-text-faint mb-1">Description</label>
+                        <textarea id="tasks-modal-desc"
+                                  class="w-full min-h-24 bg-surface-raised border border-th-border-strong rounded px-3 py-2 text-sm text-th-text-primary font-mono focus:outline-none focus:border-accent-border"
+                                  placeholder="Markdown description...">${escapeHTML(task.description || '')}</textarea>
+                        <div class="mt-1 flex justify-end">
+                            <button id="tasks-modal-save" class="px-3 py-1 text-xs bg-accent hover:bg-accent-hover text-th-text-primary rounded">Save</button>
+                        </div>
+                    </div>
+                    <div class="border-t border-th-border pt-4">
+                        <label class="block text-xs uppercase text-th-text-faint mb-1">Linked Branch</label>
+                        <div class="flex items-center gap-2">
+                            <select id="tasks-modal-linked-branch" class="flex-1 bg-surface-raised border border-th-border-strong rounded px-2 py-1.5 text-sm text-th-text-primary focus:outline-none focus:border-accent-border">
+                                <option value="">— none —</option>
+                            </select>
+                            <button id="tasks-modal-breakdown-btn" disabled
+                                    class="px-3 py-1.5 text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-surface-raised disabled:text-th-text-faint disabled:cursor-not-allowed text-th-text-primary rounded whitespace-nowrap"
+                                    title="Break down into tasks/<slug>.md inside the linked worktree">
+                                Break down with AI
+                            </button>
+                        </div>
+                        <div id="tasks-modal-breakdown-status" class="mt-1 text-xs text-th-text-muted"></div>
+                        <div id="tasks-modal-breakdown-stream" style="display:none" class="mt-2 rounded border border-purple-800/40 bg-purple-900/10 p-3 text-sm text-th-text-primary whitespace-pre-wrap font-mono max-h-64 overflow-y-auto"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-th-text-faint mb-1">Comments</label>
+                        <div id="tasks-modal-comments" class="space-y-2"></div>
+                        <div class="mt-2 flex gap-2">
+                            <input id="tasks-modal-new-comment" type="text" placeholder="Add a comment..."
+                                   class="flex-1 bg-surface-raised border border-th-border-strong rounded px-3 py-1.5 text-sm text-th-text-primary focus:outline-none focus:border-accent-border">
+                            <button id="tasks-modal-add-comment" class="px-3 py-1.5 text-xs bg-surface-raised hover:bg-surface-overlay text-th-text-primary rounded border border-th-border-strong">Add</button>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-th-text-faint mb-1">Comments</label>
-                    <div id="tasks-modal-comments" class="space-y-2"></div>
-                    <div class="mt-2 flex gap-2">
-                        <input id="tasks-modal-new-comment" type="text" placeholder="Add a comment..."
-                               class="flex-1 bg-surface-raised border border-th-border-strong rounded px-3 py-1.5 text-sm text-th-text-primary focus:outline-none focus:border-accent-border">
-                        <button id="tasks-modal-add-comment" class="px-3 py-1.5 text-xs bg-surface-raised hover:bg-surface-overlay text-th-text-primary rounded border border-th-border-strong">Add</button>
+                <!-- AI sidebar (20% on md+) -->
+                <aside class="p-4 space-y-2 overflow-y-auto bg-surface-base/40">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-[10px] font-bold text-white">AI</span>
+                        <h3 class="text-xs uppercase text-th-text-faint">Ask AI</h3>
                     </div>
-                </div>
-                <div class="border-t border-th-border pt-4">
-                    <label class="block text-xs uppercase text-th-text-faint mb-2">Ask AI</label>
-                    <div class="flex items-center gap-2 mb-2">
-                        <select id="tasks-modal-ai-provider" class="bg-surface-raised border border-th-border-strong rounded px-2 py-1 text-xs text-th-text-primary focus:outline-none"></select>
-                        <select id="tasks-modal-ai-model" class="bg-surface-raised border border-th-border-strong rounded px-2 py-1 text-xs text-th-text-primary focus:outline-none"></select>
-                    </div>
+                    <select id="tasks-modal-ai-provider" class="w-full bg-surface-raised border border-th-border-strong rounded px-2 py-1 text-xs text-th-text-primary focus:outline-none"></select>
+                    <select id="tasks-modal-ai-model" class="w-full bg-surface-raised border border-th-border-strong rounded px-2 py-1 text-xs text-th-text-primary focus:outline-none"></select>
                     <textarea id="tasks-modal-ai-prompt"
-                              class="w-full min-h-16 bg-surface-raised border border-th-border-strong rounded px-3 py-2 text-sm text-th-text-primary focus:outline-none focus:border-accent-border"
-                              placeholder="Ask the AI to research something, draft code, etc."></textarea>
-                    <div class="mt-2 flex items-center gap-2">
-                        <button id="tasks-modal-ai-submit" class="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-th-text-primary rounded">Ask</button>
+                              class="w-full min-h-32 bg-surface-raised border border-th-border-strong rounded px-3 py-2 text-sm text-th-text-primary focus:outline-none focus:border-accent-border resize-y"
+                              placeholder="Ask the AI..."></textarea>
+                    <div class="flex items-center gap-2">
+                        <button id="tasks-modal-ai-submit" class="flex-1 px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-500 text-th-text-primary rounded">Ask</button>
                         <button id="tasks-modal-ai-cancel" style="display:none" class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-500 text-th-text-primary rounded">Cancel</button>
-                        <span id="tasks-modal-ai-status" class="text-xs text-th-text-muted"></span>
                     </div>
-                </div>
+                    <div id="tasks-modal-ai-status" class="text-[11px] text-th-text-muted min-h-4"></div>
+                    <div id="tasks-modal-ai-stream" style="display:none" class="rounded border border-emerald-800/40 bg-emerald-900/10 p-2 text-xs text-th-text-primary whitespace-pre-wrap font-mono max-h-64 overflow-y-auto"></div>
+                    <p class="text-[10px] text-th-text-faint pt-2 border-t border-th-border">
+                        Responses appear as comments on the task.
+                    </p>
+                </aside>
             </div>
         `;
 
@@ -598,6 +622,172 @@
         wireAskAI(panel, taskID);
         refreshModalComments(taskID);
         populateProviderDropdowns(panel);
+        wireLinkedBranch(panel, taskID, task);
+    }
+
+    // ---------------- Linked branch + AI breakdown ----------------
+
+    async function fetchWorktrees() {
+        if (!projectID) return [];
+        try {
+            var res = await fetch('/projects/' + encodeURIComponent(projectID) + '/api/worktrees');
+            if (!res.ok) return [];
+            var data = await res.json();
+            return (data.worktrees || []).filter(function(w) { return w.branch; });
+        } catch (err) {
+            console.warn('tasks: failed to load worktrees', err);
+            return [];
+        }
+    }
+
+    function wireLinkedBranch(panel, taskID, task) {
+        var select = panel.querySelector('#tasks-modal-linked-branch');
+        var btn = panel.querySelector('#tasks-modal-breakdown-btn');
+        var status = panel.querySelector('#tasks-modal-breakdown-status');
+        var streamEl = panel.querySelector('#tasks-modal-breakdown-stream');
+
+        // The linked-branch feature is project-scoped only: global tasks aren't tied to a repo.
+        if (scope !== 'project' || !projectID) {
+            select.disabled = true;
+            btn.disabled = true;
+            status.textContent = 'Linking is only available for project-scoped tasks.';
+            return;
+        }
+
+        fetchWorktrees().then(function(worktrees) {
+            worktrees.forEach(function(wt) {
+                var opt = document.createElement('option');
+                opt.value = wt.branch;
+                opt.textContent = wt.branch + (wt.is_main ? ' (main)' : '');
+                opt.title = wt.path;
+                select.appendChild(opt);
+            });
+            if (task.linked_branch) {
+                select.value = task.linked_branch;
+                // If the linked branch no longer has a worktree, select falls back to "" — warn.
+                if (select.value !== task.linked_branch) {
+                    var opt = document.createElement('option');
+                    opt.value = task.linked_branch;
+                    opt.textContent = task.linked_branch + ' (no worktree)';
+                    select.appendChild(opt);
+                    select.value = task.linked_branch;
+                }
+            }
+            updateBreakdownButtonState(panel, select.value);
+        });
+
+        select.addEventListener('change', async function() {
+            var branch = select.value;
+            try {
+                await apiFetch(API + '/' + encodeURIComponent(taskID) + '/linked-branch' + qs(), {
+                    method: 'PUT',
+                    body: JSON.stringify({ branch: branch })
+                });
+                status.textContent = branch ? 'Linked to ' + branch : 'Unlinked.';
+                updateBreakdownButtonState(panel, branch);
+                await loadBoard();
+            } catch (err) {
+                status.textContent = 'Link failed: ' + err.message;
+            }
+        });
+
+        btn.addEventListener('click', function() {
+            runBreakdown(panel, taskID);
+        });
+    }
+
+    function updateBreakdownButtonState(panel, branch) {
+        var btn = panel.querySelector('#tasks-modal-breakdown-btn');
+        if (!btn) return;
+        var provEl = panel.querySelector('#tasks-modal-ai-provider');
+        var hasProvider = provEl && provEl.value && !provEl.disabled;
+        btn.disabled = !branch || !hasProvider;
+        if (!branch) {
+            btn.title = 'Link a branch first';
+        } else if (!hasProvider) {
+            btn.title = 'No AI CLI installed';
+        } else {
+            btn.title = 'Break down into tasks/<slug>.md inside the linked worktree';
+        }
+    }
+
+    async function runBreakdown(panel, taskID) {
+        var select = panel.querySelector('#tasks-modal-linked-branch');
+        var btn = panel.querySelector('#tasks-modal-breakdown-btn');
+        var status = panel.querySelector('#tasks-modal-breakdown-status');
+        var streamEl = panel.querySelector('#tasks-modal-breakdown-stream');
+        var providerSel = panel.querySelector('#tasks-modal-ai-provider');
+        var modelSel = panel.querySelector('#tasks-modal-ai-model');
+
+        var branch = select.value;
+        if (!branch) { status.textContent = 'Link a branch first.'; return; }
+        var providerID = providerSel.value;
+        var model = modelSel.value;
+        if (!providerID || !model) { status.textContent = 'Choose an AI provider/model first.'; return; }
+
+        btn.disabled = true;
+        status.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mr-1"></span>Running ' + providerID + '/' + model + '...';
+        streamEl.style.display = 'block';
+        streamEl.textContent = '';
+
+        try {
+            var res = await fetch(API + '/' + encodeURIComponent(taskID) + '/breakdown' + qs(), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ provider: providerID, model: model, overwrite: true })
+            });
+            if (!res.ok) {
+                var errText = await res.text();
+                throw new Error(res.status + ': ' + errText);
+            }
+            var doneInfo = await readBreakdownStream(res, streamEl);
+            if (doneInfo && doneInfo.file_path) {
+                status.textContent = 'Wrote ' + doneInfo.file_path + (doneInfo.claude_md_updated ? ' and updated CLAUDE.md' : ' (CLAUDE.md update failed — check server log)');
+            } else {
+                status.textContent = 'Done.';
+            }
+            await loadBoard();
+            refreshModalComments(taskID);
+        } catch (err) {
+            status.textContent = 'Error: ' + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // readBreakdownStream consumes SSE events; on "done" returns the parsed payload. Reuses the
+    // same event framing as readSSEStream but surfaces the done payload to the caller.
+    async function readBreakdownStream(res, streamEl) {
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+        var doneInfo = null;
+        while (true) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            var events = buffer.split('\n\n');
+            buffer = events.pop();
+            for (var i = 0; i < events.length; i++) {
+                var ev = events[i].trim();
+                if (!ev) continue;
+                var type = '', data = '';
+                var lines = ev.split('\n');
+                for (var j = 0; j < lines.length; j++) {
+                    if (lines[j].indexOf('event: ') === 0) type = lines[j].substring(7);
+                    else if (lines[j].indexOf('data: ') === 0) data = lines[j].substring(6);
+                }
+                if (type === 'chunk' && data) {
+                    streamEl.textContent = data;
+                    streamEl.scrollTop = streamEl.scrollHeight;
+                } else if (type === 'done') {
+                    try { doneInfo = JSON.parse(data); } catch (_) { /* leave null */ }
+                } else if (type === 'error') {
+                    throw new Error(data);
+                }
+            }
+        }
+        return doneInfo;
     }
 
     function closeTaskModal() {
@@ -620,18 +810,34 @@
             return;
         }
         found.task.comments.forEach(function(c) {
-            const row = document.createElement('div');
             const isAI = (c.author || '').indexOf('AI') === 0;
-            row.className = 'rounded border px-3 py-2 text-sm ' +
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 rounded border px-3 py-2 text-sm ' +
                 (isAI ? 'bg-emerald-900/20 border-emerald-800/40 text-th-text-primary' : 'bg-surface-raised border-th-border-strong text-th-text-primary');
+
+            // Circular avatar on the left. AI comments get an emerald "AI" badge; user comments
+            // get a neutral "U" so the row heights stay consistent and the layout reads as a chat.
+            const avatar = document.createElement('div');
+            avatar.className = 'flex-shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-bold text-white ' +
+                (isAI ? 'bg-emerald-600' : 'bg-surface-overlay text-th-text-muted');
+            avatar.textContent = isAI ? 'AI' : 'U';
+            if (isAI) {
+                avatar.title = c.author || 'AI';
+            }
+
+            const content = document.createElement('div');
+            content.className = 'flex-1 min-w-0';
             const meta = document.createElement('div');
             meta.className = 'text-[10px] uppercase text-th-text-faint mb-1';
             meta.textContent = (c.author || 'unknown') + ' · ' + formatTimestamp(c.timestamp);
             const body = document.createElement('div');
-            body.className = 'whitespace-pre-wrap';
+            body.className = 'whitespace-pre-wrap break-words';
             body.textContent = c.body || '';
-            row.appendChild(meta);
-            row.appendChild(body);
+            content.appendChild(meta);
+            content.appendChild(body);
+
+            row.appendChild(avatar);
+            row.appendChild(content);
             container.appendChild(row);
         });
     }
@@ -674,40 +880,72 @@
         refreshModels();
     }
 
+    function getSelectedProvider() {
+        var sel = document.getElementById('tasks-modal-ai-provider');
+        if (!sel) return null;
+        return providers.find(function(p) { return p.id === sel.value; }) || null;
+    }
+
     function wireAskAI(panel, taskID) {
-        const submit = panel.querySelector('#tasks-modal-ai-submit');
-        const cancel = panel.querySelector('#tasks-modal-ai-cancel');
-        const status = panel.querySelector('#tasks-modal-ai-status');
-        const promptEl = panel.querySelector('#tasks-modal-ai-prompt');
-        const providerSel = panel.querySelector('#tasks-modal-ai-provider');
-        const modelSel = panel.querySelector('#tasks-modal-ai-model');
+        var submit = panel.querySelector('#tasks-modal-ai-submit');
+        var cancel = panel.querySelector('#tasks-modal-ai-cancel');
+        var status = panel.querySelector('#tasks-modal-ai-status');
+        var promptEl = panel.querySelector('#tasks-modal-ai-prompt');
+        var providerSel = panel.querySelector('#tasks-modal-ai-provider');
+        var modelSel = panel.querySelector('#tasks-modal-ai-model');
+        var streamEl = panel.querySelector('#tasks-modal-ai-stream');
 
         submit.addEventListener('click', async function() {
-            const prompt = promptEl.value.trim();
+            var prompt = promptEl.value.trim();
             if (!prompt) return;
-            const provider = providerSel.value;
-            const model = modelSel.value;
-            if (!provider || !model) {
+            var providerID = providerSel.value;
+            var model = modelSel.value;
+            if (!providerID || !model) {
                 ClawIDEDialog.confirm('Missing Selection', 'Choose a provider and model first.', { confirmLabel: 'OK' });
                 return;
             }
+
             submit.style.display = 'none';
             cancel.style.display = '';
-            status.textContent = 'Running ' + provider + '/' + model + '...';
+            streamEl.style.display = 'none';
+            streamEl.textContent = '';
             askAIController = new AbortController();
+
+            var providerInfo = getSelectedProvider();
+            var isStreaming = providerInfo && providerInfo.supports_streaming;
+
+            if (isStreaming) {
+                status.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mr-1"></span>Streaming from ' + providerID + '/' + model + '...';
+                streamEl.style.display = 'block';
+                streamEl.textContent = '';
+            } else {
+                status.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mr-1"></span>Running ' + providerID + '/' + model + '...';
+            }
+
             try {
-                const res = await fetch(API + '/' + encodeURIComponent(taskID) + '/ask-ai' + qs(), {
+                var res = await fetch(API + '/' + encodeURIComponent(taskID) + '/ask-ai' + qs(), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ provider: provider, model: model, prompt: prompt }),
+                    body: JSON.stringify({ provider: providerID, model: model, prompt: prompt }),
                     signal: askAIController.signal
                 });
+
                 if (!res.ok) {
-                    const errText = await res.text();
+                    var errText = await res.text();
                     throw new Error(res.status + ': ' + errText);
                 }
-                const data = await res.json();
-                status.textContent = 'Done in ' + (data.duration_ms || 0) + 'ms';
+
+                var contentType = res.headers.get('content-type') || '';
+
+                if (contentType.indexOf('text/event-stream') !== -1) {
+                    // Streaming response — read SSE events.
+                    await readSSEStream(res, streamEl, status);
+                } else {
+                    // Buffered JSON response.
+                    var data = await res.json();
+                    status.textContent = 'Done' + (data.duration_ms ? ' in ' + data.duration_ms + 'ms' : '');
+                }
+
                 promptEl.value = '';
                 await loadBoard();
                 refreshModalComments(taskID);
@@ -721,12 +959,62 @@
                 submit.style.display = '';
                 cancel.style.display = 'none';
                 askAIController = null;
+                // Hide the stream preview after a short delay so the user can see the final state.
+                if (streamEl.textContent) {
+                    setTimeout(function() { streamEl.style.display = 'none'; }, 3000);
+                }
             }
         });
 
         cancel.addEventListener('click', function() {
             if (askAIController) askAIController.abort();
         });
+    }
+
+    // readSSEStream reads a text/event-stream response body, updates the preview element with
+    // streaming text, and resolves when done or on error.
+    async function readSSEStream(res, streamEl, statusEl) {
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+
+        while (true) {
+            var result = await reader.read();
+            if (result.done) break;
+
+            buffer += decoder.decode(result.value, { stream: true });
+
+            // Process complete SSE events (double-newline delimited).
+            var events = buffer.split('\n\n');
+            buffer = events.pop(); // last element is incomplete
+
+            for (var i = 0; i < events.length; i++) {
+                var event = events[i].trim();
+                if (!event) continue;
+
+                var eventType = '';
+                var eventData = '';
+                var lines = event.split('\n');
+                for (var j = 0; j < lines.length; j++) {
+                    if (lines[j].indexOf('event: ') === 0) {
+                        eventType = lines[j].substring(7);
+                    } else if (lines[j].indexOf('data: ') === 0) {
+                        eventData = lines[j].substring(6);
+                    }
+                }
+
+                if (eventType === 'chunk' && eventData) {
+                    streamEl.textContent = eventData;
+                    // Auto-scroll to bottom.
+                    streamEl.scrollTop = streamEl.scrollHeight;
+                } else if (eventType === 'done') {
+                    statusEl.textContent = 'Done — saved as comment';
+                } else if (eventType === 'error') {
+                    statusEl.textContent = 'Error: ' + eventData;
+                    throw new Error(eventData);
+                }
+            }
+        }
     }
 
     // ---------------- Scope toggle ----------------

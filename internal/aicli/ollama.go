@@ -36,6 +36,11 @@ func (p *OllamaProvider) AvailableModels() []ModelInfo {
 	}
 }
 
+func (p *OllamaProvider) SupportsStreaming() bool { return false }
+func (p *OllamaProvider) RunStreaming(_ context.Context, _ Request, _ func(StreamChunk)) error {
+	return fmt.Errorf("ollama does not support streaming yet")
+}
+
 func (p *OllamaProvider) Run(ctx context.Context, req Request) (Response, error) {
 	if err := ValidateModel(p, req.Model); err != nil {
 		return Response{}, err

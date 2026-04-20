@@ -44,6 +44,13 @@ type ModelInfo struct {
 	DisplayName string `json:"display_name"` // shown in the UI
 }
 
+// StreamChunk is a piece of text produced during streaming execution.
+type StreamChunk struct {
+	Text  string // incremental text to display
+	Done  bool   // true on the final chunk; Text holds the full accumulated result
+	Error string // non-empty if the stream ended with an error
+}
+
 // CLIProvider is the contract every AI CLI integration must satisfy.
 type CLIProvider interface {
 	// ID is a stable string used in API requests and stored in comment author fields.
@@ -63,6 +70,15 @@ type CLIProvider interface {
 	// Run executes the provider for the given request and returns the parsed response. Callers
 	// always go through this method — they never build argv or exec.Command themselves.
 	Run(ctx context.Context, req Request) (Response, error)
+
+	// SupportsStreaming reports whether this provider can stream incremental text output.
+	// If false, the handler uses Run() and shows a spinner on the frontend.
+	SupportsStreaming() bool
+
+	// RunStreaming executes the provider and calls onChunk for each piece of output text as it
+	// arrives. The final call has Done=true and Text set to the full accumulated result.
+	// Only called when SupportsStreaming() returns true.
+	RunStreaming(ctx context.Context, req Request, onChunk func(StreamChunk)) error
 }
 
 // IsInstalled reports whether a provider's binary is reachable via exec.LookPath. Providers that
