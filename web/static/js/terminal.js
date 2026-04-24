@@ -491,14 +491,38 @@
             };
         }
 
+        // Tmux runs with `window-size latest` (see internal/tmux/tmux.go), so
+        // it adopts whatever dims the PTY reports. If we forward a tiny size
+        // once, Claude Code's TUI latches to it until the next resize event.
+        var MIN_COLS = 20;
+        var MIN_ROWS = 5;
+
         function sendResize() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'resize',
-                    rows: term.rows,
-                    cols: term.cols,
-                }));
-            }
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            if (term.cols < MIN_COLS || term.rows < MIN_ROWS) return;
+            ws.send(JSON.stringify({
+                type: 'resize',
+                rows: term.rows,
+                cols: term.cols,
+            }));
+        }
+
+        // Coalesce bursts and validate proposed dims before applying. Without
+        // this, ResizeObserver can fire mid-layout (pane split re-render,
+        // sidebar toggle, flex reflow) when the container is briefly tiny,
+        // fit() computes ~8 cols, and tmux narrows the pane.
+        var fitRAF = 0;
+        function safeFit() {
+            if (fitRAF) cancelAnimationFrame(fitRAF);
+            fitRAF = requestAnimationFrame(function() {
+                fitRAF = 0;
+                var dims;
+                try { dims = fitAddon.proposeDimensions(); } catch (e) { return; }
+                if (!dims || !isFinite(dims.cols) || !isFinite(dims.rows)) return;
+                if (dims.cols < MIN_COLS || dims.rows < MIN_ROWS) return;
+                fitAddon.fit();
+                sendResize();
+            });
         }
 
         // Write to PTY - run data through interceptors first
@@ -512,10 +536,7 @@
         });
 
         // Handle resize
-        const resizeObserver = new ResizeObserver(function() {
-            fitAddon.fit();
-            sendResize();
-        });
+        const resizeObserver = new ResizeObserver(safeFit);
         resizeObserver.observe(container);
 
         connect();
@@ -543,14 +564,9 @@
             reattach: function(newContainer) {
                 this.container = newContainer;
                 newContainer.appendChild(this.term.element);
-                var self = this;
-                this.resizeObserver = new ResizeObserver(function() {
-                    self.fitAddon.fit();
-                    self.sendResize();
-                });
+                this.resizeObserver = new ResizeObserver(safeFit);
                 this.resizeObserver.observe(newContainer);
-                this.fitAddon.fit();
-                this.sendResize();
+                safeFit();
             },
             destroy: function() {
                 this.closed = true;
