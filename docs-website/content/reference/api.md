@@ -121,17 +121,6 @@ VoiceBox endpoints are global and not scoped to a project.
 | DELETE | `/api/voicebox/{entryID}` | Delete a specific voice entry |
 | DELETE | `/api/voicebox` | Delete all voice entries |
 
-## Snippets
-
-Snippet endpoints are global and not scoped to a project.
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/snippets/` | List all code snippets |
-| POST | `/api/snippets/` | Create a new code snippet |
-| PUT | `/api/snippets/{snippetID}` | Update an existing snippet |
-| DELETE | `/api/snippets/{snippetID}` | Delete a snippet |
-
 ## Project Endpoints
 
 ### Projects

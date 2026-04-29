@@ -21,8 +21,6 @@ sections:
         url: /features/port-detection/
       - title: Settings
         url: /features/settings/
-      - title: Code Snippets
-        url: /features/code-snippets/
       - title: Onboarding
         url: /features/onboarding/
       - title: Bookmarks

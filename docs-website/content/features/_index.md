@@ -66,12 +66,6 @@ Configure ClawIDE to fit your workflow with CLI flags, environment variables, a 
 
 [Learn more →]({{< ref "features/settings" >}})
 
-## Code Snippets
-
-Save, search, and insert reusable code snippets across all your sessions and projects.
-
-[Learn more →]({{< ref "features/code-snippets" >}})
-
 ## Onboarding
 
 A guided welcome experience that introduces ClawIDE's key features and walks you through your first workspace.
